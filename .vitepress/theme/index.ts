@@ -28,6 +28,7 @@ import CommandPlaneDiagram from './components/CommandPlaneDiagram.vue'
 import AuthFlowDiagram from './components/AuthFlowDiagram.vue'
 import FourLayersDiagram from './components/FourLayersDiagram.vue'
 import HeroLogo from './components/HeroLogo.vue'
+import HeroMesh from './components/HeroMesh.vue'
 import HeroParticles from './components/HeroParticles.vue'
 import HeroWaves from './components/HeroWaves.vue'
 import VersionSwitcher from './components/VersionSwitcher.vue'
@@ -45,11 +46,11 @@ function persistLang(path: string) {
 const theme: Theme = {
     extends: DefaultTheme,
 
-    // Home hero: two background layers (HeroWaves wave dot-matrix at the bottom + full-width converging particles HeroParticles above it, home-hero-before), and the image area is the logo particle animation (home-hero-image)
+    // Home hero: three background layers (HeroMesh protocol-mesh semantic base at z0 + HeroWaves wave dot-matrix + full-width converging particles HeroParticles, home-hero-before), and the image area is the logo particle animation (home-hero-image)
     Layout() {
         return h(DefaultTheme.Layout, null, {
             'layout-top': () => h(VersionBanner),
-            'home-hero-before': () => [h(HeroWaves), h(HeroParticles)],
+            'home-hero-before': () => [h(HeroMesh), h(HeroWaves), h(HeroParticles)],
             'home-hero-image': () => h(HeroLogo),
             'nav-bar-content-after': () => h(VersionSwitcher)
         })

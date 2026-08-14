@@ -1,14 +1,14 @@
 ---
 layout: home
-title: IoT DC3 · Distributed Industrial IoT Platform
+title: IoT DC3 · Open-Source Industrial IoT Platform
 
 hero:
   name: IoT DC3
-  text: An open-source distributed IoT platform built for AI scenarios
-  tagline: Device connectivity, data collection, operations management, and intelligent analytics for industrial IoT. 28 multi-protocol drivers bring data up from heterogeneous devices; Spring AI lets large language models read that data and drive commands back to devices, closing the sense–decide–act–feedback loop. Distributed, multi-tenant, fully open source.
+  text: Multi-protocol · Cloud-native · Open-source Industrial IoT Platform
+  tagline: AI-powered — from device connectivity to industrial agents. 28 multi-protocol drivers bring data up from heterogeneous devices; Spring AI lets large language models read that data and drive commands back to devices, closing the sense–decide–act loop. Multi-tenant, edge-to-cloud, fully open source.
   image:
     src: /images/logo.svg
-    alt: IoT DC3 platform logo — distributed multi-protocol device connectivity and data acquisition architecture
+    alt: IoT DC3 platform logo — multi-protocol device connectivity and data acquisition architecture
   actions:
     - theme: brand
       text: Run your first device

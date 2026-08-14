@@ -32,7 +32,8 @@
     --vp-code-block-bg: #f2f5f8;
     --vp-code-line-highlight-color: rgba(18, 150, 219, 0.12);
     --vp-home-hero-name-color: transparent;
-    --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #0a6cb2 30%, #16a6dd);
+    /* DC3 品牌渐变:Cyan → Blue → Violet(与 og-image/banner/social-preview 同源) */
+    --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #38c6ec 15%, #5a8dee 55%, #8f6ff2 92%);
     --vp-button-brand-bg: #0a6cb2;
     --vp-button-brand-hover-bg: #0c5f9e;
     --vp-button-brand-active-bg: #0a5288;
