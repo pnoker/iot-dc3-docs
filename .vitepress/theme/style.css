@@ -39,6 +39,7 @@
     --vp-button-brand-active-bg: #0a5288;
     --vp-button-brand-text: #ffffff;
     --vp-layout-max-width: 1504px;
+    --dc3-glass-radius: 20px;
     font-synthesis-weight: none;
 }
 
@@ -83,18 +84,24 @@ body {
     border-bottom: none;
 }
 
-/* One frosted layer for the whole navbar, identical in every layout state
-   (home / sidebar doc / 404, at the top or scrolled). The default theme paints
-   opaque per-element backgrounds — .content-body on every non-home-top page, and
-   the whole bar on no-sidebar pages — at a higher specificity than a plain
-   .VPNavBar rule, and it also leaves the home hero fully transparent at the top.
-   We force a single translucent layer here so the logo/title area and the menu
-   area share the same background everywhere, and the header never jumps between
-   opaque white and transparent. !important is deliberate: it overrides the
-   theme's conditional rules without a multi-class specificity war. */
+/* Frosted-glass navbar aligned with iot-dc3-online: transparent at the very top
+   of the home page (the hero shows through), frosted after scroll and on every
+   other page. The default theme paints opaque per-element backgrounds —
+   .content-body on every non-home-top page, and the whole bar on no-sidebar
+   pages — at a higher specificity than a plain .VPNavBar rule; the child
+   backgrounds are cleared below so a single translucent layer shows through and
+   the header never jumps between opaque white and transparent. !important
+   overrides the theme's conditional rules without a specificity war. */
 .VPNavBar {
     background: color-mix(in srgb, var(--vp-c-bg) 85%, transparent) !important;
     backdrop-filter: saturate(1.4) blur(12px) !important;
+}
+
+/* At the very top of the home page the bar turns fully transparent so the hero
+   shows through (matching iot-dc3-online); it frosts again once the page scrolls. */
+.VPNavBar.home.top {
+    background: transparent !important;
+    backdrop-filter: none !important;
 }
 
 /* Clear the child backgrounds the default theme fills in, so only the single
@@ -152,10 +159,73 @@ body {
     }
 }
 
+.VPNavBarTitle {
+    display: flex;
+    align-items: center;
+    height: var(--vp-nav-height);
+}
+
 .VPNavBarTitle .title {
-    font-weight: 720;
-    letter-spacing: 0;
+    width: auto;
+    height: 40px;
+    padding: 5px 13px 5px 6px;
+    border: 1px solid rgba(148, 216, 246, 0.34);
+    border-radius: var(--dc3-glass-radius);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.82), transparent 38%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.54), rgba(115, 205, 241, 0.13) 52%, rgba(75, 88, 210, 0.08));
+    box-shadow:
+        0 10px 28px rgba(12, 89, 153, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86),
+        inset 0 -8px 18px rgba(55, 131, 203, 0.05);
+    backdrop-filter: blur(18px) saturate(1.45);
+    -webkit-backdrop-filter: blur(18px) saturate(1.45);
     color: var(--vp-c-brand-1);
+    font-weight: 740;
+    letter-spacing: -0.01em;
+    transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+}
+
+.VPNavBarTitle .title:hover {
+    border-color: rgba(61, 172, 224, 0.46);
+    box-shadow:
+        0 14px 34px rgba(12, 89, 153, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        inset 0 -8px 18px rgba(55, 131, 203, 0.07);
+    transform: translateY(-1px);
+}
+
+.VPNavBarTitle .logo {
+    width: 30px;
+    height: 30px;
+    margin-right: 8px;
+    filter: drop-shadow(0 4px 7px rgba(13, 82, 157, 0.2));
+}
+
+.VPNavBarTitle .title > span {
+    background: linear-gradient(112deg, #07549a, #149ed7 46%, #4f52bf);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+.dark .VPNavBarTitle .title {
+    border-color: rgba(139, 210, 250, 0.18);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(210, 247, 255, 0.14), transparent 38%),
+        linear-gradient(135deg, rgba(55, 130, 183, 0.12), rgba(21, 42, 62, 0.38) 52%, rgba(54, 55, 132, 0.16));
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.24),
+        inset 0 1px 0 rgba(231, 251, 255, 0.12),
+        inset 0 -8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.dark .VPNavBarTitle .title > span {
+    background: linear-gradient(112deg, #8edcff, #d3fbff 46%, #a5a8ff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .VPNavBarMenuLink,
@@ -171,6 +241,205 @@ body {
 
 .VPNavBarSearch {
     padding-left: 8px;
+}
+
+/* ── header glass identity (ported from iot-dc3-online) ── */
+.VPNavBarSocialLinks .VPSocialLink,
+.VPNavBarExtra .VPSocialLink,
+.VPNavScreenSocialLinks .VPSocialLink {
+    --social-rgb: 67, 88, 139;
+    width: 28px;
+    height: 28px;
+    margin: 0 1px;
+    border: 1px solid rgba(var(--social-rgb), 0.22);
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 28% 8%, rgba(255, 255, 255, 0.84), transparent 44%),
+        linear-gradient(145deg, rgba(var(--social-rgb), 0.18), rgba(var(--social-rgb), 0.07));
+    box-shadow:
+        0 5px 14px rgba(var(--social-rgb), 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.78),
+        inset 0 -6px 12px rgba(var(--social-rgb), 0.05);
+    backdrop-filter: blur(12px) saturate(1.25);
+    -webkit-backdrop-filter: blur(12px) saturate(1.25);
+    color: rgb(var(--social-rgb));
+    transition: color 220ms ease, border-color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+}
+
+.VPNavBarSocialLinks .VPSocialLink[href*="gitee.com"],
+.VPNavBarExtra .VPSocialLink[href*="gitee.com"],
+.VPNavScreenSocialLinks .VPSocialLink[href*="gitee.com"] {
+    --social-rgb: 177, 72, 91;
+}
+
+.VPNavBarSocialLinks .VPSocialLink[href*="x.com"],
+.VPNavBarExtra .VPSocialLink[href*="x.com"],
+.VPNavScreenSocialLinks .VPSocialLink[href*="x.com"] {
+    --social-rgb: 55, 72, 98;
+}
+
+.VPNavBarSocialLinks .VPSocialLink:hover,
+.VPNavBarExtra .VPSocialLink:hover,
+.VPNavScreenSocialLinks .VPSocialLink:hover {
+    border-color: rgba(var(--social-rgb), 0.4);
+    color: rgb(var(--social-rgb));
+    box-shadow:
+        0 8px 18px rgba(var(--social-rgb), 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -7px 14px rgba(var(--social-rgb), 0.08);
+    transform: translateY(-1px);
+}
+
+.dark .VPNavBarSocialLinks .VPSocialLink,
+.dark .VPNavBarExtra .VPSocialLink,
+.dark .VPNavScreenSocialLinks .VPSocialLink {
+    --social-rgb: 158, 181, 231;
+    border-color: rgba(var(--social-rgb), 0.2);
+    background:
+        radial-gradient(circle at 28% 8%, rgba(231, 250, 255, 0.16), transparent 44%),
+        linear-gradient(145deg, rgba(var(--social-rgb), 0.17), rgba(var(--social-rgb), 0.06));
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(231, 250, 255, 0.14),
+        inset 0 -6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark .VPNavBarSocialLinks .VPSocialLink[href*="gitee.com"],
+.dark .VPNavBarExtra .VPSocialLink[href*="gitee.com"],
+.dark .VPNavScreenSocialLinks .VPSocialLink[href*="gitee.com"] {
+    --social-rgb: 236, 147, 163;
+}
+
+.dark .VPNavBarSocialLinks .VPSocialLink[href*="x.com"],
+.dark .VPNavBarExtra .VPSocialLink[href*="x.com"],
+.dark .VPNavScreenSocialLinks .VPSocialLink[href*="x.com"] {
+    --social-rgb: 179, 196, 220;
+}
+
+.dark .VPNavBarSocialLinks .VPSocialLink:hover,
+.dark .VPNavBarExtra .VPSocialLink:hover,
+.dark .VPNavScreenSocialLinks .VPSocialLink:hover {
+    border-color: rgba(var(--social-rgb), 0.38);
+    color: rgb(var(--social-rgb));
+    box-shadow:
+        0 8px 20px rgba(var(--social-rgb), 0.16),
+        inset 0 1px 0 rgba(231, 250, 255, 0.2),
+        inset 0 -7px 14px rgba(0, 0, 0, 0.1);
+}
+
+.VPNavBarSocialLinks .VPSocialLink > [class^="vpi-social-"],
+.VPNavBarExtra .VPSocialLink > [class^="vpi-social-"],
+.VPNavScreenSocialLinks .VPSocialLink > [class^="vpi-social-"] {
+    width: 15px;
+    height: 15px;
+}
+
+.VPNavBarSocialLinks .VPSocialLink[href*="x.com"] > [class^="vpi-social-"],
+.VPNavBarExtra .VPSocialLink[href*="x.com"] > [class^="vpi-social-"],
+.VPNavScreenSocialLinks .VPSocialLink[href*="x.com"] > [class^="vpi-social-"] {
+    width: 12.5px;
+    height: 12.5px;
+}
+
+.VPNavBarExtra .social-links-list,
+.VPNavScreenSocialLinks {
+    gap: 2px;
+}
+
+.VPNavBarExtra .social-links-list {
+    margin: 0;
+}
+
+.VPNavBarTranslations .VPMenu,
+.VPNavBarExtra .VPMenu {
+    border: 1px solid rgba(148, 216, 246, 0.3);
+    border-radius: var(--dc3-glass-radius);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.82), transparent 38%),
+        linear-gradient(135deg, color-mix(in srgb, var(--vp-c-bg-elv) 82%, transparent), rgba(115, 205, 241, 0.12) 58%, rgba(75, 88, 210, 0.08));
+    box-shadow:
+        0 18px 46px rgba(12, 89, 153, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -10px 24px rgba(55, 131, 203, 0.05);
+    backdrop-filter: blur(24px) saturate(1.45);
+    -webkit-backdrop-filter: blur(24px) saturate(1.45);
+}
+
+.VPNavBarTranslations .VPMenu .link,
+.VPNavBarExtra .VPMenu .link {
+    border-radius: 10px;
+}
+
+.VPNavBarTranslations .VPMenu .link:hover,
+.VPNavBarExtra .VPMenu .link:hover {
+    background: rgba(18, 150, 219, 0.09);
+}
+
+.dark .VPNavBarTranslations .VPMenu,
+.dark .VPNavBarExtra .VPMenu {
+    border-color: rgba(139, 210, 250, 0.18);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(210, 247, 255, 0.13), transparent 38%),
+        linear-gradient(135deg, rgba(29, 61, 84, 0.82), rgba(15, 31, 46, 0.9) 58%, rgba(48, 48, 111, 0.72));
+    box-shadow:
+        0 20px 48px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(231, 251, 255, 0.11),
+        inset 0 -10px 24px rgba(0, 0, 0, 0.14);
+}
+
+@media (max-width: 1279px) {
+    .VPNavBar .VPNavBarExtra {
+        margin-right: 0;
+    }
+
+    .VPNavBar .VPNavBarExtra > .button,
+    .VPNavBar .VPNavBarHamburger {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid rgba(148, 216, 246, 0.34);
+        border-radius: var(--dc3-glass-radius);
+        background:
+            radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.82), transparent 38%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.54), rgba(115, 205, 241, 0.13) 52%, rgba(75, 88, 210, 0.08));
+        box-shadow:
+            0 10px 28px rgba(12, 89, 153, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.86),
+            inset 0 -8px 18px rgba(55, 131, 203, 0.05);
+        backdrop-filter: blur(18px) saturate(1.45);
+        -webkit-backdrop-filter: blur(18px) saturate(1.45);
+        transition: border-color 260ms ease, box-shadow 260ms ease, transform 260ms ease;
+    }
+
+    .VPNavBar .VPNavBarExtra > .button {
+        justify-content: center;
+    }
+
+    .VPNavBar .VPNavBarExtra > .button .icon {
+        font-size: 18px;
+    }
+
+    .VPNavBar .VPNavBarExtra > .button:hover,
+    .VPNavBar .VPNavBarHamburger:hover {
+        border-color: rgba(61, 172, 224, 0.46);
+        box-shadow:
+            0 14px 34px rgba(12, 89, 153, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.92),
+            inset 0 -8px 18px rgba(55, 131, 203, 0.07);
+        transform: translateY(-1px);
+    }
+
+    .dark .VPNavBar .VPNavBarExtra > .button,
+    .dark .VPNavBar .VPNavBarHamburger {
+        border-color: rgba(139, 210, 250, 0.18);
+        background:
+            radial-gradient(circle at 18% 0%, rgba(210, 247, 255, 0.14), transparent 38%),
+            linear-gradient(135deg, rgba(55, 130, 183, 0.12), rgba(21, 42, 62, 0.38) 52%, rgba(54, 55, 132, 0.16));
+        box-shadow:
+            0 12px 30px rgba(0, 0, 0, 0.24),
+            inset 0 1px 0 rgba(231, 251, 255, 0.12),
+            inset 0 -8px 18px rgba(0, 0, 0, 0.12);
+    }
 }
 
 .VPButton {
