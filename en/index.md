@@ -57,7 +57,7 @@ features:
 
 ## What is IoT DC3
 
-IoT DC3 is an open-source, distributed IoT platform built for AI scenarios (AGPL-3.0). It covers **device connectivity,
+IoT DC3 is a multi-protocol, cloud-native, AI-powered, open-source industrial IoT platform evolving toward AI agents (AGPL-3.0). It covers **device connectivity,
 data collection, operations management, and intelligent analytics** for industrial IoT. **28 driver modules** pull data
 up from heterogeneous devices and normalize it into semantically labeled point values; **Spring AI** then plugs large
 language models into operations — a model can query devices, read and write points, run commands, analyze alarms, and
