@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vitepress dev",
-    "build": "vitepress build",
+    "build": "vitepress build && node scripts/generate-llms-full.cjs",
     "preview": "vitepress preview",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",

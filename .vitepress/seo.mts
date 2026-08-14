@@ -397,8 +397,47 @@ function getBreadcrumbs(relativePath: string, locale: keyof typeof LOCALES, titl
     return items
 }
 
+// FAQ 页：把 markdown 的「### 问题 + 回答」解析为 FAQPage 结构化数据。
+// markdown 是单一事实来源（无需另维护 JSON），答案经 cleanText 扁平化为纯文本。
+function parseFaq(filePath: string) {
+    let source: string
+    try {
+        source = readFileSync(filePath, 'utf8')
+    } catch (_) {
+        return []
+    }
+    source = source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '')
+    const faqs: Array<{question: string; answer: string}> = []
+    let current: {question: string; answer: string[]} | null = null
+
+    const flush = () => {
+        if (current) {
+            const answer = cleanText(current.answer.join('\n'))
+            if (current.question && answer) faqs.push({question: current.question, answer})
+            current = null
+        }
+    }
+
+    for (const line of source.split(/\r?\n/)) {
+        const question = line.match(/^###\s+(.+)$/)
+        if (question) {
+            flush()
+            current = {question: cleanText(question[1]), answer: []}
+            continue
+        }
+        if (/^#{1,2}\s+/.test(line) || /^\s*(-{3,}|\*{3,})\s*$/.test(line)) {
+            flush()
+            continue
+        }
+        if (current) current.answer.push(line)
+    }
+    flush()
+    return faqs
+}
+
 function getStructuredData(context: TransformContext, locale: keyof typeof LOCALES, canonicalUrl: string, title: string, description: string) {
     const isHome = context.pageData.frontmatter.layout === 'home'
+    const isFaq = context.pageData.relativePath.replace(/^(zh|en)\//, '').replace(/\.md$/, '') === 'community/faq'
     const pageType = isHome ? 'WebPage' : 'TechArticle'
     const page: Record<string, unknown> = {
         '@type': pageType,
@@ -439,6 +478,23 @@ function getStructuredData(context: TransformContext, locale: keyof typeof LOCAL
             itemListElement: getBreadcrumbs(context.pageData.relativePath, locale, title)
         }
     ]
+
+    if (isFaq) {
+        const faqs = parseFaq(context.pageData.filePath)
+        if (faqs.length) {
+            const faqId = `${canonicalUrl}#faq`
+            page.mainEntity = {'@id': faqId}
+            graph.push({
+                '@type': 'FAQPage',
+                '@id': faqId,
+                'mainEntity': faqs.map(faq => ({
+                    '@type': 'Question',
+                    'name': faq.question,
+                    'acceptedAnswer': {'@type': 'Answer', 'text': faq.answer}
+                }))
+            })
+        }
+    }
 
     return JSON.stringify({'@context': 'https://schema.org', '@graph': graph}).replace(/</g, '\\u003c')
 }
@@ -485,6 +541,12 @@ export function transformHead(context: TransformContext): HeadConfig[] {
             type: 'text/plain',
             href: `${SITE_URL}/llms.txt`,
             title: 'AI-readable site summary'
+        }],
+        ['link', {
+            rel: 'alternate',
+            type: 'text/plain',
+            href: `${SITE_URL}/llms-full.txt`,
+            title: 'AI-readable full content'
         }],
         ...getAlternates(context.pageData.relativePath),
         ['meta', {property: 'og:type', content: isHome ? 'website' : 'article'}],
