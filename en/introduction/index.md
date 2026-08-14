@@ -9,7 +9,7 @@ import IntroductionArchitectureDiagram from '../../.vitepress/theme/components/I
 
 # Platform Positioning
 
-IoT DC3 is an open-source distributed IoT platform built for AI scenarios. It spans device connectivity, data
+IoT DC3 is a multi-protocol, cloud-native, AI-powered, open-source industrial IoT platform evolving toward AI agents. It spans device connectivity, data
 collection, operations management, and intelligent analytics — and ties them into a single closed loop: multi-protocol
 drivers collect data from heterogeneous devices and normalize it into point values that machines and people can both
 read, then large language models read that data and push commands back to the devices. By the end of this page you'll
