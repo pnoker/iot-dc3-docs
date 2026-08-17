@@ -4,7 +4,7 @@ title: 驱动总览
 
 # 驱动 Drivers
 
-> IoT DC3 内置 **28 个协议驱动**，覆盖工业总线、PLC/SCADA、物联网、数据库与虚拟测试。每个驱动是一个独立服务（`dc3-driver-*`
+> IoT DC3 内置 **36 个协议驱动**，覆盖工业总线、PLC/SCADA、物联网、数据库与虚拟测试。每个驱动是一个独立服务（`dc3-driver-*`
 > ），启动时把自己和可接受的[配置属性](../introduction/concepts/attribute-config)
 > 注册到管理中心，按[位号](../introduction/concepts/point)采数、按[指令](../introduction/concepts/command)写值。
 
@@ -35,6 +35,11 @@ title: 驱动总览
 | [DLMS](./dlms)               | DLMS / COSEM      | 智能电表          |
 | [SL651](./sl651)             | SL651             | 水文监测          |
 | [SNMP](./snmp)               | SNMP              | 网络设备监控        |
+| [DL/T645](./dlt645)          | DL/T645-2007      | 电能表协议         |
+| [DNP3](./dnp3)               | DNP3 (IEEE 1815)  | 电力自动化         |
+| [IEC 61850](./iec61850)      | IEC 61850 (MMS)   | 变电站自动化        |
+| [KNX](./knx)                 | KNX               | 楼宇自动化总线       |
+| [M-Bus](./mbus)              | M-Bus (EN 13757)  | 仪表总线          |
 
 ## 物联网 / 无线
 
@@ -47,6 +52,8 @@ title: 驱动总览
 | [BLE](./ble)       | Bluetooth LE | 低功耗蓝牙        |
 | [Zigbee](./zigbee) | Zigbee       | 短距无线         |
 | [CAN](./can)       | CAN          | 控制器局域网       |
+| [LoRaWAN](./lorawan) | LoRaWAN    | ChirpStack MQTT 上行接入 |
+| [Kafka](./kafka)     | Apache Kafka | 流式数据源        |
 
 ## 串口 / 通用网络
 
@@ -63,6 +70,7 @@ title: 驱动总览
 | [PostgreSQL](./postgresql) | PostgreSQL | 从库表采集点位 |
 | [Oracle](./oracle)         | Oracle     | 从库表采集点位 |
 | [SQL Server](./sqlserver)  | SQL Server | 从库表采集点位 |
+| [Redis](./redis)           | Redis      | 从键采集点位   |
 
 ## 虚拟 / 测试
 

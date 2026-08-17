@@ -4,7 +4,7 @@ title: Driver Capability Matrix
 
 # Driver Capability Matrix
 
-This page gives an at-a-glance view of all **28 drivers** in IoT DC3 — their protocol category, read / write /
+This page gives an at-a-glance view of all **36 drivers** in IoT DC3 — their protocol category, read / write /
 subscribe capabilities, and implementation status — so you can match a protocol to your needs fast. Each row links to
 that driver's own page, where attributes, polling cadence, and a minimal onboarding example are spelled out.
 
@@ -52,6 +52,11 @@ currently skeletons.
 | [DLMS](./dlms) (`DlmsDriver`)               | SCADA/Power/Metering | —    | —     | —                | Skeleton | Smart meters, transport pending        |
 | [SL651](./sl651) (`Sl651Driver`)            | SCADA/Power/Metering | —    | —     | ✓                | Complete | Hydrology telemetry, TCP server ingest |
 | [SNMP](./snmp) (`SnmpDriver`)               | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Network device monitoring              |
+| [DL/T645](./dlt645) (`Dlt645Driver`)         | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Electricity meter (DL/T645-2007)       |
+| [DNP3](./dnp3) (`Dnp3Driver`)                | SCADA/Power/Metering | ✓    | ✓     | —                | Available | Utility automation, native stack implemented |
+| [IEC 61850](./iec61850) (`Iec61850Driver`)   | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Substation automation (MMS client)     |
+| [KNX](./knx) (`KnxDriver`)                   | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Building automation bus (Calimero)     |
+| [M-Bus](./mbus) (`MbusDriver`)               | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Metering bus (EN 13757), self-built framing |
 
 ## IoT / Wireless
 
@@ -70,6 +75,8 @@ coordinator network state (not node join or attribute reports), and `can` is bac
 | [BLE](./ble) (`BleDriver`)          | IoT/Wireless | ✓    | ✓     | —                | Complete | Bluetooth Low Energy GATT                                                |
 | [Zigbee](./zigbee) (`ZigbeeDriver`) | IoT/Wireless | ✓    | ✓     | —                | Skeleton | Skeleton; subscribe (join/reports) not implemented                       |
 | [CAN](./can) (`CanDriver`)          | IoT/Wireless | ✓    | —     | —                | Skeleton | Controller Area Network, backed by can-utils                             |
+| [LoRaWAN](./lorawan) (`LorawanDriver`) | IoT/Wireless | ✓    | ✓     | ✓                | Usable   | ChirpStack MQTT uplink ingest, Cayenne LPP, downlink publish              |
+| [Kafka](./kafka) (`KafkaDriver`)     | IoT/Wireless | ✓    | ✓     | ✓                | Usable   | Streaming source, consume + produce                                      |
 
 ## Serial / Generic Network
 
@@ -92,6 +99,7 @@ template on each [Point](../introduction/concepts/point); no change subscription
 | [PostgreSQL](./postgresql) (`PostgresqlDriver`) | Database | ✓    | ✓     | —                | Complete | Read points from tables |
 | [Oracle](./oracle) (`OracleDriver`)             | Database | ✓    | ✓     | —                | Complete | Read points from tables |
 | [SQL Server](./sqlserver) (`SqlserverDriver`)   | Database | ✓    | ✓     | —                | Complete | Read points from tables |
+| [Redis](./redis) (`RedisDriver`)                | Database | ✓    | ✓     | —                | Complete | Read/write STRING and HASH keys  |
 
 ## Virtual / Testing
 

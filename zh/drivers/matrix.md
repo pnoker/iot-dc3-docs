@@ -4,7 +4,7 @@ title: 驱动能力矩阵
 
 # 驱动能力矩阵
 
-本页一览 IoT DC3 全部 **28 个驱动**的协议类别、读 / 写 / 订阅能力与实现状态，帮你在选型时快速对位。每行链接到该驱动自己的页面，属性、采集周期、最小接入示例等细节在那里展开。
+本页一览 IoT DC3 全部 **36 个驱动**的协议类别、读 / 写 / 订阅能力与实现状态，帮你在选型时快速对位。每行链接到该驱动自己的页面，属性、采集周期、最小接入示例等细节在那里展开。
 
 读 / 写 /
 订阅按驱动当前实现的真实行为标注：「✓」表示该能力已落地，「—」表示该协议方向不实现、由设计决定不提供、或骨架尚未补齐——具体以代码为准（见表后说明）。订阅 /
@@ -44,6 +44,11 @@ title: 驱动能力矩阵
 | [DLMS](./dlms) (`DlmsDriver`)               | SCADA/电力/计量 | — | — | —     | 骨架   | 智能电表，传输层待补      |
 | [SL651](./sl651) (`Sl651Driver`)            | SCADA/电力/计量 | — | — | ✓     | 完整   | 水文遥测，TCP 服务端收报文 |
 | [SNMP](./snmp) (`SnmpDriver`)               | SCADA/电力/计量 | ✓ | ✓ | —     | 完整   | 网络设备监控          |
+| [DL/T645](./dlt645) (`Dlt645Driver`)         | SCADA/电力/计量 | ✓ | ✓ | —     | 完整   | 电能表（DL/T645-2007）  |
+| [DNP3](./dnp3) (`Dnp3Driver`)                | SCADA/电力/计量 | ✓ | ✓ | —     | 可用   | 电力自动化，原生栈已实现待联调     |
+| [IEC 61850](./iec61850) (`Iec61850Driver`)   | SCADA/电力/计量 | ✓ | ✓ | —     | 完整   | 变电站自动化（MMS 客户端）   |
+| [KNX](./knx) (`KnxDriver`)                   | SCADA/电力/计量 | ✓ | ✓ | —     | 完整   | 楼宇自动化总线（Calimero） |
+| [M-Bus](./mbus) (`MbusDriver`)               | SCADA/电力/计量 | ✓ | ✓ | —     | 完整   | 仪表总线（EN 13757）自研组帧 |
 
 ## IoT / 无线
 
@@ -61,6 +66,8 @@ Observe 订阅尚未实现；
 | [BLE](./ble) (`BleDriver`)          | IoT/无线 | ✓ | ✓ | —     | 完整   | 低功耗蓝牙 GATT                     |
 | [Zigbee](./zigbee) (`ZigbeeDriver`) | IoT/无线 | ✓ | ✓ | —     | 骨架   | 骨架实现，订阅（入网/上报）未实现              |
 | [CAN](./can) (`CanDriver`)          | IoT/无线 | ✓ | — | —     | 骨架   | 控制器局域网，底层走 can-utils           |
+| [LoRaWAN](./lorawan) (`LorawanDriver`) | IoT/无线 | ✓ | ✓ | ✓     | 可用   | ChirpStack MQTT 上行接入，Cayenne LPP    |
+| [Kafka](./kafka) (`KafkaDriver`)     | IoT/无线 | ✓ | ✓ | ✓     | 可用   | 流式数据源，消费 + 生产                    |
 
 ## 串口 / 通用网络
 
@@ -81,6 +88,7 @@ Observe 订阅尚未实现；
 | [PostgreSQL](./postgresql) (`PostgresqlDriver`) | 数据库 | ✓ | ✓ | —     | 完整   | 从库表采集位号 |
 | [Oracle](./oracle) (`OracleDriver`)             | 数据库 | ✓ | ✓ | —     | 完整   | 从库表采集位号 |
 | [SQL Server](./sqlserver) (`SqlserverDriver`)   | 数据库 | ✓ | ✓ | —     | 完整   | 从库表采集位号 |
+| [Redis](./redis) (`RedisDriver`)                | 数据库 | ✓ | ✓ | —     | 完整   | 读写 STRING/HASH 键 |
 
 ## 虚拟 / 测试
 

@@ -4,7 +4,7 @@ title: Drivers
 
 # Drivers
 
-> IoT DC3 ships **28 protocol drivers** covering industrial buses, PLC/SCADA, IoT, databases, and virtual testing. Each
+> IoT DC3 ships **36 protocol drivers** covering industrial buses, PLC/SCADA, IoT, databases, and virtual testing. Each
 > driver is a standalone service (`dc3-driver-*`) that registers itself and
 > the [config attributes](../introduction/concepts/attribute-config) it accepts with the manager on startup, then
 > reads [points](../introduction/concepts/point) and writes via [commands](../introduction/concepts/command).
@@ -29,6 +29,11 @@ the [Driver](../introduction/concepts/driver) concept. Pick your protocol by cat
 | [DLMS](./dlms)               | DLMS / COSEM      | Smart meters                    |
 | [SL651](./sl651)             | SL651             | Hydrology monitoring            |
 | [SNMP](./snmp)               | SNMP              | Network device monitoring       |
+| [DL/T645](./dlt645)          | DL/T645-2007      | Electricity meter protocol      |
+| [DNP3](./dnp3)               | DNP3 (IEEE 1815)  | Utility automation              |
+| [IEC 61850](./iec61850)      | IEC 61850 (MMS)   | Substation automation           |
+| [KNX](./knx)                 | KNX               | Building automation bus         |
+| [M-Bus](./mbus)              | M-Bus (EN 13757)  | Metering bus                    |
 
 ## IoT / Wireless
 
@@ -41,6 +46,8 @@ the [Driver](../introduction/concepts/driver) concept. Pick your protocol by cat
 | [BLE](./ble)       | Bluetooth LE | Low-energy Bluetooth            |
 | [Zigbee](./zigbee) | Zigbee       | Short-range wireless            |
 | [CAN](./can)       | CAN          | Controller Area Network         |
+| [LoRaWAN](./lorawan) | LoRaWAN    | ChirpStack MQTT uplink ingest   |
+| [Kafka](./kafka)     | Apache Kafka | Streaming data source          |
 
 ## Serial / Generic Network
 
@@ -57,6 +64,7 @@ the [Driver](../introduction/concepts/driver) concept. Pick your protocol by cat
 | [PostgreSQL](./postgresql) | PostgreSQL | Read points from tables |
 | [Oracle](./oracle)         | Oracle     | Read points from tables |
 | [SQL Server](./sqlserver)  | SQL Server | Read points from tables |
+| [Redis](./redis)           | Redis      | Read points from keys   |
 
 ## Virtual / Testing
 
