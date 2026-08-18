@@ -31,13 +31,15 @@ import GuideIndexDiagram from '../../.vitepress/theme/components/GuideIndexDiagr
 
 ## 这一栏怎么读
 
-四个子页各管一段运维生命周期：先把服务**起起来**（部署与镜像源），再让它**看得见**（可观测性、日志），最后在出问题时**修得动**
+五个子页各管一段运维生命周期：先把服务**起起来**（部署与镜像源、生产部署指南），再让它**看得见**（可观测性、日志），最后在出问题时**修得动**
 （故障排查）。
 
 <GuideIndexDiagram lang="zh" />
 
 - **[部署模式与镜像源](./usage)** — 容器镜像选择、镜像仓库切换、Compose 编排。`make` 选择镜像源用 `REGISTRY`（`auto`/
   `global`/`cn`），`global` 走默认仓库、`cn` 走中国大陆镜像；最快验证起栈是 `make up-db`，国内网络改用 `make up-db-cn`。
+- **[生产部署指南](./deployment)** — 从单机 Compose 到 Docker Swarm / Kubernetes / Helm 的完整部署路径：五种形态的选型、
+  镜像可得性、谁可以扩容谁不能，以及上线前的生产加固清单。
 - **[可观测性](./observability)** — 应用与依赖如何接入 Grafana / Prometheus / ELK（可选 `optional` 栈）。用
   `make up-optional` 拉起 EMQX/ELK/Prometheus/Grafana 这套可选栈，端口见环境变量目录里的"Observability Stack"一节（Grafana
   `3000`、Kibana `5601`）。

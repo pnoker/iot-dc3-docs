@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 手动同步上游 iot-dc3 仓库的 CHANGE.md / USAGE.md 到本仓库的独立快照。
+# 手动同步上游 iot-dc3 仓库的 CHANGE.md / USAGE.md / DEPLOYMENT.md 到本仓库的独立快照。
 #
 # 背景:iot-dc3 每次发版由 `make changelog` 重新生成 dc3/doc/CHANGE.md，
 # USAGE.md 也在 iot-dc3 维护。本仓库为完全独立的文档仓库（build 不依赖网络），
@@ -15,7 +15,8 @@ set -euo pipefail
 SRC_RAW="${DC3_RAW:-https://raw.githubusercontent.com/pnoker/iot-dc3/main}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "→ 从 $SRC_RAW 同步 dc3/doc/CHANGE.md 与 dc3/doc/USAGE.md"
+echo "→ 从 $SRC_RAW 同步 dc3/doc/CHANGE.md 与 dc3/doc/USAGE.md 与 dc3/doc/DEPLOYMENT.md"
 curl -fsSL "$SRC_RAW/dc3/doc/CHANGE.md" -o "$ROOT/dc3/doc/CHANGE.md"
 curl -fsSL "$SRC_RAW/dc3/doc/USAGE.md" -o "$ROOT/dc3/doc/USAGE.md"
+curl -fsSL "$SRC_RAW/dc3/doc/DEPLOYMENT.md" -o "$ROOT/dc3/doc/DEPLOYMENT.md"
 echo "✅ 同步完成。请检查 diff 后提交。"

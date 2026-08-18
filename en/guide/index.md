@@ -37,8 +37,9 @@ connection.
 
 ## How to read this section
 
-The four sub-pages each cover one stage of the operations lifecycle: bring the services up (deployment and image
-registries), make them visible (observability, logging), and make them fixable when something breaks (troubleshooting).
+The five sub-pages each cover one stage of the operations lifecycle: bring the services up (deployment and image
+registries, production deployment), make them visible (observability, logging), and make them fixable when something
+breaks (troubleshooting).
 
 <GuideIndexDiagram lang="en" />
 
@@ -46,6 +47,9 @@ registries), make them visible (observability, logging), and make them fixable w
   orchestration. `make` picks the registry through `REGISTRY` (`auto`/`global`/`cn`): `global` uses the default
   registry, `cn` uses a mainland-China mirror. The fastest way to confirm the stack comes up is `make up-db`; on a China
   network use `make up-db-cn` instead.
+- **[Production Deployment](./deployment)** — the full path from single-host Compose to Docker Swarm / Kubernetes /
+  Helm: choosing among the five modes, image availability, who can scale and who cannot, and the production hardening
+  checklist.
 - **[Observability](./observability)** — how the app and its dependencies plug into Grafana, Prometheus, and ELK (the
   optional `optional` stack). Run `make up-optional` to bring up EMQX/ELK/Prometheus/Grafana; ports are listed under
   the "Observability Stack" section of the environment-variable reference (Grafana `3000`, Kibana `5601`).

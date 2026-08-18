@@ -75,6 +75,7 @@
   "operation/data-commands": "Data & Commands",
   "operation/alarms": "Alarms & Notifications",
   "guide/usage": "Deployment & Images",
+  "guide/deployment": "Production Deployment",
   "guide/observability": "Observability",
   "guide/logging": "Logging",
   "guide/troubleshooting": "Troubleshooting",

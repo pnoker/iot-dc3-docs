@@ -75,6 +75,7 @@
   "operation/data-commands": "数据与命令",
   "operation/alarms": "告警与通知",
   "guide/usage": "部署模式与镜像源",
+  "guide/deployment": "生产部署指南",
   "guide/observability": "可观测性",
   "guide/logging": "日志规范",
   "guide/troubleshooting": "故障排查",

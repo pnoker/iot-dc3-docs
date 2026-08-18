@@ -125,7 +125,7 @@ const PILLARS: ReadonlyArray<Pillar> = [
             {key: 'group.quickstart', items: [['quickstart'], ['quickstart/environment'], ['quickstart/first-device']]},
             {
                 key: 'group.deploy-ops',
-                items: [['guide/usage'], ['guide/observability'], ['guide/logging'], ['guide/troubleshooting']]
+                items: [['guide/usage'], ['guide/deployment'], ['guide/observability'], ['guide/logging'], ['guide/troubleshooting']]
             },
             {
                 key: 'group.development',
