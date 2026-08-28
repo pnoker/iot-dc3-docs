@@ -40,7 +40,8 @@ IoT DC3 用四个 Compose 栈拼出完整环境：`db` 起依赖、`dev` 从源�
 <UsageStackDiagram lang="zh" />
 
 ::: danger 对外入口只有 web 与 listening-virtual
-在 `app`（生产）栈里，只有 `dc3-web`（8080/8443）和 `dc3-driver-listening-virtual`（TCP 6270 / UDP 6271）发布到宿主机端口；网关
+在 `app`（生产）栈里，只有 `dc3-web`（8080/8443）和 `dc3-driver-listening-virtual`（TCP 6270；6271 意图是设备 UDP 通道，
+但当前所有发布点都未声明 `/udp` / `protocol: UDP`，实际按 TCP 发布）发布到宿主机端口；网关
 8000、四个中心的 HTTP/gRPC 端口、数据库、消息队列**一律只在内部网络**，不要额外暴露到公网。
 
 注意 `dev` 栈为方便调试会额外发布网关 8000 与各中心 HTTP 端口（8300/8400/8500/8600）及 auth/manager/data 对应的

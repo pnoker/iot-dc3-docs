@@ -51,9 +51,10 @@ directly.
 <UsageStackDiagram lang="en" />
 
 ::: danger Only web and listening-virtual are exposed
-In the `app` (production) stack, only `dc3-web` (8080/8443) and `dc3-driver-listening-virtual` (TCP 6270 / UDP 6271) are
-published to host ports. The gateway's 8000, the four centers' HTTP/gRPC ports, the database, and the message queue *
-*all stay on the internal network** — do not expose them to the public internet.
+In the `app` (production) stack, only `dc3-web` (8080/8443) and `dc3-driver-listening-virtual` (TCP 6270; 6271 is
+intended as the device UDP channel, but every publish site today omits `/udp` / `protocol: UDP` and actually
+publishes TCP) are published to host ports. The gateway's 8000, the four centers' HTTP/gRPC ports, the database, and
+the message queue **all stay on the internal network** — do not expose them to the public internet.
 
 For debugging convenience, the `dev` stack additionally publishes the gateway's 8000, each center's HTTP port (
 8300/8400/8500/8600), and the gRPC ports for auth/manager/data (9300/9400/9500; agentic has no gRPC server). That's a
