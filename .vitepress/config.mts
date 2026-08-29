@@ -289,14 +289,15 @@ export default defineConfig({
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-0S37KX68Y3');`],
-        // Baidu Tongji (百度统计)
-        ['script', {}, `var _hmt = _hmt || [];
+        // Baidu Tongji (百度统计) — skip on localhost/127.0.0.1 so local dev traffic
+        // never pollutes the production reports
+        ['script', {}, `if(!/^(localhost|127\\.0\\.0\\.1|\\[::1\\])$/.test(location.hostname)){var _hmt = _hmt || [];
 (function() {
 var hm = document.createElement("script");
 hm.src = "https://hm.baidu.com/hm.js?bd41b7a1501a288245f375eaef8f97cc";
 var s = document.getElementsByTagName("script")[0];
 s.parentNode.insertBefore(hm, s);
-})();`],
+})();}`],
         // Google AdSense (ca-pub-7573143232245283) — site review and ad serving both
         // require this loader on every page; ads.txt lives in public/
         ['link', {rel: 'preconnect', href: 'https://pagead2.googlesyndication.com'}],
