@@ -57,3 +57,26 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+
+  # Publish-time URL submission (Bing & other IndexNow partners). The key is public
+  # by design and served from public/<key>.txt; see https://indexnow.org.
+  indexnow:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit sitemap URLs to IndexNow
+        continue-on-error: true
+        run: |
+          KEY='29e195147b8b35320871bc324a323c86'
+          HOST='docs.dc3.site'
+          curl -fsS "https://${HOST}/sitemap.xml" -o sitemap.xml
+          URLS=$(grep -o '<loc>[^<]*</loc>' sitemap.xml | sed 's/<loc>//;s|</loc>||' | jq -R -s 'split("\n") | map(select(length > 0))')
+          jq -n --arg host "$HOST" --arg key "$KEY" --argjson urls "$URLS" \
+            '{host: $host, key: $key, keyLocation: ("https://" + $host + "/" + $key + ".txt"), urlList: $urls}' > body.json
+          echo "Submitting $(echo "$URLS" | jq length) URLs to IndexNow"
+          STATUS=$(curl -s -o indexnow-response.txt -w '%{http_code}' \
+            -X POST 'https://api.indexnow.org/IndexNow' \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            --data @body.json)
+          echo "IndexNow response: HTTP $STATUS"
+          cat indexnow-response.txt || true

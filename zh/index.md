@@ -1,6 +1,6 @@
 ---
 layout: home
-title: IoT DC3 · 多协议接入的开源工业物联网平台
+title: 多协议接入的开源工业物联网平台
 
 hero:
   name: IoT DC3

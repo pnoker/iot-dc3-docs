@@ -439,6 +439,7 @@ function getStructuredData(context: TransformContext, locale: keyof typeof LOCAL
     const isHome = context.pageData.frontmatter.layout === 'home'
     const isFaq = context.pageData.relativePath.replace(/^(zh|en)\//, '').replace(/\.md$/, '') === 'community/faq'
     const pageType = isHome ? 'WebPage' : 'TechArticle'
+    const softwareId = `${SITE_URL}/#software`
     const page: Record<string, unknown> = {
         '@type': pageType,
         '@id': `${canonicalUrl}#webpage`,
@@ -450,7 +451,11 @@ function getStructuredData(context: TransformContext, locale: keyof typeof LOCAL
         breadcrumb: {'@id': `${canonicalUrl}#breadcrumb`}
     }
 
-    if (!isHome) {
+    if (isHome) {
+        // The landing page is the product's entry point: describe the software itself so
+        // engines can classify "what this site documents" (one node per locale home).
+        page.about = {'@id': softwareId}
+    } else {
         page.author = {'@id': ORGANIZATION_ID}
         page.publisher = {'@id': ORGANIZATION_ID}
         page.headline = title
@@ -478,6 +483,22 @@ function getStructuredData(context: TransformContext, locale: keyof typeof LOCAL
             itemListElement: getBreadcrumbs(context.pageData.relativePath, locale, title)
         }
     ]
+
+    if (isHome) {
+        graph.push({
+            '@type': 'SoftwareApplication',
+            '@id': softwareId,
+            name: 'IoT DC3',
+            description: HOME_DESCRIPTIONS[locale],
+            url: SITE_URL,
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Linux',
+            isAccessibleForFree: true,
+            license: 'https://www.gnu.org/licenses/agpl-3.0.html',
+            publisher: {'@id': ORGANIZATION_ID},
+            offers: {'@type': 'Offer', price: '0', priceCurrency: 'USD'}
+        })
+    }
 
     if (isFaq) {
         const faqs = parseFaq(context.pageData.filePath)

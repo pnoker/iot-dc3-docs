@@ -13,7 +13,8 @@ IoT DC3 is designed for industrial device access, normalized point-value data, c
 - [Quickstart](https://docs.dc3.site/en/quickstart/): Environment setup and first-device onboarding.
 - [Drivers](https://docs.dc3.site/en/drivers/): Multi-protocol driver catalog and device onboarding.
 - [AI integration](https://docs.dc3.site/en/ai/): Agentic capabilities, MCP, and Spring AI integration.
-- [Operations](https://docs.dc3.site/en/operation/): Data commands, alarms, deployment, observability, and troubleshooting.
+- [Operations guide](https://docs.dc3.site/en/guide/): Deployment modes, production hardening, observability, logging, and troubleshooting.
+- [Operations](https://docs.dc3.site/en/operation/): Data commands, alarms, and device operations.
 
 ## Project
 
