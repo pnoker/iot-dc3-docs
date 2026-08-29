@@ -297,6 +297,14 @@ hm.src = "https://hm.baidu.com/hm.js?bd41b7a1501a288245f375eaef8f97cc";
 var s = document.getElementsByTagName("script")[0];
 s.parentNode.insertBefore(hm, s);
 })();`],
+        // Google AdSense (ca-pub-7573143232245283) — site review and ad serving both
+        // require this loader on every page; ads.txt lives in public/
+        ['link', {rel: 'preconnect', href: 'https://pagead2.googlesyndication.com'}],
+        ['script', {
+            async: '',
+            src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7573143232245283',
+            crossorigin: 'anonymous'
+        }],
         ['script', {}, LANG_DETECT]
     ],
 
