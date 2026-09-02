@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>07 令牌统一与 scope 分层</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:132px;bottom:118px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.za{background:#fdf1e2;color:#b06a05;border-color:#f3ddba}
+.p-life{flex:1.15}
+.p-scope{flex:1}
+.p-ttl{width:300px}
+/* lifecycle */
+.lifesteps{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
+.ls{display:flex;gap:10px}
+.ls .rail{width:20px;display:flex;flex-direction:column;align-items:center}
+.ls .dot{width:23px;height:23px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 11.5px "Helvetica Neue",Arial;flex:none}
+.ls .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:10px}
+.ls .bx{flex:1;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:10px 12px;margin-bottom:10px}
+.ls .bt{font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ls .bd{font-size:10.2px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+.ls .pill{font-size:8.5px;font-weight:700;border-radius:999px;padding:1.5px 8px;background:var(--brand-tint);
+  color:var(--brand-deep);border:1px solid var(--brand-line)}
+.ls:nth-child(2) .dot{background:var(--brand-mid)}
+.ls:nth-child(3) .dot{background:var(--brand-deep)}
+.lifefoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--muted);line-height:1.5}
+.lifefoot b{color:var(--brand-deep)}
+/* scope projection */
+.proj{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.pbox{border-radius:11px;padding:13px 14px;text-align:center}
+.pbox .t{font-size:13px;font-weight:800}
+.pbox .d{font-size:10.2px;color:var(--ink-3);margin-top:4px;line-height:1.5}
+.pb-rbac{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.pb-rbac .t{color:var(--brand-deep)}
+.pb-arrow{display:flex;flex-direction:column;align-items:center;gap:2px;height:26px;justify-content:center}
+.pb-arrow .l{width:1.5px;flex:1;background:var(--brand-line)}
+.pb-arrow .t{width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-top:6px solid var(--brand-line)}
+.pb-arrow span{font-size:9px;color:var(--muted)}
+.pb-sc{border:1.5px solid #d6d3f3;background:linear-gradient(160deg,#fff,#f5f4fd)}
+.pb-sc .t{color:var(--indigo)}
+.scopes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.sc{font:700 9px Menlo,monospace;color:var(--indigo);background:#fff;border:1px solid #d6d3f3;border-radius:999px;padding:2px 8px}
+.pfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--ink-2);line-height:1.5}
+.pfoot b{color:var(--red)}
+/* ttl ladder */
+.ladder{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.rung{border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.rung .lv{font:800 9.5px "Helvetica Neue",Arial;letter-spacing:.8px;border-radius:5px;padding:3px 8px;flex:none}
+.rung .tx{font-size:10.6px;line-height:1.5}
+.rung .tx b{font-weight:700}
+.r1{border:1px solid #cde8d9;background:#f2faf6}
+.r1 .lv{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.r1 .tx{color:#22694a}
+.r2{border:1px solid #f3ddba;background:#fdf8ef}
+.r2 .lv{background:#fdf1e2;color:#b06a05;border:1px solid #f3ddba}
+.r2 .tx{color:#7c4d0a}
+.r3{border:1px solid #efc4c0;background:#fdf5f4}
+.r3 .lv{background:#fbe9e7;color:var(--red);border:1px solid #efc4c0}
+.r3 .tx{color:#8c3830}
+.ladfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--muted);line-height:1.5}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.07</span></div>
+    <h1>令牌统一：<b>一套身份、一个签发方、权限不因协议而变大</b></h1>
+    <div class="h-sub">智能体接口最大的风险面在认证——DC3 的解法是把三个入口收进同一套身份体系</div>
+  </div>
+  <div class="main">
+    <div class="panel p-life">
+      <div class="zlabel">令牌生命周期 · 一个签发方</div>
+      <div class="lifesteps">
+        <div class="ls">
+          <div class="rail"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx">
+            <div class="bt">签发 <span class="pill">OAuth 2.0 · client_credentials</span></div>
+            <div class="bd">Web 端 / CLI / 智能体客户端共用同一套身份体系，不另造令牌通道</div>
+          </div>
+        </div>
+        <div class="ls">
+          <div class="rail"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx">
+            <div class="bt">携带 <span class="pill">JWT · RS256 非对称签名</span></div>
+            <div class="bd">资源侧用公钥验签，不需要回源查询——网关与 /mcp 端点统一校验</div>
+          </div>
+        </div>
+        <div class="ls">
+          <div class="rail"><div class="dot">3</div></div>
+          <div class="bx">
+            <div class="bt">校验 <span class="pill">验签 → scope → 租户上下文</span></div>
+            <div class="bd">任何一层不满足即终止；调用全程落入审计账本</div>
+          </div>
+        </div>
+      </div>
+      <div class="lifefoot">落地状态：<b>OAuth 网关开关已可在 compose 中启用</b> · 活栈验证通过（RS256 验签全通）</div>
+    </div>
+    <div class="panel p-scope">
+      <div class="zlabel zi">scope 从哪来 · RBAC 投影</div>
+      <div class="proj">
+        <div class="pbox pb-rbac">
+          <div class="t">平台 RBAC 角色</div>
+          <div class="d">用户在管理台的真实权限——唯一权限真相源</div>
+        </div>
+        <div class="pb-arrow"><div class="l"></div><div class="t"></div><span>投影（projection）· 不另造权限模型</span></div>
+        <div class="pbox pb-sc">
+          <div class="t">MCP scope</div>
+          <div class="d">智能体令牌的能力边界，由角色推导而来</div>
+          <div class="scopes">
+            <span class="sc">call（基础调用）</span>
+            <span class="sc">call_high（高危附加项）</span>
+            <span class="sc">只读集合</span>
+          </div>
+          <div class="d" style="margin-top:7px;font-size:9.3px;color:var(--muted)">各 scope 非互斥：call_high 是 call 之上的附加授权</div>
+        </div>
+      </div>
+      <div class="pfoot">红线：<b>智能体拿到的每一分能力，都是某个真实用户显式授权出去的</b>——用户是什么角色，令牌就是什么能力</div>
+    </div>
+    <div class="panel p-ttl">
+      <div class="zlabel za">风险分层 TTL · 不搞一刀切</div>
+      <div class="ladder">
+        <div class="rung r1"><span class="lv">只读</span><span class="tx"><b>长有效期</b>——查询类工具token 便利优先</span></div>
+        <div class="rung r2"><span class="lv">常规</span><span class="tx"><b>中等有效期</b>——点位读写按业务节奏授权</span></div>
+        <div class="rung r3"><span class="lv">高危</span><span class="tx"><b>短有效期 + step-up</b>——命令下发需重新换取授权，防止一张令牌长期横跳</span></div>
+      </div>
+      <div class="ladfoot">TTL 阶梯按操作风险配置化（读多写少场景友好），细粒度在快速迭代中</div>
+    </div>
+  </div>
+  <div class="strip">一句话验收标准：能说清楚<b>每一次智能体调用是谁授权的、能做什么、什么时候过期</b></div>
+  <div class="note"><span>设计文档：仓库 docs/design/token-unification-mcp-first-cli.md</span><span>配文：EP.07《MCP 落地工业平台》</span></div>
+</div>
+</body>
+</html>

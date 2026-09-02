@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R1 数据底座收敛</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.flow{position:absolute;top:150px;left:56px;right:56px;background:rgba(255,255,255,.94);border:1px solid var(--line);
+  border-radius:14px;box-shadow:0 8px 26px rgba(23,58,94,.07);padding:34px 22px 24px;z-index:4}
+.zlabel{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.crow{display:flex;align-items:stretch}
+.cnode{flex:1;border:1px solid var(--line);border-radius:11px;background:#fbfdfe;padding:11px 12px;text-align:center;
+  display:flex;flex-direction:column;gap:4px;justify-content:center}
+.cnode .t{font-size:12px;font-weight:800}
+.cnode .d{font-size:9.4px;color:var(--ink-3);line-height:1.5}
+.cnode.before{border-style:dashed;background:#fdf7f6;border-color:#efc4c0}
+.cnode.after{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.carr{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.carr .l{width:100%;height:1.6px;background:var(--brand-line);position:relative}
+.carr .l::after{content:"";position:absolute;right:-1px;top:-4px;border-top:4.5px solid transparent;
+  border-bottom:4.5px solid transparent;border-left:7px solid var(--brand-line)}
+.carr span{font-size:8.5px;color:var(--muted)}
+.low{position:absolute;top:396px;left:56px;right:56px;bottom:112px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:24px 16px 10px;display:flex;flex-direction:column}
+.zlabel2{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel2.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.lst{display:flex;flex-direction:column;gap:7px;flex:1;justify-content:center}
+.li{display:flex;gap:7px;font-size:10.3px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.li i{width:5.5px;height:5.5px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
+.li.z i{background:var(--indigo)}
+.li b{color:var(--ink)}
+.pfoot{margin-top:auto;padding-top:7px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.45}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R1 · 2025 年度版 · 特性详解 2/3</span></div>
+    <h1>数据底座收敛：<b>点位统一落 PostgreSQL</b>，事件底座重建</h1>
+    <div class="h-sub">这一次收敛决定了后来一切的能力：时序扩展（TimescaleDB）、向量（pgvector）、图（AGE）都长在同一条底座上</div>
+  </div>
+  <div class="flow">
+    <span class="zlabel">点位存储：收敛前 vs 收敛后</span>
+    <div class="crow">
+      <div class="cnode before"><div class="t">Mongo（历史方案）</div><div class="d">点位值存 Mongo<br>两套存储、两套备份、两类运维技能<br>驱动/数据模块各自声明依赖</div></div>
+      <div class="carr"><div class="l"></div><span>2025-05<br>合入主干</span></div>
+      <div class="cnode after"><div class="t">PostgreSQL（统一点位存储）</div><div class="d">PointValue DAL / Mapper / DO 全量切换<br>String 型点位泛化为通用 PointValue<br>typed point value 类清理</div></div>
+      <div class="carr"><div class="l"></div><span>底座复利</span></div>
+      <div class="cnode after"><div class="t">同源扩展位</div><div class="d">TimescaleDB 时序扩展<br>pgvector 向量（AI 会话记忆）<br>AGE 图（关系网络）</div></div>
+    </div>
+  </div>
+  <div class="low">
+    <div class="panel">
+      <div class="zlabel2">事件底座重建：做了什么</div>
+      <div class="lst">
+        <div class="li"><i></i><span><b>旧 EventService 移除</b>：实体字段清理，不含糊保留</span></div>
+        <div class="li"><i></i><span><b>DeviceEvent / DriverEvent 专用 DAL</b>：独立 DO、Mapper、Manager——设备事件与驱动事件<b>分开建模</b></span></div>
+        <div class="li"><i></i><span>老的 Device/DriverEventController 同步下线，事件读取走新链路</span></div>
+      </div>
+      <div class="pfoot">这一步是后来"命令历史 / 事件历史"页面的地基</div>
+    </div>
+    <div class="panel">
+      <div class="zlabel2 zi">认证链路瘦身：做了什么</div>
+      <div class="lst">
+        <div class="li z"><i></i><span><b>LimitedIp 特性移除</b>：连同 gRPC、DAL、service、proto 全链路定义</span></div>
+        <div class="li z"><i></i><span><b>UserLimit 限流逻辑移除</b>：TokenService 回归签发与校验本职</span></div>
+        <div class="li z"><i></i><span><b>未用 Redis 依赖清理</b>：common-auth 与网关各自减负</span></div>
+      </div>
+      <div class="pfoot">认证的边界更清晰：之后的安全增强（httpOnly Cookie、令牌统一）都在干净底座上进行</div>
+    </div>
+  </div>
+  <div class="strip">为什么单独讲：这套收敛后的数据底座，<b>一直沿用至今</b>——看懂它，就看懂了 DC3 后续所有存储演进的前提</div>
+  <div class="note"><span>版本锚点：dc3.release.20250425 系列（收敛于 2025 年内陆续合入主干）</span><span>配文：R1《IoT DC3 2025 年度版》</span></div>
+</div>
+</body>
+</html>

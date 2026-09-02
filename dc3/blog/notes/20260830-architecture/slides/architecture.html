@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>03 六层架构总览</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--planned:#8a98a8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.proto{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.pchip{font:700 10px "Helvetica Neue",Arial;color:#fff;border-radius:999px;padding:4px 11px;letter-spacing:.5px}
+.pc1{background:var(--brand-mid)}.pc2{background:var(--teal)}.pc3{background:var(--amber)}
+.layers{position:absolute;top:126px;left:56px;right:56px;bottom:118px;display:flex;flex-direction:column;gap:9px;z-index:4}
+.layer{position:relative;flex:1;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.93);
+  box-shadow:0 5px 18px rgba(23,58,94,.05);display:flex;align-items:center;padding:0 18px;gap:14px}
+.layer.hot{border:1.5px solid var(--brand-line);background:linear-gradient(90deg,#fff,var(--brand-tint));
+  box-shadow:0 8px 24px rgba(10,108,178,.12)}
+.ln{width:118px;flex:none;display:flex;flex-direction:column;gap:2px}
+.ln .nm{font-size:14.5px;font-weight:700}
+.ln .en{font:700 9px "Helvetica Neue",Arial;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.ln .ct{font-size:10px;color:var(--brand-deep);font-weight:600}
+.mods{display:flex;gap:8px;flex:1;flex-wrap:wrap}
+.mod{border:1px solid var(--line);background:#fbfdfe;border-radius:8px;padding:6px 11px;
+  font-size:11px;color:var(--ink-2);display:flex;flex-direction:column;gap:1px;justify-content:center}
+.mod b{font-size:11.5px;color:var(--ink);font-weight:600}
+.mod small{font-size:9px;color:var(--muted)}
+.mod.center{border-color:#d6d3f3;background:#f5f4fd}
+.mod.center b{color:var(--indigo)}
+.mod.bus{border-color:#cde8d9;background:#f2faf6}
+.mod.bus b{color:var(--teal)}
+.mod.drive{border-color:#f4e0bf;background:#fdf6ea}
+.mod.drive b{color:#b06a05}
+.ltag{margin-left:auto;flex:none;font-size:10px;color:var(--ink-3);border:1px dashed var(--line);
+  border-radius:999px;padding:4px 10px;background:#fff}
+.stackline{position:absolute;left:calc(56px + 59px);width:1.5px;background:var(--brand-line);z-index:3}
+.vflow{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:5px;
+  font-size:10.5px;color:var(--brand-deep)}
+.varr{width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-top:6px solid var(--brand-line)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;background:rgba(255,255,255,.93);
+  border:1px solid var(--brand-line);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:9px;z-index:4;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);font-size:11px;color:var(--ink-2)}
+.strip b{color:var(--brand-deep);font-weight:700}
+.strip .tk{font:700 10px "Helvetica Neue",Arial;color:#fff;background:var(--brand-deep);border-radius:6px;padding:3px 8px}
+.note{position:absolute;left:56px;right:56px;bottom:18px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.03</span></div>
+      <h1>一条数据的完整旅程：<b>六层微服务链路</b></h1>
+      <div class="h-sub">服务怎么切 · 服务之间怎么说话 · 一个请求从进来到落地经过几层</div>
+    </div>
+    <div class="proto">
+      <span class="pchip pc1">REST / JSON-RPC</span>
+      <span class="pchip pc2">gRPC + Protobuf（服务间）</span>
+      <span class="pchip pc3">MQ 消息（驱动→数据中心）</span>
+    </div>
+  </div>
+  <div class="layers">
+    <div class="layer">
+      <div class="ln"><span class="nm">客户端层</span><span class="en">Clients</span></div>
+      <div class="mods">
+        <div class="mod"><b>Web 前端</b><small>Vue 3 + TypeScript + Vite</small></div>
+        <div class="mod"><b>dc3-cli</b><small>TypeScript · 人与智能体共用的终端</small></div>
+        <div class="mod"><b>第三方系统</b><small>REST API 接入</small></div>
+      </div>
+      <div class="ltag">脚本与 Agent 也走这一层</div>
+    </div>
+    <div class="layer hot">
+      <div class="ln"><span class="nm">网关层</span><span class="en">Gateway</span><span class="ct">唯一入口</span></div>
+      <div class="mods">
+        <div class="mod"><b>Spring Cloud Gateway</b><small>静态路由 + 环境变量</small></div>
+        <div class="mod"><b>认证与鉴权</b><small>JWT 校验 · scope 检查</small></div>
+        <div class="mod center"><b>MCP 端点 /mcp</b><small>智能体标准协议入口</small></div>
+      </div>
+      <div class="ltag">客户端不需要知道后面有几个服务</div>
+    </div>
+    <div class="layer">
+      <div class="ln"><span class="nm">中心服务层</span><span class="en">Center ×4</span></div>
+      <div class="mods">
+        <div class="mod"><b>manager</b><small>设备 · 驱动 · 点位 · 权限（管理面）</small></div>
+        <div class="mod"><b>data</b><small>位值接收 · 批处理 · 读取（数据面）</small></div>
+        <div class="mod"><b>auth</b><small>认证授权 · 令牌签发</small></div>
+        <div class="mod center"><b>agentic</b><small>AI 编排与工具面</small></div>
+      </div>
+      <div class="ltag">另有 center-single 单体形态省资源</div>
+    </div>
+    <div class="layer">
+      <div class="ln"><span class="nm">消息总线层</span><span class="en">Message Bus</span></div>
+      <div class="mods">
+        <div class="mod bus"><b>RabbitMQ（默认）</b><small>削峰解耦</small></div>
+        <div class="mod bus"><b>Kafka / Pulsar</b><small>高吞吐回放</small></div>
+        <div class="mod bus"><b>MQTT / ActiveMQ / RocketMQ</b><small>边缘复用 · 存量与国产栈</small></div>
+      </div>
+      <div class="ltag">TCK 契约 ×6 全通过（EP.04）</div>
+    </div>
+    <div class="layer">
+      <div class="ln"><span class="nm">驱动层</span><span class="en">Drivers</span><span class="ct">×36 独立进程</span></div>
+      <div class="mods">
+        <div class="mod drive"><b>工业协议 17</b><small>Modbus · OPC · S7 · IEC…</small></div>
+        <div class="mod drive"><b>IoT 协议 7</b><small>MQTT · CoAP · LoRaWAN…</small></div>
+        <div class="mod drive"><b>桥接 / 通信 / 仿真 12</b><small>按需启停扩容</small></div>
+      </div>
+      <div class="ltag">采集频率与协议语义自持</div>
+    </div>
+    <div class="layer">
+      <div class="ln"><span class="nm">设备层</span><span class="en">Field Devices</span></div>
+      <div class="mods">
+        <div class="mod"><b>真实世界</b><small>PLC · 传感器 · 电表 · 网关 · 控制器</small></div>
+      </div>
+      <div class="ltag">数据的源头，动作的终点</div>
+    </div>
+  </div>
+  <div class="strip">
+    <span class="tk">技术栈</span>
+    <span><b>Java 21</b> · <b>Spring Boot 4</b> · <b>Spring Cloud 2025</b> · <b>Spring AI 2</b></span>
+    <span>·</span><span><b>gRPC + Protobuf</b> 内部通信</span>
+    <span>·</span><span><b>PostgreSQL</b>（TimescaleDB + pgvector + AGE）</span>
+  </div>
+  <div class="note"><span>跨服务调用必须走 Facade 接口 · DO/BO/VO 三层分离 · 租户隔离全链路</span><span>规模化瓶颈在消息总线与数据库，扩容前先看这两层</span></div>
+</div>
+</body>
+</html>

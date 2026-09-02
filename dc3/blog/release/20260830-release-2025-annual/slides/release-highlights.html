@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R1 版本速览</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.vbadge{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,.95);
+  border:1px solid var(--brand-line);border-radius:12px;padding:8px 18px;box-shadow:0 8px 22px rgba(10,108,178,.12)}
+.vbadge .v{font:800 22px "Helvetica Neue",Arial;background:linear-gradient(112deg,#07549a,#149ed7 46%,#4f52bf);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.vbadge .k{font-size:9.5px;color:var(--muted)}
+.feats{position:absolute;top:132px;left:56px;right:56px;height:288px;display:grid;grid-template-columns:1fr 1fr;gap:16px;z-index:4}
+.ft{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:24px 18px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.ft ul{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.ft li{list-style:none;display:flex;gap:8px;font-size:11.5px;color:var(--ink-2);line-height:1.55}
+.ft li i{width:6px;height:6px;border-radius:50%;background:var(--brand-bright);margin-top:6px;flex:none}
+.ft li b{color:var(--ink)}
+.ft .fnote{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:10px;color:var(--muted)}
+.ft2 ul li i{background:var(--indigo)}
+.ft3 ul li i{background:var(--teal)}
+.ft4 ul li i{background:var(--amber)}
+.nums{position:absolute;top:440px;left:56px;right:56px;height:110px;background:rgba(255,255,255,.94);
+  border:1px solid var(--brand-line);border-radius:14px;box-shadow:0 8px 26px rgba(23,58,94,.07);
+  display:flex;align-items:center;justify-content:space-around;padding:0 20px;z-index:4}
+.nu{display:flex;flex-direction:column;align-items:center;gap:2px}
+.nu .v{font:800 26px "Helvetica Neue",Arial;color:var(--brand-deep)}
+.nu .v small{font-size:13px;font-weight:700}
+.nu .k{font-size:10.5px;color:var(--ink-3)}
+.ndiv{width:1px;height:60px;background:var(--line)}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:44px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:14px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.strip .sep{width:1px;height:20px;background:var(--line)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release Notes · R1</span></div>
+      <h1><b>v2026.9.15</b> 版本速览：四大特性，一个目标——接得进、跑得稳</h1>
+      <div class="h-sub">所列能力均已合入主干 · 本篇随版本标签发布 · 版本号遵循项目日历制（v2026.月.日）</div>
+    </div>
+    <div class="vbadge"><div class="v">v2026.9.15</div><div class="k">Release R1</div></div>
+  </div>
+  <div class="feats">
+    <div class="ft">
+      <div class="zlabel">特性一 · 多协议接入</div>
+      <ul>
+        <li><i></i><span><b>36 个驱动模块</b>：工业协议 17 · IoT 协议 7 · 数据桥接 5 · 基础通信 5 · 仿真调试 2</span></li>
+        <li><i></i><span>驱动为<b>独立微服务</b>：按需启停、按需扩容，不用的驱动不参与部署</span></li>
+        <li><i></i><span>统一建模 Driver → Device → Profile → Point，上层只见<b>语义统一的点位</b></span></li>
+      </ul>
+      <div class="fnote">覆盖工厂自动化 / 电力 / 楼宇 / 水利主力协议面</div>
+    </div>
+    <div class="ft ft2">
+      <div class="zlabel">特性二 · 云原生微服务</div>
+      <ul>
+        <li><i></i><span>Java 21 · Spring Boot 4 · Spring Cloud 2025，网关统一入口</span></li>
+        <li><i></i><span>服务间 <b>gRPC + Protobuf</b>；无状态设计支持水平扩展</span></li>
+        <li><i></i><span>Compose 一键起栈，另有 <b>Swarm / Kubernetes / Helm</b> 部署配置</span></li>
+      </ul>
+      <div class="fnote">center-single 单体形态为小规模场景省资源</div>
+    </div>
+    <div class="ft ft3">
+      <div class="zlabel">特性三 · Driver SDK</div>
+      <ul>
+        <li><i></i><span>只写协议本身：<b>报文解析 + 点位映射</b>，注册/心跳/调度/上行由运行时承担</span></li>
+        <li><i></i><span>驱动开发指南随文档站发布：<b>docs.dc3.site · Driver Authoring</b></span></li>
+        <li><i></i><span>新驱动 = 新镜像，注册即被平台统一管理</span></li>
+      </ul>
+      <div class="fnote">第 37 个驱动应该来自真实工位的真实需求</div>
+    </div>
+    <div class="ft ft4">
+      <div class="zlabel">特性四 · 企业级基线</div>
+      <ul>
+        <li><i></i><span><b>租户隔离</b>全链路：数据库 / 缓存键 / API 上下文 / 服务间 gRPC</span></li>
+        <li><i></i><span>JWT + Spring Security <b>RBAC</b> · TLS 传输加密 · 操作审计</span></li>
+        <li><i></i><span>Facade 边界 + DO/BO/VO 三层模型，跨服务调用不绑传输细节</span></li>
+      </ul>
+      <div class="fnote">双语在线文档 docs.dc3.site 随版本同步更新</div>
+    </div>
+  </div>
+  <div class="nums">
+    <div class="nu"><div class="v">36</div><div class="k">协议驱动模块</div></div>
+    <div class="ndiv"></div>
+    <div class="nu"><div class="v">6<span style="font-size:14px"> 层</span></div><div class="k">微服务链路</div></div>
+    <div class="ndiv"></div>
+    <div class="nu"><div class="v">4</div><div class="k">中心服务</div></div>
+    <div class="ndiv"></div>
+    <div class="nu"><div class="v">10<small> 年</small></div><div class="k">项目演进（2016 起）</div></div>
+    <div class="ndiv"></div>
+    <div class="nu"><div class="v">2</div><div class="k">文档语言（中/英）</div></div>
+  </div>
+  <div class="strip">
+    <span>升级说明：<b>面向部署配置，无破坏性 API 变更</b></span>
+    <span class="sep"></span>
+    <span>起始数据库结构以 initdb 种子为准</span>
+    <span class="sep"></span>
+    <span>下载：<b>GitHub / Gitee Releases</b></span>
+  </div>
+  <div class="note"><span>版本档案：R1 · 主题「连接与云原生底座」· 能力基线为主干 main 分支</span><span>配文：R1 发版文 · 发布渠道：开源中国 / InfoQ / CSDN 等</span></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="UTF-8"><title>dc3 concept</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-deep:#07549a;--brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+--ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+--teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;--indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+--amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;--gray:#8a98a8;--gray-tint:#f1f4f7}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;background:var(--bg-0)}
+.head{position:absolute;left:64px;right:64px;top:36px}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:26px;height:3.5px;border-radius:2px;background:linear-gradient(90deg,#08a9de,#6662d7)}
+.kicker span{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:31px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{position:absolute;border-radius:13px;border:1px solid #fff;background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(255,255,255,.72));
+  box-shadow:0 8px 22px rgba(12,89,153,.10);padding:16px 18px;z-index:3}
+.card .ct{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card .ct i{width:9px;height:9px;border-radius:3px;flex:none}
+.row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);padding:5.5px 9px;border-radius:7px;margin-bottom:5px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+.row b{color:var(--ink);font-weight:700}
+.row .tag{margin-left:auto;font:700 10px "Segoe UI",Arial,sans-serif;color:var(--brand-deep);background:var(--brand-tint);border:1px solid var(--brand-line);border-radius:5px;padding:2px 7px}
+.pill{position:absolute;border-radius:999px;font-size:12px;font-weight:600;color:var(--brand-deep);z-index:4;
+  background:rgba(255,255,255,.85);border:1px solid var(--brand-line);box-shadow:0 4px 12px rgba(12,89,153,.08);display:flex;align-items:center;justify-content:center}
+svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
+.lab{position:absolute;font-size:11px;font-weight:600;color:var(--ink-3);z-index:4}
+.band{position:absolute;left:64px;right:64px;border-radius:13px;border:1px solid #fff;z-index:3;
+  background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(238,245,251,.85));box-shadow:0 8px 22px rgba(12,89,153,.10);padding:14px 20px}
+</style>
+</head><body><div class="slide">
+<div class="head"><div class="kicker"><div class="kbar"></div><span>DC3 Concept · 02 Device</span></div><h1>设备的建模关系：<span class="hl">一驱动 · 一模板 · 一组位号</span></h1></div>
+
+<div class="card" style="left:480px;top:142px;width:320px;height:64px;justify-content:center;text-align:center">
+  <div class="ct" style="justify-content:center;margin:0"><i style="background:var(--brand)"></i>归属驱动 Driver · 1 → N 设备</div>
+</div>
+<svg class="wires" viewBox="0 0 1280 720">
+  <line x1="640" y1="206" x2="640" y2="238" stroke="#4a90c9" stroke-opacity=".55" stroke-width="1.6"/>
+  <path d="M640 244 L635 235 L645 235 Z" fill="#1296db"/>
+  <line x1="436" y1="330" x2="392" y2="330" stroke="#5558c9" stroke-opacity=".5" stroke-width="1.6"/>
+  <path d="M386 330 L395 325.5 L395 334.5 Z" fill="#5558c9"/>
+  <line x1="844" y1="330" x2="888" y2="330" stroke="#0e9384" stroke-opacity=".5" stroke-width="1.6"/>
+  <path d="M894 330 L885 325.5 L885 334.5 Z" fill="#0e9384"/>
+</svg>
+<div class="card" style="left:392px;top:244px;width:496px;height:250px;border:1.5px solid #fff;background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(224,240,252,.88));box-shadow:0 14px 34px rgba(18,150,219,.2)">
+  <div class="ct"><i style="background:var(--brand)"></i>设备 Device · 平台建模的核心实体</div>
+  <div class="row"><b>device_name / device_code</b><span class="tag">名称 · 编码</span></div>
+  <div class="row"><b>driver_id</b><span class="tag">归属驱动</span></div>
+  <div class="row"><b>profile_id</b><span class="tag">引用模板（可空 · 单模板）</span></div>
+  <div class="row"><b>device_ext</b><span class="tag">驱动配置 host · port …</span></div>
+  <div class="row"><b>enable_flag</b><span class="tag">启用 · 禁用</span></div>
+</div>
+<div class="card" style="left:64px;top:244px;width:322px;height:250px;border-top:3px solid var(--indigo)">
+  <div class="ct"><i style="background:var(--indigo)"></i>模板 Profile</div>
+  <div class="row"><b>位号定义</b><span class="tag">类型 · 单位 · 精度</span></div>
+  <div class="row"><b>命令定义 · 事件定义</b><span class="tag">行为模板</span></div>
+  <div class="lab" style="position:static;margin-top:6px;font-size:11.5px">设备引用模板后批量继承上述定义，不必逐台配置。</div>
+</div>
+<div class="card" style="left:894px;top:244px;width:322px;height:250px;border-top:3px solid var(--teal)">
+  <div class="ct"><i style="background:var(--teal)"></i>位号集合 Point</div>
+  <div class="row"><b>MOTOR_SPEED</b><span class="tag">r · RPM</span></div>
+  <div class="row"><b>MOTOR_TEMP</b><span class="tag">r · °C</span></div>
+  <div class="row"><b>MOTOR_SPEED_SET</b><span class="tag">rw · RPM</span></div>
+  <div class="lab" style="position:static;margin-top:6px;font-size:11.5px">定义在模板中，设备侧实例化并采集。</div>
+</div>
+<div class="band" style="top:530px;display:flex;align-items:center;gap:16px;justify-content:center">
+  <span style="font:800 13px "Segoe UI",Arial;letter-spacing:1.5px;color:var(--brand-deep)">行为面</span>
+  <span style="font-size:13px;color:var(--ink-2)">命令 Command（受控下发，人工确认）</span>
+  <span style="color:var(--line)">|</span>
+  <span style="font-size:13px;color:var(--ink-2)">事件 Event（状态与异常上报）</span>
+</div>
+<div class="pill" style="left:470px;width:340px;top:604px;height:34px">一台 Modbus 电表 = 驱动 + 模板 + 连接配置 + 位号实例</div>
+
+</div></body></html>

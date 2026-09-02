@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 有界缓冲机制</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;left:56px;right:56px;bottom:170px;display:flex;flex-direction:column;gap:14px;z-index:4}
+.pipe{position:relative;flex:1.2;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:30px 20px;display:flex;align-items:center;gap:0}
+.zlabel{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.node{width:170px;height:120px;border-radius:12px;border:1px solid var(--line);background:#fbfdfe;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;padding:0 10px}
+.node .t{font-size:13px;font-weight:800}
+.node .d{font-size:9.5px;color:var(--ink-3);line-height:1.5}
+.node.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));
+  box-shadow:0 12px 30px rgba(10,108,178,.15)}
+.q{display:flex;gap:6px;margin-top:2px}
+.q i{width:20px;height:20px;border-radius:5px;background:linear-gradient(160deg,#7fddff,#1296db)}
+.q i.dim{opacity:.4}
+.harr{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 6px}
+.harr .l{width:100%;height:2px;background:var(--brand-line);position:relative}
+.harr .l::after{content:"";position:absolute;right:-1px;top:-4px;border-top:4.5px solid transparent;
+  border-bottom:4.5px solid transparent;border-left:7px solid var(--brand-line)}
+.harr span{font-size:9px;color:var(--muted);text-align:center;line-height:1.35}
+.trig{flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column;position:relative}
+.trig .zlabel{left:12px}
+.tl{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.tli{display:flex;gap:8px;font-size:10.6px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.tli i{width:6px;height:6px;border-radius:50%;background:var(--brand-bright);margin-top:6px;flex:none}
+.tli b{color:var(--ink)}
+.tli code{font:600 9.2px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border-radius:4px;padding:1px 5px}
+.low{flex:1;display:flex;gap:18px;min-height:0}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:24px 16px 10px;display:flex;flex-direction:column}
+.panel .zlabel{top:-11px;left:12px}
+.why{display:flex;flex-direction:column;gap:7px;flex:1;justify-content:center}
+.wi{display:flex;gap:7px;font-size:10.4px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.wi i{width:16px;height:16px;border-radius:5px;background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4;
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex:none;font-style:normal}
+.wi.b i{background:var(--brand-tint);color:var(--brand-deep);border-color:var(--brand-line)}
+.wi b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R5 v2026.7.27 · 特性详解 1/3</span></div>
+    <h1>数据中心侧：<b>PointValueIngestBuffer</b> 有界队列与背压怎么做的</h1>
+    <div class="h-sub">提交 9f574d909 / f8ddcf587 / a1876727d · PointValueJob 移除，摄取全量改走缓冲</div>
+  </div>
+  <div class="main">
+    <div class="pipe" style="flex:1.1">
+      <span class="zlabel">写入路径 · 做了什么</span>
+      <div class="node">
+        <span class="t">消息消费</span>
+        <span class="d">位值从消息总线到达数据中心<br>（此前由 PointValueJob 定时搬运）</span>
+      </div>
+      <div class="harr"><div class="l"></div><span>offer() 入队</span></div>
+      <div class="node hot">
+        <span class="t">PointValueIngestBuffer</span>
+        <div class="q"><i></i><i></i><i></i><i></i><i class="dim"></i></div>
+        <span class="d">有界 ArrayBlockingQueue<br>容量固定 · 满则 offer 返回 false</span>
+      </div>
+      <div class="harr"><div class="l"></div><span>worker 线程<br>排空</span></div>
+      <div class="node">
+        <span class="t">批量落库</span>
+        <span class="d">按"条数或时间"触发<br>攒批写入仓储</span>
+      </div>
+    </div>
+    <div class="low">
+      <div class="trig" style="flex:1.2">
+        <span class="zlabel">怎么做的 · 三个关键决策</span>
+        <div class="tl">
+          <div class="tli"><i></i><span><b>有界而非无界</b>：容量写死上限，突发流量下内存可预估，<b>不给 OOM 留门</b></span></div>
+          <div class="tli"><i></i><span><b>满时 offer 返回 false</b> → 接收方 <b>nack-requeue</b>：消息回队列稍后再投，而不是扩容硬吃</span></div>
+          <div class="tli"><i></i><span><b>失败再入队</b>：落库失败包装为 <code>RepositoryException</code>，整批重回缓冲重试——<b>失败不是终点</b></span></div>
+          <div class="tli"><i></i><span><b>size-or-time 双触发</b>：攒够条数或到时间就刷，兼顾吞吐与延迟</span></div>
+        </div>
+      </div>
+      <div class="trig">
+        <span class="zlabel" style="background:#fbe9e7;color:var(--red);border-color:#efc4c0">为什么这样做</span>
+        <div class="tl">
+          <div class="tli"><i style="background:var(--red)"></i><span>采集平台最大的事故源是<b>静默丢数</b>：下游抖一下，数据没了，事后无从补录</span></div>
+          <div class="tli"><i style="background:var(--red)"></i><span>无界队列"看起来安全"，实际是把崩溃推迟到 OOM——<b>丢的是整个进程</b></span></div>
+          <div class="tli"><i style="background:var(--red)"></i><span>有界 + 背压 + 再入队 = <b>过载时降速而不是丢数据</b>，这是工业采集的底线语义</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">一句话：PointValueJob 的定时搬运退场，<b>摄取进入"缓冲接管 + 显式背压"的时代</b>——配置见 PointBatchProperties</div>
+  <div class="note"><span>版本锚点：v2026.7.27（7.15–7.27 窗口合入）</span><span>配文：R2《IoT DC3 v2026.7.27 发布》</span></div>
+</div>
+</body>
+</html>

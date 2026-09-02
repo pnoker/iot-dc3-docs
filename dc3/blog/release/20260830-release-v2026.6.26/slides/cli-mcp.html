@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R3 CLI 命令面与 MCP 链路</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.vbadge{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,.95);
+  border:1px solid var(--brand-line);border-radius:12px;padding:8px 18px;box-shadow:0 8px 22px rgba(10,108,178,.12)}
+.vbadge .v{font:800 22px "Helvetica Neue",Arial;background:linear-gradient(112deg,#07549a,#149ed7 46%,#4f52bf);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.vbadge .k{font-size:9.5px;color:var(--muted)}
+.main{position:absolute;top:130px;left:56px;right:56px;bottom:150px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-cli{flex:1.15}
+.p-chain{flex:1}
+.p-token{width:300px}
+/* cli */
+.cmds{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.cg2{border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 11px}
+.cg2 .gt{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.cg2 .gn{font:800 11px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);
+  border:1px solid var(--brand-tint-2);border-radius:5px;padding:1.5px 7px}
+.cg2 .gd{font-size:9.3px;color:var(--ink-3);line-height:1.5}
+.cg2 .gd b{color:var(--ink)}
+.clifoot{margin-top:auto;padding-top:7px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.5}
+.clifoot code{font:600 9px Menlo,monospace;color:var(--brand-deep)}
+/* chain */
+.chain{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
+.cn2{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.cn2 .rail{width:20px;display:flex;flex-direction:column;align-items:center}
+.cn2 .dot{width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 11px "Helvetica Neue",Arial;flex:none}
+.cn2 .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:8px}
+.cn2:nth-child(2) .dot{background:var(--brand-mid)}
+.cn2:nth-child(3) .dot{background:var(--indigo)}
+.cn2:nth-child(4) .dot{background:var(--brand-deep)}
+.cn2 .bx{flex:1;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 11px}
+.cn2 .bt{font-size:11.5px;font-weight:700}
+.cn2 .bd{font-size:9.6px;color:var(--ink-3);margin-top:2px;line-height:1.5}
+.cn2 .bd code{font:600 9px Menlo,monospace;color:var(--brand-deep)}
+.chainfoot{margin-top:auto;padding-top:7px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.5}
+/* token ladder */
+.ladder{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.rung{border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:9px}
+.rung .lv{font:800 9px "Helvetica Neue",Arial;border-radius:5px;padding:2.5px 7px;flex:none}
+.rung .tx{font-size:10.2px;line-height:1.45}
+.rung .tx b{font-weight:700}
+.r1{border:1px solid #cde8d9;background:#f2faf6}
+.r1 .lv{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.r1 .tx{color:#22694a}
+.r2{border:1px solid #f3ddba;background:#fdf8ef}
+.r2 .lv{background:#fdf1e2;color:#b06a05;border:1px solid #f3ddba}
+.r2 .tx{color:#7c4d0a}
+.r3{border:1px solid #efc4c0;background:#fdf5f4}
+.r3 .lv{background:#fbe9e7;color:var(--red);border:1px solid #efc4c0}
+.r3 .tx{color:#8c3830}
+.strip{position:absolute;left:56px;right:56px;bottom:100px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release Notes · R3</span></div>
+      <h1>发布形态：<b>dc3-cli 全命令面</b>与一条 MCP 调用链</h1>
+      <div class="h-sub">CLI 既是人的运维终端，也是智能体框架的标准接入客户端——同一套令牌，同一条工具面</div>
+    </div>
+    <div class="vbadge"><div class="v">v2026.10.15</div><div class="k">Release R3</div></div>
+  </div>
+  <div class="main">
+    <div class="panel p-cli">
+      <div class="zlabel">dc3-cli · 本版本交付的命令组</div>
+      <div class="cmds">
+        <div class="cg2">
+          <div class="gt"><span class="gn">dc3 auth</span><span class="gd"><b>OAuth client_credentials 登录</b> · 旧 cookie 契约兼容（login 回归已修）</span></div>
+        </div>
+        <div class="cg2">
+          <div class="gt"><span class="gn">dc3 tools</span><span class="gd"><b>MCP 工具调用</b> · stdio / HTTP 双传输——Agent 框架与脚本都能挂</span></div>
+        </div>
+        <div class="cg2">
+          <div class="gt"><span class="gn">dc3 analytics</span><span class="gd"><b>数据分析命令组</b>：设备统计、位值趋势等分析面直达终端</span></div>
+        </div>
+        <div class="cg2">
+          <div class="gt"><span class="gn">dc3 alert</span><span class="gd"><b>告警深度分析</b>：根因辅助分析的命令行入口</span></div>
+        </div>
+        <div class="cg2">
+          <div class="gt"><span class="gn">dc3 agentic</span><span class="gd"><b>会话生命周期 + 动作审批</b>：AI 会话可查、可控、可批</span></div>
+        </div>
+      </div>
+      <div class="clifoot">独立 TypeScript 模块随主仓交付 · CI 工作流 <code>ci-cli.yml</code> 已建 · 手册见 dc3-cli/README.md</div>
+    </div>
+    <div class="panel p-chain">
+      <div class="zlabel zi">一条调用的四站链路</div>
+      <div class="chain">
+        <div class="cn2">
+          <div class="rail"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">客户端发起</div><div class="bd">Claude / Cursor / dc3-cli / Agent 框架，携带 OAuth 令牌</div></div>
+        </div>
+        <div class="cn2">
+          <div class="rail"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">网关 <code>POST /mcp</code></div><div class="bd">JSON-RPC · RS256 验签 · scope 检查（由 RBAC 投影）</div></div>
+        </div>
+        <div class="cn2">
+          <div class="rail"><div class="dot">3</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">工具执行</div><div class="bd">落到 Agentic Center 受控工具面：查设备 / 读写点 / 命令辅助</div></div>
+        </div>
+        <div class="cn2">
+          <div class="rail"><div class="dot">4</div></div>
+          <div class="bx"><div class="bt">结果与审计</div><div class="bd">确定数据原路返回 · 调用全程入审计账本</div></div>
+        </div>
+      </div>
+      <div class="chainfoot">协议是新的，权限体系是旧的：工具封装自平台既有 API，智能体没有特权通道</div>
+    </div>
+    <div class="panel p-token">
+      <div class="zlabel zt">令牌 TTL 阶梯</div>
+      <div class="ladder">
+        <div class="rung r1"><span class="lv">只读</span><span class="tx"><b>长有效期</b>——查询类工具便利优先</span></div>
+        <div class="rung r2"><span class="lv">常规</span><span class="tx"><b>中等有效期</b>——点位读写按业务节奏</span></div>
+        <div class="rung r3"><span class="lv">高危</span><span class="tx"><b>短有效期 + step-up</b>——重新换取授权（强制执行接入中）</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">三行命令验证本版本：<b>dc3 config set gateway → dc3 auth login → dc3 tools call</b> · oauth 开关经 compose 透传（dc3.gateway.oauth.enabled）</div>
+  <div class="note"><span>版本档案：R3 · 对齐主干 v2026.8.19 后 116 commits</span><span>配文：R3 发版文 · 发布前按最新 commit 复核对齐矩阵</span></div>
+</div>
+</body>
+</html>

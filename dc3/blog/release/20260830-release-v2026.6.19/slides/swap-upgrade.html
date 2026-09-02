@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 升级与换型指引</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.vbadge{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,.95);
+  border:1px solid var(--brand-line);border-radius:12px;padding:8px 18px;box-shadow:0 8px 22px rgba(10,108,178,.12)}
+.vbadge .v{font:800 22px "Helvetica Neue",Arial;background:linear-gradient(112deg,#07549a,#149ed7 46%,#4f52bf);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.vbadge .k{font-size:9.5px;color:var(--muted)}
+.main{position:absolute;top:130px;left:56px;right:56px;bottom:196px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.p-mq{flex:1}
+.p-ts{flex:1}
+.p-db{flex:1}
+.steps{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.step{border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 11px}
+.step .sn{display:flex;align-items:center;gap:7px}
+.step .no{width:20px;height:20px;border-radius:6px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 10.5px "Helvetica Neue",Arial;flex:none}
+.step .tt{font-size:11px;font-weight:700}
+.step code{display:block;margin-top:4px;font:600 9.2px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);
+  background:var(--brand-tint);border:1px solid var(--brand-tint-2);border-radius:6px;padding:4px 7px;line-height:1.5;white-space:pre-wrap}
+.step .dd{font-size:9px;color:var(--ink-3);margin-top:3px;line-height:1.45}
+.pfoot{margin-top:auto;padding-top:7px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.45}
+.pfoot b{color:var(--brand-deep)}
+.compat{position:absolute;left:56px;right:56px;bottom:104px;height:76px;background:rgba(255,255,255,.94);
+  border:1px solid var(--brand-line);border-radius:13px;box-shadow:0 8px 24px rgba(23,58,94,.06);
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:10px 18px;z-index:4}
+.cp{display:flex;gap:8px;align-items:flex-start}
+.cp i{width:16px;height:16px;border-radius:5px;background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4;
+  display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;flex:none;margin-top:1px;font-style:normal}
+.cp span{font-size:10.3px;color:var(--ink-2);line-height:1.5}
+.cp b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:52px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:14px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release Notes · R2</span></div>
+      <h1>升级与换型指引：<b>三条家族线，各三步走</b></h1>
+      <div class="h-sub">部署侧操作 · 业务代码零改动 · 环境变量与依赖名以 docs 与仓库为准</div>
+    </div>
+    <div class="vbadge"><div class="v">v2026.9.30</div><div class="k">Release R2</div></div>
+  </div>
+  <div class="main">
+    <div class="panel p-mq">
+      <div class="zlabel">消息总线换型</div>
+      <div class="steps">
+        <div class="step"><div class="sn"><span class="no">1</span><span class="tt">起目标队列容器</span></div><code>podman compose -f dc3/docker-compose-*.yml up -d</code></div>
+        <div class="step"><div class="sn"><span class="no">2</span><span class="tt">改 MQ 类型环境变量</span></div><code>DC3_MQ_TYPE=kafka   # 默认 rabbitmq</code></div>
+        <div class="step"><div class="sn"><span class="no">3</span><span class="tt">数据中心换依赖</span></div><code>&lt;artifactId&gt;dc3-mq-kafka&lt;/artifactId&gt;</code></div>
+      </div>
+      <div class="pfoot">六适配器同跑 <b>TCK 契约</b> · 行为等价有背书</div>
+    </div>
+    <div class="panel p-ts">
+      <div class="zlabel zt">时序库换型</div>
+      <div class="steps">
+        <div class="step"><div class="sn"><span class="no">1</span><span class="tt">起目标存储容器</span></div><code>make up STACK=optional SERVICES="tdengine"</code></div>
+        <div class="step"><div class="sn"><span class="no">2</span><span class="tt">改激活类型</span></div><code>DC3_TSDB_TYPE=tdengine   # 默认 timescale</code></div>
+        <div class="step"><div class="sn"><span class="no">3</span><span class="tt">数据中心换依赖</span></div><code>&lt;artifactId&gt;dc3-tsdb-tdengine&lt;/artifactId&gt;</code></div>
+      </div>
+      <div class="pfoot">IoTDB 首启自动挂载微秒精度配置（<b>必需</b>）· 时区口径全家族 DEFAULT_ZONEID</div>
+    </div>
+    <div class="panel p-db">
+      <div class="zlabel zi">关系引擎切换</div>
+      <div class="steps">
+        <div class="step"><div class="sn"><span class="no">1</span><span class="tt">起对应数据库容器</span></div><code>mysql / mariadb 镜像按 compose 选择</code></div>
+        <div class="step"><div class="sn"><span class="no">2</span><span class="tt">改数据源连接配置</span></div><code>DC3_DATA_DATASOURCE_URL=...</code></div>
+        <div class="step"><div class="sn"><span class="no">3</span><span class="tt">初始化对应方言种子</span></div><code>initdb 种子按库方言提供</code></div>
+      </div>
+      <div class="pfoot">MariaDB 差异仅 <b>VALUES()</b> 写法 · collation 用 unicode_ci 两库通吃</div>
+    </div>
+  </div>
+  <div class="compat">
+    <div class="cp"><i>✓</i><span><b>兼容性</b>：默认路径（RabbitMQ + TimescaleDB + PostgreSQL）行为不变，升级透明</span></div>
+    <div class="cp"><i>✓</i><span><b>开销可控</b>：非默认适配器不引入则不打包——不为不用的组件付 jar 与启动成本</span></div>
+    <div class="cp"><i>✓</i><span><b>验证建议</b>：切换后先以 Virtual 驱动验证链路，再切真实设备流量</span></div>
+  </div>
+  <div class="strip">发布口径：<b>部署侧配置操作，业务代码零改动</b> · 命令与变量名以仓库 docs/mq-brokers.md、docs/tsdb-stores.md 为准</div>
+  <div class="note">配文：R2《IoT DC3 v2026.9.30 发布》· 换型前三步即为升级后启用非默认适配器的完整操作</div>
+</div>
+</body>
+</html>

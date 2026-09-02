@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>07 MCP 端到端链路</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.hero{width:250px;height:66px;border-radius:14px;background:linear-gradient(112deg,#07549a,#1183c9 55%,#1296db);
+  box-shadow:0 10px 26px rgba(7,84,154,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.hero .ep{font:800 20px "SFMono-Regular",Menlo,monospace;color:#fff}
+.hero .e{font:700 8.5px "Helvetica Neue",Arial;letter-spacing:2px;color:rgba(255,255,255,.75)}
+.stations{position:absolute;top:150px;left:56px;right:56px;display:flex;align-items:stretch;z-index:4}
+.st{flex:1;position:relative;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.94);
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:18px 15px 12px;display:flex;flex-direction:column;gap:7px}
+.st.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));
+  box-shadow:0 10px 28px rgba(10,108,178,.13)}
+.stn{position:absolute;top:-12px;left:14px;font:800 10.5px "Helvetica Neue",Arial;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3.5px 10px;letter-spacing:1px}
+.st .tt{font-size:14px;font-weight:800;margin-top:4px}
+.st .en{font:700 8.5px "Helvetica Neue",Arial;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase}
+.st .dd{font-size:10.3px;color:var(--ink-3);line-height:1.55}
+.st ul{display:flex;flex-direction:column;gap:5px;margin-top:2px}
+.st li{list-style:none;display:flex;gap:6px;font-size:10.3px;color:var(--ink-2);line-height:1.45}
+.st li i{width:5.5px;height:5.5px;border-radius:50%;background:var(--brand-bright);margin-top:5px;flex:none}
+.st.hot li i{background:var(--brand-deep)}
+.st .foot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.5}
+.st .foot code{font:600 9px Menlo,monospace;color:var(--brand-deep)}
+.sa{width:44px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.sa .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.sa .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.sa span{font-size:8.5px;color:var(--muted);text-align:center;line-height:1.35}
+.ret{position:absolute;top:332px;left:56px;right:56px;height:34px;display:flex;align-items:center;z-index:3}
+.ret .rl{flex:1;height:1.5px;background:repeating-linear-gradient(90deg,var(--brand-line) 0 8px,transparent 8px 14px);position:relative}
+.ret .rl::before{content:"";position:absolute;left:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-right:6px solid var(--brand-line)}
+.ret span{font-size:10.5px;color:var(--brand-deep);background:var(--brand-tint);border:1px solid var(--brand-line);
+  border-radius:999px;padding:4px 14px;margin:0 12px;font-weight:600}
+.low{position:absolute;top:396px;left:56px;right:56px;bottom:118px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:24px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.p-cli{flex:1.05}
+.p-prin{flex:1}
+.cli{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.cl{display:flex;align-items:center;gap:10px}
+.cl .dollar{font:700 11px Menlo,monospace;color:var(--green);flex:none}
+.cl code{font:600 10.5px "SFMono-Regular",Menlo,monospace;color:var(--ink);background:#f5f7f9;border:1px solid var(--line);
+  border-radius:7px;padding:6px 10px;flex:1}
+.cl .cd{font-size:9.5px;color:var(--muted);width:110px;flex:none;line-height:1.4}
+.clifoot{padding-top:8px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.5}
+.clifoot b{color:var(--brand-deep)}
+.prin{display:flex;flex-direction:column;gap:12px;flex:1;justify-content:center}
+.pi{border-radius:10px;padding:11px 13px;font-size:11px;line-height:1.6}
+.pi.p1{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));color:var(--ink)}
+.pi.p1 b{color:var(--brand-deep)}
+.pi.p2{border:1px dashed var(--line);background:#fbfdfe;color:var(--ink-2)}
+.pi b{font-weight:700}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.07</span></div>
+      <h1>一次 MCP 调用的<b>四站旅程</b>：从大模型对话到设备点位</h1>
+      <div class="h-sub">工具不是新的业务通道，而是既有平台能力的协议化封装——协议是新的，权限体系是旧的</div>
+    </div>
+    <div class="hero"><div class="ep">POST /mcp</div><div class="e">GATEWAY ENDPOINT · JSON-RPC</div></div>
+  </div>
+  <div class="stations">
+    <div class="st">
+      <span class="stn">站 1 · 客户端</span>
+      <span class="tt">智能体客户端</span><span class="en">MCP Clients</span>
+      <ul>
+        <li><i></i>Claude / Cursor 等通用客户端</li>
+        <li><i></i>Agent 开发框架</li>
+        <li><i></i>dc3-cli tools：stdio / HTTP 双传输</li>
+      </ul>
+      <div class="foot">一次实现 = 对所有 MCP 客户端开放</div>
+    </div>
+    <div class="sa"><div class="l"></div><span>携带令牌</span></div>
+    <div class="st hot">
+      <span class="stn">站 2 · 协议面</span>
+      <span class="tt">POST /mcp</span><span class="en">Gateway · JSON-RPC</span>
+      <ul>
+        <li><i></i>HTTP 网关上的标准 MCP 端点</li>
+        <li><i></i>请求头携带平台签发的 OAuth 令牌</li>
+        <li><i></i>工具列表 / 调用 / 结果的标准协议交互</li>
+      </ul>
+      <div class="foot">传输：<code>JSON-RPC over HTTP</code></div>
+    </div>
+    <div class="sa"><div class="l"></div><span>验签放行</span></div>
+    <div class="st">
+      <span class="stn">站 3 · 安检</span>
+      <span class="tt">网关校验</span><span class="en">AuthN / AuthZ</span>
+      <ul>
+        <li><i></i>RS256 非对称签名校验</li>
+        <li><i></i>scope 检查：只读 / 高危分级</li>
+        <li><i></i>路由映射到平台工具</li>
+      </ul>
+      <div class="foot">scope 由 RBAC 投影，见下一张图</div>
+    </div>
+    <div class="sa"><div class="l"></div><span>执行工具</span></div>
+    <div class="st">
+      <span class="stn">站 4 · 执行</span>
+      <span class="tt">平台工具执行</span><span class="en">Tool Execution</span>
+      <ul>
+        <li><i></i>落到 Agentic Center 受控工具面</li>
+        <li><i></i>设备查询 / 点位读写 / 命令辅助</li>
+        <li><i></i>背后是各中心服务既有 API</li>
+      </ul>
+      <div class="foot">返回<b>确定数据</b> · 调用全程入审计</div>
+    </div>
+  </div>
+  <div class="ret"><div class="rl"></div><span>结果原路返回：确定数据 + 标准协议响应</span><div class="rl"></div></div>
+  <div class="low">
+    <div class="panel p-cli">
+      <div class="zlabel">最快验证路径 · 三行命令</div>
+      <div class="cli">
+        <div class="cl"><span class="dollar">$</span><code>dc3 config set gateway &lt;url&gt;</code><span class="cd">指向平台网关</span></div>
+        <div class="cl"><span class="dollar">$</span><code>dc3 auth login</code><span class="cd">取得 OAuth 令牌</span></div>
+        <div class="cl"><span class="dollar">$</span><code>dc3 tools call &lt;tool&gt;</code><span class="cd">调用 MCP 工具</span></div>
+      </div>
+      <div class="clifoot">dc3-cli 是<b>独立的 TypeScript CLI</b>：既是运维终端，也是给 Agent 框架与脚本用的 MCP 客户端</div>
+    </div>
+    <div class="panel p-prin">
+      <div class="zlabel zi">这条链路的两条设计原则</div>
+      <div class="prin">
+        <div class="pi p1"><b>能力封装，不是旁路</b>：MCP 工具背后是 Agentic Center 用的同一套受控工具面——不会因为换了协议而出现特权通道</div>
+        <div class="pi p2"><b>快速迭代中的区域</b>：工具清单、scope 细粒度、高危工具附加授权在陆续完善，以 docs 与仓库 design 文档最新状态为准</div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">分水岭含义：过去对 AI 开放的深度取决于定制集成数量，现在<b>实现一次 /mcp 就等于对所有 MCP 客户端开放</b></div>
+  <div class="note"><span>MCP：Model Context Protocol · 2026 年智能体生态互操作底座</span><span>配文：EP.07《MCP 落地工业平台》</span></div>
+</div>
+</body>
+</html>

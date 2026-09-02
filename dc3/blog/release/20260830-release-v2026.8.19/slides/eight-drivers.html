@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R3 八个新驱动</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.bignum{display:flex;align-items:baseline;gap:8px}
+.bignum .n{font:800 50px "Helvetica Neue",Arial;color:var(--brand-deep);line-height:1}
+.bignum .arr{font:800 30px "Helvetica Neue",Arial;color:var(--muted)}
+.bignum .t{font-size:10.5px;color:var(--ink-3);width:80px;line-height:1.5}
+.grid{position:absolute;top:122px;left:56px;right:56px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;z-index:4}
+.dc{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:13px;
+  box-shadow:0 6px 18px rgba(23,58,94,.05);padding:22px 14px 10px;height:150px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.za{background:#fdf1e2;color:#b06a05;border-color:#f3ddba}
+.dc .nm{font:800 16px "Segoe UI",Arial,"PingFang SC";color:var(--ink)}
+.dc .fd{font-size:10px;color:var(--ink-3);margin:3px 0 7px;line-height:1.5;flex:1}
+.dc .how{font-size:9.3px;color:var(--ink-2);line-height:1.5;border-top:1px dashed var(--line);padding-top:6px}
+.dc .how b{color:var(--brand-deep)}
+.chain{position:absolute;top:438px;left:56px;right:56px;background:rgba(255,255,255,.94);border:1px solid var(--brand-line);
+  border-radius:13px;box-shadow:0 8px 24px rgba(23,58,94,.06);display:flex;align-items:center;padding:12px 18px;gap:0;z-index:4}
+.stepp{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.stepp .a{font-size:11px;font-weight:700;color:var(--ink)}
+.stepp .b{font-size:9.3px;color:var(--ink-3)}
+.sarr{flex:none;width:36px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.sarr .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.sarr .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R6 v2026.8.19 · 特性详解 1/3</span></div>
+      <h1>八个全新驱动：<b>28 → 36</b>，按行业对号入座</h1>
+      <div class="h-sub">每个驱动 = 独立微服务 + pom / Dockerfile / compose 三处注册，进 docker-ci 构建矩阵</div>
+    </div>
+    <div class="bignum"><div class="n">28</div><div class="arr">→</div><div class="n">36</div><div class="t">driver<br>modules</div></div>
+  </div>
+  <div class="grid">
+    <div class="dc">
+      <div class="zlabel">电力远动</div>
+      <div class="nm">DNP3</div>
+      <div class="fd">DNP3 主站驱动，电力系统 SCADA 远动通信</div>
+      <div class="how"><b>怎么做的</b>：基于 native 协议栈实现，不走通用串口模拟</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel">变电站</div>
+      <div class="nm">IEC 61850</div>
+      <div class="fd">变电站自动化国际标准，间隔层设备接入</div>
+      <div class="how"><b>怎么做的</b>：面向 SCL 模型映射为平台位号模板</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel za">电表</div>
+      <div class="nm">DLT645</div>
+      <div class="fd">DL/T 645-2007 多功能电能表规约</div>
+      <div class="how"><b>怎么做的</b>：数据标识字典化，点表可直接套模板</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel za">表计计量</div>
+      <div class="nm">M-Bus</div>
+      <div class="fd">EN13757 仪表总线，水气热表计量</div>
+      <div class="how"><b>怎么做的</b>：贴合Meter 总线的主站采集语义</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel">楼宇</div>
+      <div class="nm">KNX</div>
+      <div class="fd">KNX 楼宇自动化标准，照明 / 暖通 / 遮阳</div>
+      <div class="how"><b>怎么做的</b>：组地址与平台点位双向映射</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel zt">无线接入</div>
+      <div class="nm">LoRaWAN</div>
+      <div class="fd">经 ChirpStack NS 的 MQTT 上行接入</div>
+      <div class="how"><b>怎么做的</b>：复用 MQTT 通道订阅 NS 上行主题</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel zi">流数据源</div>
+      <div class="nm">Kafka</div>
+      <div class="fd">Kafka 流数据直接作为采集来源</div>
+      <div class="how"><b>怎么做的</b>：消费组语义接入统一摄取链路</div>
+    </div>
+    <div class="dc">
+      <div class="zlabel zi">键值源</div>
+      <div class="nm">Redis</div>
+      <div class="fd">Redis 键值数据桥接采集</div>
+      <div class="how"><b>怎么做的</b>：键模式订阅 → 位号映射</div>
+    </div>
+  </div>
+  <div class="chain">
+    <div class="stepp"><div class="a">协议实现</div><div class="b">native 栈 / 规约库</div></div>
+    <div class="sarr"><div class="l"></div></div>
+    <div class="stepp"><div class="a">pom 注册</div><div class="b">模块声明进聚合构建</div></div>
+    <div class="sarr"><div class="l"></div></div>
+    <div class="stepp"><div class="a">Dockerfile + compose</div><div class="b">镜像与编排同步交付</div></div>
+    <div class="sarr"><div class="l"></div></div>
+    <div class="stepp"><div class="a">docker-ci 矩阵</div><div class="b">镜像构建纳入 CI 门槛</div></div>
+  </div>
+  <div class="strip">发布口径：<b>驱动是独立微服务</b>，用哪个装哪个——不用的驱动不进部署，不占运行资源</div>
+  <div class="note"><span>版本锚点：v2026.8.19（8.9–8.19 窗口合入 8 个驱动）</span><span>配文：R3《IoT DC3 v2026.8.19 发布》</span></div>
+</div>
+</body>
+</html>

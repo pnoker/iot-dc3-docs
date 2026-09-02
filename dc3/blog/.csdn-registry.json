@@ -1,0 +1,337 @@
+{
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-agent-era-10years/index.md": {
+    "articleId": "164192605",
+    "title": "十年了，我们把工业物联网平台交给了智能体",
+    "tags": [
+      "物联网",
+      "开源",
+      "Spring Boot",
+      "人工智能",
+      "Java"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/1d11f4320c46413eaa501dce4d45560d.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/905ed0dd77a043a3bca97f826a36673f.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/8b191fc5166f48daa07df841bcb99431.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "开源",
+      "Spring Boot",
+      "人工智能",
+      "Java"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.253Z",
+    "updatedAt": "2026-09-01T06:13:41.380Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-36-drivers/index.md": {
+    "articleId": "164193344",
+    "title": "36 个驱动模块：应对协议碎片化",
+    "tags": [
+      "物联网",
+      "Modbus",
+      "OPC UA",
+      "工业互联网",
+      "Java"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/2059f4b1775c4d06bf694a7814dd4d04.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/0485637ca5914b9198cbaa3a8990f4b2.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/87438f7050be46f19b4e54e528ec5bff.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "Modbus",
+      "OPC UA",
+      "工业互联网",
+      "Java"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.254Z",
+    "updatedAt": "2026-09-01T06:14:09.698Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-architecture/index.md": {
+    "articleId": "164193373",
+    "title": "拆解 IoT DC3：六层微服务架构",
+    "tags": [
+      "架构",
+      "物联网",
+      "微服务",
+      "Spring Cloud",
+      "Java"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/12a54d359e694f1ea4956a6d0b1b9de5.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/b895d8ceb0ac421483be29020a096682.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/041de18433f1481588b343dd5cc03bbc.jpeg"
+    },
+    "chips": [
+      "架构",
+      "物联网",
+      "微服务",
+      "Spring Cloud",
+      "Java"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.254Z",
+    "updatedAt": "2026-09-01T06:14:44.519Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-mq-adapters/index.md": {
+    "articleId": "164193388",
+    "title": "IoT DC3 消息总线：六适配器可插拔设计",
+    "tags": [
+      "消息队列",
+      "RabbitMQ",
+      "Kafka",
+      "架构",
+      "物联网"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/194c21c0e19942068aee8effc6039d36.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/9daef14cee0844daabfc9f2003347acd.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/cda9e7d3abc44c639d936d2e4e229f71.jpeg"
+    },
+    "chips": [
+      "消息队列",
+      "RabbitMQ",
+      "Kafka",
+      "架构",
+      "物联网"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.255Z",
+    "updatedAt": "2026-09-01T06:15:14.773Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-tsdb-choice/index.md": {
+    "articleId": "164193443",
+    "title": "IoT DC3 时序存储选型：四款数据库可插拔",
+    "tags": [
+      "物联网",
+      "数据库",
+      "时序数据库",
+      "TDengine",
+      "InfluxDB",
+      "IoTDB"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/cc79f4e927dc4545a4554824019c2bb1.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/fd4297a879404b00bf08ec5415898d06.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/eb1e198ba1394ee1a8776130c5923975.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "数据库",
+      "时序数据库",
+      "TDengine",
+      "InfluxDB",
+      "IoTDB"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.255Z",
+    "updatedAt": "2026-09-01T06:15:49.368Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-agentic-center/index.md": {
+    "articleId": "164193490",
+    "title": "IoT DC3 AI 能力：Agentic Center 的设计与边界",
+    "tags": [
+      "人工智能",
+      "物联网",
+      "Spring AI",
+      "大模型",
+      "Java"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/6582e317cca24bd7a1b23cb9f4fb04f5.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/002a83cc4033481b931196a06949bbe4.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/2479aa6910014bb3b21126f89d922280.jpeg"
+    },
+    "chips": [
+      "人工智能",
+      "物联网",
+      "Spring AI",
+      "大模型",
+      "Java"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.255Z",
+    "updatedAt": "2026-09-01T06:16:25.614Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-mcp-interface/index.md": {
+    "articleId": "164193501",
+    "title": "MCP 落地工业平台：从大模型对话到设备点位",
+    "tags": [
+      "MCP",
+      "人工智能",
+      "智能体",
+      "物联网"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/f48ade622a694bf39b7033e4f852e4fa.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/3e6a3b3b98ea4020a2d489772a57bd26.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/ae89883836694bc4b786ba450558da02.jpeg"
+    },
+    "chips": [
+      "MCP",
+      "人工智能",
+      "智能体",
+      "物联网"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.255Z",
+    "updatedAt": "2026-09-01T06:17:40.765Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-quickstart/index.md": {
+    "articleId": "164193516",
+    "title": "从零部署 IoT DC3：四步快速启动实录",
+    "tags": [
+      "物联网",
+      "Docker",
+      "部署"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/ee37d12941b743b18dab75282cc07cca.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/5547ff1806ce4e10bff2049ab755d94c.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/ce759256cacf46b381272dceea001833.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "Docker",
+      "部署"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.255Z",
+    "updatedAt": "2026-09-01T06:18:13.772Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-security-ledger/index.md": {
+    "articleId": "164193536",
+    "title": "IoT DC3 安全设计：四层纵深防御体系",
+    "tags": [
+      "物联网",
+      "安全",
+      "RBAC"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/43c4581d7ddd4d60bcfe717ec0c4cdd2.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/8752db67dc7a48c7b73b29d662e48330.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/40053f1b2e0740f99d444d7ad7f506df.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "安全",
+      "RBAC"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.255Z",
+    "updatedAt": "2026-09-01T06:18:44.793Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260830-ecosystem-map/index.md": {
+    "articleId": "164193561",
+    "title": "IoT DC3 参与指南：文档、Demo、CLI 与贡献路径",
+    "tags": [
+      "开源",
+      "物联网",
+      "AGPL",
+      "贡献指南",
+      "开源社区"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/7495bbe8436a4a11b67f2f760e7902d0.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/423021d540e9467f8b7da9f9b4eed44a.jpeg",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/ccf52b2301fb4602a08e3725cd1116e1.jpeg"
+    },
+    "chips": [
+      "开源",
+      "物联网",
+      "AGPL",
+      "贡献指南",
+      "开源社区"
+    ],
+    "publishedAt": "2026-08-30T15:31:05.256Z",
+    "updatedAt": "2026-09-01T06:19:35.270Z"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260901-driver-concept/index.md": {
+    "articleId": "145554846",
+    "title": "IoT DC3 概念解读：驱动——协议接入的统一抽象",
+    "tags": [
+      "物联网",
+      "iot",
+      "java",
+      "dc3"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/89cf1d777fbb4378a6a1de7feab91d66.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/7cad6a08367c463484d0a81a11cafd75.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "iot",
+      "java",
+      "dc3"
+    ],
+    "publishedAt": "2025-02-10T00:00:00.000Z",
+    "updatedAt": "2026-09-01T07:18:57.863Z",
+    "note": "重提无卡片版(首次带卡片版审核未通过)"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260901-device-concept/index.md": {
+    "articleId": "164261761",
+    "title": "IoT DC3 概念解读：设备——物理实体的平台建模",
+    "tags": [
+      "物联网",
+      "iot",
+      "dc3",
+      "java",
+      "开源",
+      "人工智能"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/2eba906a377c43bc832ecc23be030ebe.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/2c3ef2e3dfd749488c1ce2c238d38ce8.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "iot",
+      "dc3",
+      "java",
+      "开源",
+      "人工智能"
+    ],
+    "publishedAt": "2026-09-01T07:42:03.000Z",
+    "note": "2026-09-01 根因实验结论:设备篇内容含真实审核触发点(13 号操作即拒,同期 19/20 过审,触发词未定位,疑标题);其后账号进入\"高频发布后全拒\"状态(E5 中性对照文也拒),164261761/164262687/164262861 均为实验文章全部未通过。待账号冷却后:中性对照验证恢复→定位触发词→在旧文 145553624 上重发修正版→清理实验文章",
+    "status": "unpublished"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260901-point-concept/index.md": {
+    "articleId": "145551126",
+    "title": "IoT DC3 概念解读：位号——工业数据的最小语义单元",
+    "tags": [
+      "物联网",
+      "dc3",
+      "iot",
+      "java"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/8c66058ea11e40bab026a8d37bff0ef7.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/ce595e79554c457585dfc21560172dcc.jpeg"
+    },
+    "chips": [
+      "物联网",
+      "dc3",
+      "iot",
+      "java"
+    ],
+    "publishedAt": "2025-02-10T00:00:00.000Z",
+    "updatedAt": "2026-09-01T07:42:03.000Z",
+    "note": "原 VIP 付费文,2026-09-01 更新时改为全部可见"
+  },
+  "/Users/pnoker/Code/pnoker/IoTDC3/github/iot-dc3-docs/dc3/blog/notes/20260901-profile-concept/index.md": {
+    "articleId": "145551051",
+    "title": "IoT DC3 概念解读：模板——语义模板的基座",
+    "tags": [],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/421c85cc075448c786ddb8ddc13ecf87.jpeg",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/c572f0ba756f4a0ca5a023cb9db7ced8.jpeg"
+    },
+    "chips": [
+      "iot",
+      "dc3",
+      "java",
+      "物联网",
+      "安全",
+      "RBAC"
+    ],
+    "publishedAt": "2025-02-10T00:00:00.000Z",
+    "updatedAt": "2026-09-02T05:29:03.582Z",
+    "note": " | 2026-09-02 对齐语义模板命名:标题/正文/封面图更新,内图复用"
+  }
+}

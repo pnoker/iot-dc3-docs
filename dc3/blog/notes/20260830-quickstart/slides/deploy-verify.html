@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>08 验证清单与虚拟驱动演示</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:132px;bottom:112px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.p-ck{flex:1}
+.p-vd{flex:1.15}
+.p-nx{flex:1}
+/* checklist */
+.cks{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.ck{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:9px 11px}
+.ck .cb{width:19px;height:19px;border-radius:6px;background:#e2f3ec;border:1px solid #bfe4d4;color:#12795a;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none;margin-top:1px}
+.ck .tt{font-size:11.5px;font-weight:700}
+.ck .dd{font-size:9.8px;color:var(--ink-3);margin-top:2px;line-height:1.5}
+.ck .dd b{color:var(--brand-deep)}
+.ckfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--muted);line-height:1.5}
+/* virtual driver demo */
+.vd{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.vrow{display:flex;align-items:center;gap:9px}
+.vbox{flex:1;border-radius:10px;border:1px solid var(--line);background:#fbfdfe;padding:8px 11px;text-align:center}
+.vbox .t{font-size:11.5px;font-weight:700}
+.vbox .d{font-size:9.3px;color:var(--ink-3);margin-top:2px;line-height:1.4}
+.vbox.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.vbox.hot .t{color:var(--brand-deep)}
+.varr{flex:none;display:flex;flex-direction:column;align-items:center;width:30px;gap:2px}
+.varr .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.varr .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.wave{display:flex;align-items:flex-end;gap:5px;height:56px;margin-top:6px;padding:0 6px;border-bottom:1.5px solid var(--line)}
+.wv{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#7fddff,var(--brand-mid));opacity:.85}
+.vcode{font:600 9.8px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border:1px solid var(--brand-tint-2);
+  border-radius:7px;padding:5px 9px;margin-top:8px;line-height:1.5}
+.vdfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--muted);line-height:1.5}
+.vdfoot b{color:var(--brand-deep)}
+/* next */
+.nx{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.ni{display:flex;gap:9px;align-items:flex-start}
+.ni .no{width:20px;height:20px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 10.5px "Helvetica Neue",Arial;flex:none;margin-top:1px}
+.ni:nth-child(2) .no{background:var(--brand-mid)}
+.ni:nth-child(3) .no{background:var(--indigo)}
+.ni:nth-child(4) .no{background:var(--teal)}
+.ni span{font-size:10.8px;color:var(--ink-2);line-height:1.55}
+.ni b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:40px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:15px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.08</span></div>
+    <h1>第四步展开：<b>验证清单</b>与虚拟驱动演示</h1>
+    <div class="h-sub">不接真设备也能确认整条链路健康——Virtual 驱动就是为这一刻准备的</div>
+  </div>
+  <div class="main">
+    <div class="panel p-ck">
+      <div class="zlabel">五分钟验证清单</div>
+      <div class="cks">
+        <div class="ck"><span class="cb">✓</span><div><div class="tt">首页仪表盘加载</div><div class="dd">说明网关与各中心服务通信正常——<b>第一健康信号</b></div></div></div>
+        <div class="ck"><span class="cb">✓</span><div><div class="tt">设备列表可见</div><div class="dd">管理面（manager）读写正常</div></div></div>
+        <div class="ck"><span class="cb">✓</span><div><div class="tt">实时数据在跳</div><div class="dd">驱动 → 消息总线 → 数据中心链路通了</div></div></div>
+        <div class="ck"><span class="cb">✓</span><div><div class="tt">历史曲线可查</div><div class="dd">时序存储写入与查询正常（EP.05 的家族在干活）</div></div></div>
+      </div>
+      <div class="ckfoot">四项全绿 = 平台健康；任何一项异常，回部署页坑位清单排查</div>
+    </div>
+    <div class="panel p-vd">
+      <div class="zlabel zt">虚拟驱动演示 · 数据从哪来</div>
+      <div class="vd">
+        <div class="vrow">
+          <div class="vbox hot"><div class="t">启用 Virtual 驱动</div><div class="d">仿真调试类 · 内置 2 个（Virtual / Listening Virtual）</div></div>
+          <div class="varr"><div class="l"></div></div>
+          <div class="vbox"><div class="t">模拟设备持续上报</div><div class="d">位值数据按采集频率生成</div></div>
+          <div class="varr"><div class="l"></div></div>
+          <div class="vbox"><div class="t">整条链路可验证</div><div class="d">实时数据 · 历史曲线 · 告警规则</div></div>
+        </div>
+        <div class="wave">
+          <div class="wv" style="height:34%"></div><div class="wv" style="height:52%"></div><div class="wv" style="height:41%"></div>
+          <div class="wv" style="height:66%"></div><div class="wv" style="height:58%"></div><div class="wv" style="height:78%"></div>
+          <div class="wv" style="height:47%"></div><div class="wv" style="height:62%"></div><div class="wv" style="height:84%"></div>
+          <div class="wv" style="height:55%"></div><div class="wv" style="height:70%"></div><div class="wv" style="height:44%"></div>
+        </div>
+        <div class="vcode">$ psql 版演示数据（可选手动导入，不自动运行）
+$ podman exec -i dc3-postgres psql -U dc3 -d dc3 &lt; demo/iot-dc3-demo.sql</div>
+      </div>
+      <div class="vdfoot">演示数据集提供<b>一批预置设备与点位</b>，跳过手工建模直接看效果 · 图中曲线为示意</div>
+    </div>
+    <div class="panel p-nx">
+      <div class="zlabel zi">跑通之后的四个方向</div>
+      <div class="nx">
+        <div class="ni"><span class="no">A</span><span><b>体验 AI Chat</b>——配置模型后自然语言查设备（EP.06）</span></div>
+        <div class="ni"><span class="no">B</span><span><b>接入 MCP 客户端</b>——dc3-cli / Claude / Cursor（EP.07）</span></div>
+        <div class="ni"><span class="no">C</span><span><b>写第一个驱动</b>——Driver SDK 路径（EP.02）</span></div>
+        <div class="ni"><span class="no">D</span><span><b>研究安全模型</b>——租户 / RBAC / 审计（EP.09）</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">验收口径一句话：<b>四项清单全绿 + 虚拟驱动出数 = 从 clone 到看到数据的完整闭环</b></div>
+  <div class="note">配文：EP.08《从零跑通一个工业物联网平台：一杯咖啡的部署实录》</div>
+</div>
+</body>
+</html>

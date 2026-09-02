@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R1 前端入仓与工程底座</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;flex-direction:column;gap:14px;z-index:4}
+.row{flex:1;display:flex;gap:18px}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:24px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.cmp{display:flex;gap:12px;flex:1;align-items:stretch}
+.cbox{flex:1;border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.cbox .t{font-size:11.5px;font-weight:700}
+.cbox .d{font-size:9.8px;line-height:1.5;color:var(--ink-3)}
+.c-old{border:1px dashed #efc4c0;background:#fdf7f6}
+.c-old .t{color:#8c3830}
+.c-new{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.c-new .t{color:var(--brand-deep)}
+.c-new .d b{color:var(--ink)}
+.carr{align-self:center;flex:none;width:30px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.carr .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.carr .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.pages{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;flex:1;align-content:center}
+.pg{border:1px solid var(--line);background:#fbfdfe;border-radius:8px;padding:6px 9px;font-size:10px;color:var(--ink-2);line-height:1.45}
+.pg b{color:var(--ink);display:block;font-size:10.2px}
+.eng{display:flex;flex-direction:column;gap:6px;flex:1;justify-content:center}
+.ei{display:flex;gap:7px;font-size:10.2px;color:var(--ink-2);line-height:1.5;align-items:flex-start}
+.ei i{width:5.5px;height:5.5px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
+.ei b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R4 v2026.7.3 · 特性详解 1/2</span></div>
+    <h1>前端入仓与工程底座：<b>monorepo</b>、MCP 管理面、列表引擎</h1>
+    <div class="h-sub">一次 619 个提交的主干聚合里，前端从"另一个仓库"变成"平台的一部分"</div>
+  </div>
+  <div class="main">
+    <div class="row">
+      <div class="panel">
+        <div class="zlabel">dc3-web 入仓：为什么这样做</div>
+        <div class="cmp">
+          <div class="cbox c-old">
+            <span class="t">入仓前 · 独立仓库</span>
+            <span class="d">前后端两个仓库、两套 Issue/PR/CI；一次跨端改动要开两个 PR、对两次时间线，<b>版本节奏永远对不齐</b></span>
+          </div>
+          <div class="carr"><div class="l"></div></div>
+          <div class="cbox c-new">
+            <span class="t">入仓后 · monorepo</span>
+            <span class="d">跨端变更是<b>同一个原子提交</b>；CI 统一编排（20 个驱动进入 docker-ci 构建矩阵）；issue 讨论前后端同处一地；review 天然带上下文</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="zlabel zt">入仓同时完成的工作</div>
+        <div class="eng">
+          <div class="ei"><i></i><span><b>CI 整合</b>：构建、测试、镜像流水线合并为一套，驱动镜像全量进构建矩阵</span></div>
+          <div class="ei"><i></i><span><b>i18n 抽取</b>：全部文案收敛到 locales/{lang}.json，翻译可独立维护</span></div>
+          <div class="ei"><i></i><span><b>文档站升级</b>：架构图全屏缩放、日/越语全景 SVG、FAQ 与 IDEA 指南</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel" style="flex:1.25">
+        <div class="zlabel zi">MCP 管理面：本版本交付的管理页面</div>
+        <div class="pages">
+          <div class="pg"><b>连接管理</b>MCP connection 管理页</div>
+          <div class="pg"><b>客户端管理</b>client 注册与查看</div>
+          <div class="pg"><b>工具管理</b>tool 清单与状态</div>
+          <div class="pg"><b>服务账号下拉</b>绑定真实用户身份</div>
+          <div class="pg"><b>租户/连接信息</b>只读信息弹窗</div>
+          <div class="pg"><b>工具调用审计</b>每次调用可回溯</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="zlabel">列表引擎：EntityListPage</div>
+        <div class="eng">
+          <div class="ei"><i></i><span><b>useEntityListPage</b> composable + 测试：分页、筛选、加载态统一沉淀</span></div>
+          <div class="ei"><i></i><span>form/payload hooks、树选择 form 化——<b>新管理页以"组合引擎"方式生长</b>，不再复制粘贴</span></div>
+          <div class="ei"><i></i><span>菜单树客户端权限守卫：越权路由直接拦在前端</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="zlabel zt">体验细节</div>
+        <div class="eng">
+          <div class="ei"><i></i><span>告警/事件/命令页 <b>30 秒自动刷新</b></span></div>
+          <div class="ei"><i></i><span>设备编辑矩阵表格分页与统一样式</span></div>
+          <div class="ei"><i></i><span>位号模板刷新、thingModel 工具、状态分段组件沉淀复用</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">为什么值得单独讲：<b>MCP 管理面是"智能体接口"的运营侧</b>——连接谁、客户端是谁、调了什么工具，全部可管理、可审计</div>
+  <div class="note"><span>版本锚点：v2026.7.3</span><span>配文：R1《IoT DC3 v2026.7.3 发布》</span></div>
+</div>
+</body>
+</html>

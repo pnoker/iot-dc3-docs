@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>09 租户隔离数据路径</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.pipe{position:absolute;top:140px;left:56px;right:56px;display:flex;align-items:stretch;z-index:4}
+.node{flex:1;position:relative;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.94);
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:15px 14px 11px;display:flex;flex-direction:column;gap:6px}
+.node.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));
+  box-shadow:0 10px 28px rgba(10,108,178,.13)}
+.nt{position:absolute;top:-11px;left:12px;font-size:10px;font-weight:700;color:var(--brand-deep);
+  background:#fff;border:1px solid var(--brand-line);border-radius:999px;padding:2.5px 9px}
+.node .tt{font-size:13px;font-weight:800;margin-top:4px}
+.node .en{font:700 8px "Helvetica Neue",Arial;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase}
+.node .dd{font-size:9.8px;color:var(--ink-3);line-height:1.5}
+.node .kc{align-self:flex-start;font:700 8.5px Menlo,monospace;color:var(--brand-deep);background:#fff;
+  border:1px solid var(--brand-line);border-radius:6px;padding:2.5px 7px;margin-top:auto}
+.pa{width:34px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.pa .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.pa .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.pa span{font-size:8px;color:var(--muted);white-space:nowrap}
+.branches{position:absolute;top:308px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.bp{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:13px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:24px 15px 11px;display:flex;flex-direction:column}
+.bz{position:absolute;top:-11px;left:12px;font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.bp ul{display:flex;flex-direction:column;gap:6px}
+.bp li{list-style:none;display:flex;gap:7px;font-size:10.4px;color:var(--ink-2);line-height:1.5}
+.bp li i{width:5.5px;height:5.5px;border-radius:50%;background:var(--brand-bright);margin-top:5px;flex:none}
+.bp li b{color:var(--ink)}
+.bp .code{margin-top:8px;font:600 9.3px Menlo,monospace;color:var(--ink-2);background:#f5f7f9;border:1px solid var(--line);
+  border-radius:7px;padding:5.5px 9px;line-height:1.6}
+.bp .code em{font-style:normal;color:var(--brand-deep);font-weight:700}
+.vline{position:absolute;top:150px;width:1.5px;background:var(--brand-line);z-index:3}
+.vline::after{content:"";position:absolute;bottom:-1px;left:-3.5px;border-left:4px solid transparent;
+  border-right:4px solid transparent;border-top:6px solid var(--brand-line)}
+.nored{position:absolute;left:56px;right:56px;top:478px;height:96px;border:1.5px dashed #efc4c0;border-radius:13px;
+  background:#fdf7f6;display:flex;align-items:center;gap:18px;padding:0 20px;z-index:4}
+.nored .nk{font-size:10px;font-weight:800;color:#fff;background:var(--red);border-radius:6px;padding:4px 10px;flex:none}
+.nored .nt2{display:flex;flex-direction:column;gap:4px}
+.nored .t1{font-size:12.8px;font-weight:800;color:#8c3830}
+.nored .t2{font-size:10.5px;color:var(--ink-2);line-height:1.55}
+.nored .t2 b{color:#8c3830}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:40px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:15px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.09</span></div>
+    <h1>租户隔离的完整数据路径：<b>多租户不是"查询时加个 where"</b></h1>
+    <div class="h-sub">从请求进入到数据落库，租户上下文每一步都在场——工程纪律是"不提供任何绕过的捷径"</div>
+  </div>
+  <div class="pipe">
+    <div class="node">
+      <span class="nt">入口</span>
+      <span class="tt">请求进入</span><span class="en">Request In</span>
+      <span class="dd">网关解析令牌，<b>确定调用者身份与所属租户</b>——智能体调用同样在此定身份</span>
+      <span class="kc">tenant_id = ?</span>
+    </div>
+    <div class="pa"><div class="l"></div><span>携带</span></div>
+    <div class="node hot">
+      <span class="nt">API 层</span>
+      <span class="tt">租户上下文注入</span><span class="en">Context</span>
+      <span class="dd">请求上下文带租户信息进入业务层，后续所有读写默认继承</span>
+      <span class="kc">context.tenantId</span>
+    </div>
+    <div class="pa"><div class="l"></div><span>传递</span></div>
+    <div class="node">
+      <span class="nt">服务间</span>
+      <span class="tt">gRPC 携带租户</span><span class="en">Cross-Service</span>
+      <span class="dd">跨服务调用契约支持时必带租户 ID；<b>跨服务取数先验证归属权</b>再返回或变更</span>
+      <span class="kc">grpc: tenantId</span>
+    </div>
+    <div class="pa"><div class="l"></div><span>落库</span></div>
+    <div class="node">
+      <span class="nt">数据层</span>
+      <span class="tt">查询强制租户范围</span><span class="en">Persistence</span>
+      <span class="dd">业务表带租户字段，查询与写入均限定范围——上层数据中心、告警、AI 全部继承</span>
+      <span class="kc">WHERE tenant_id = ?</span>
+    </div>
+  </div>
+  <div class="vline" style="left:390px;height:118px"></div>
+  <div class="vline" style="left:764px;height:118px"></div>
+  <div class="vline" style="left:1138px;height:118px"></div>
+  <div class="branches">
+    <div class="bp">
+      <span class="bz">缓存层 · 最容易漏的一环</span>
+      <ul>
+        <li><i></i>租户数据的缓存键<b>必须包含租户上下文</b></li>
+        <li><i></i>否则跨租户读到脏缓存——隔离在缓存层穿帮</li>
+        <li><i></i>DC3 把它列为架构红线，而不是"最佳实践建议"</li>
+      </ul>
+      <div class="code">cache key = <em>{tenant}:{entity}:{id}</em></div>
+    </div>
+    <div class="bp">
+      <span class="bz">为什么与 AI 直接相关</span>
+      <ul>
+        <li><i></i>智能体的工具调用运行在<b>调用者的租户上下文</b>里</li>
+        <li><i></i>A 饭店的智能体，根本查不到 B 饭店的设备——<b>不在候选集，而非"查到再过滤"</b></li>
+        <li><i></i>这正是 EP.06"不敢给"那道坎的底层答案</li>
+      </ul>
+      <div class="code">agent tool call → <em>caller tenant scope</em></div>
+    </div>
+  </div>
+  <div class="nored">
+    <span class="nk">反模式红线</span>
+    <div class="nt2">
+      <div class="t1">不提供 "tenantId IS NULL" 式的绕过捷径</div>
+      <div class="t2">除非数据模型<b>显式定义为全局记录</b>——图省事的"先查全量再内存过滤"是隔离穿帮的第一大来源，写在纪律里而不是靠 review 抓。</div>
+    </div>
+  </div>
+  <div class="strip">隔离检查清单：<b>数据库 ✓ 缓存键 ✓ API 上下文 ✓ 服务间 gRPC ✓</b> —— 五处一致才算"全链路"</div>
+  <div class="note">配文：EP.09《当智能体也能调设备接口：工业数据的安全账本》</div>
+</div>
+</body>
+</html>

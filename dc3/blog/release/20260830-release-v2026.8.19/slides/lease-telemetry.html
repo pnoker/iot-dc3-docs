@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R3 租约围栏遥测</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.bc{display:flex;flex-direction:column;gap:8px;align-items:flex-end;margin-top:6px}
+.bci{font-size:10px;font-weight:700;color:var(--red);background:#fbe9e7;border:1px solid #efc4c0;border-radius:999px;padding:3px 10px}
+.chain{position:absolute;top:150px;left:56px;right:56px;background:rgba(255,255,255,.94);border:1px solid var(--line);
+  border-radius:14px;box-shadow:0 8px 26px rgba(23,58,94,.07);padding:34px 22px 24px;z-index:4}
+.zlabel{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.crow{display:flex;align-items:stretch;gap:0}
+.cnode{flex:1;border:1px solid var(--line);border-radius:11px;background:#fbfdfe;padding:11px 12px;text-align:center;
+  display:flex;flex-direction:column;gap:4px;justify-content:center}
+.cnode .t{font-size:12px;font-weight:800}
+.cnode .d{font-size:9.4px;color:var(--ink-3);line-height:1.5}
+.cnode.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));
+  box-shadow:0 8px 22px rgba(10,108,178,.13)}
+.carr{flex:none;width:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0 2px}
+.carr .l{width:100%;height:1.6px;background:var(--brand-line);position:relative}
+.carr .l::after{content:"";position:absolute;right:-1px;top:-4px;border-top:4.5px solid transparent;
+  border-bottom:4.5px solid transparent;border-left:7px solid var(--brand-line)}
+.carr span{font-size:8.5px;color:var(--muted);text-align:center;line-height:1.3}
+.lgcards{position:absolute;top:352px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:24px 16px 10px;display:flex;flex-direction:column}
+.zlabel2{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel2.zr{background:#fbe9e7;color:var(--red);border-color:#efc4c0}
+.lst{display:flex;flex-direction:column;gap:7px;flex:1;justify-content:center}
+.li{display:flex;gap:7px;font-size:10.3px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.li i{width:5.5px;height:5.5px;border-radius:50%;background:var(--green);margin-top:5px;flex:none}
+.li.r i{background:var(--red)}
+.li b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:58px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R6 v2026.8.19 · 特性详解 2/3</span></div>
+      <h1>租约围栏的持久化遥测：<b>不丢、不重</b>是怎么做出来的</h1>
+      <div class="h-sub">提交 956de3dd3（breaking change）· 驱动遥测链路的分布式正确性改造</div>
+    </div>
+    <div class="bc"><span class="bci">BREAKING：驱动需强制配置 durable outbox</span><span class="bci">租约感知的所有权与遥测契约</span></div>
+  </div>
+  <div class="chain">
+    <span class="zlabel">四段机制 · 怎么做的</span>
+    <div class="crow">
+      <div class="cnode">
+        <div class="t">PG 租约 + Fencing</div>
+        <div class="d">PostgreSQL 租约声明<b>分布式所有权</b>；fencing 令牌保证失效实例旧请求失效——多驱动实例 / 故障切换不会双写</div>
+      </div>
+      <div class="carr"><div class="l"></div><span>先落盘</span></div>
+      <div class="cnode hot">
+        <div class="t">SQLite Durable Outbox</div>
+        <div class="d">遥测<b>必须先进持久化外发箱</b>才允许发布到 RabbitMQ——发布前的状态是可恢复的，不是易失的</div>
+      </div>
+      <div class="carr"><div class="l"></div><span>再发布</span></div>
+      <div class="cnode">
+        <div class="t">RabbitMQ 发布</div>
+        <div class="d">消息带围栏契约进入总线，重发场景与所有权变更场景被契约约束</div>
+      </div>
+      <div class="carr"><div class="l"></div><span>幂等消费</span></div>
+      <div class="cnode">
+        <div class="t">数据中心摄取</div>
+        <div class="d">摄取<b>事务化 + 幂等</b>：重复投递落库结果一致，失败回滚不产生半批</div>
+      </div>
+    </div>
+  </div>
+  <div class="lgcards">
+    <div class="panel">
+      <div class="zlabel2">为什么这样做</div>
+      <div class="lst">
+        <div class="li"><i></i><span><b>重发与去重是一对</b>：R2 的缓冲重发保证"不丢"，但重发必然带来重复——本版本在摄取侧用幂等把"不重"补齐，链路语义闭环为 <b>at-least-once + 幂等 = 效果恰好一次</b></span></div>
+        <div class="li"><i></i><span><b>所有权问题必须显式解</b>：两个驱动实例同时认为"我负责这批设备"时，谁说了算？租约 + fencing 是分布式系统的标准答案，而不是靠"部署时别这么干"</span></div>
+        <div class="li"><i></i><span><b>outbox 是发布的前置条件</b>：先持久化再发布，崩溃恢复后从外发箱续传——发布行为从"尽力而为"变成"可续传的事务"</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="zlabel2 zr">升级注意（breaking）</div>
+      <div class="lst">
+        <div class="li r"><i></i><span>驱动侧<b>必须配置 durable outbox</b>——这是硬性要求，不是可选项；升级前先确认驱动部署带持久化卷</span></div>
+        <div class="li r"><i></i><span>遥测契约变更：驱动与数据中心需<b>成对升级</b>，跨版本混布不在兼容承诺内</span></div>
+        <div class="li r"><i></i><span>为什么敢于 breaking：遥测正确性是采集平台的根，<b>根上的账越早算清越好</b>——发布说明与迁移要点见仓库 changelog</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">一句话：<b>缓冲（R2）管丢不丢，租约围栏（本版）管重不重</b>——采集正确性两条腿终于都齐了</div>
+  <div class="note"><span>版本锚点：v2026.8.19</span><span>配文：R3《IoT DC3 v2026.8.19 发布》</span></div>
+</div>
+</body>
+</html>

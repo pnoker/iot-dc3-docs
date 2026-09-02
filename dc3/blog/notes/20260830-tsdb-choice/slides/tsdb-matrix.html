@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>05 TSDB 能力矩阵</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.dbhead{display:flex;gap:10px}
+.dbc{width:112px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.93);
+  padding:7px 9px;text-align:center;box-shadow:0 5px 16px rgba(23,58,94,.05)}
+.dbc .n{font:700 11.5px "Helvetica Neue",Arial,"PingFang SC"}
+.dbc .d{font-size:8.5px;color:var(--ink-3);margin-top:2px;line-height:1.35}
+.dbc.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.dbc.hot .n{color:var(--brand-deep)}
+.dbc .cn{display:inline-block;font-size:8.5px;font-weight:700;color:#12795a;background:#e2f3ec;border-radius:999px;
+  padding:1px 7px;margin-top:3px;border:1px solid #bfe4d4}
+.matrix{position:absolute;top:150px;left:56px;right:56px;background:rgba(255,255,255,.94);border:1px solid var(--line);
+  border-radius:14px;box-shadow:0 8px 26px rgba(23,58,94,.07);overflow:hidden;z-index:4}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+col.c-cap{width:200px}
+th{font-size:11px;font-weight:700;color:var(--ink);padding:9px 10px;background:#f4f8fc;border-bottom:1.5px solid var(--line)}
+th .en{display:block;font:600 8.5px "Helvetica Neue",Arial;color:var(--muted);letter-spacing:.5px;margin-top:1px}
+td{font-size:10.8px;color:var(--ink-2);padding:10px 10px;border-bottom:1px solid #edf1f5;line-height:1.45}
+tr:last-child td{border-bottom:none}
+td.cap{color:var(--ink);font-weight:600}
+td.cap small{display:block;font-size:8.8px;color:var(--muted);font-weight:400;margin-top:1px}
+.yes{color:#12795a;font-weight:700}
+.no2{color:var(--muted)}
+.no2 b{font-weight:600}
+.mark{display:inline-flex;align-items:center;gap:5px}
+.mark i{width:16px;height:16px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:10px;font-weight:800}
+.my{background:#e2f3ec;color:#12795a}
+.mn{background:#f1f4f7;color:var(--muted)}
+.mp{background:var(--brand-tint);color:var(--brand-deep)}
+tr.hl-row td{background:#fbfdff}
+.strip{position:absolute;left:56px;right:56px;bottom:58px;height:44px;background:rgba(255,255,255,.93);
+  border:1px solid var(--brand-line);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:14px;z-index:4;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);font-size:11.5px;color:var(--ink-2)}
+.strip b{color:var(--brand-deep)}
+.strip .sep{width:1px;height:20px;background:var(--line)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.05</span></div>
+      <h1>四库能力矩阵：<b>按适配器实际声明发布，非预估</b></h1>
+      <div class="h-sub">每个格子来自适配器的真实能力声明 · "不支持"是显式契约，不是缺陷藏掖</div>
+    </div>
+    <div class="dbhead">
+      <div class="dbc hot"><div class="n">TimescaleDB</div><div class="d">内嵌 PG · 默认</div><span class="cn">默认启用</span></div>
+      <div class="dbc"><div class="n">TDengine</div><div class="d">超级表 + tags</div><span class="cn">国产开源</span></div>
+      <div class="dbc"><div class="n">InfluxDB</div><div class="d">3.x · HTTP API</div></div>
+      <div class="dbc"><div class="n">IoTDB</div><div class="d">2.x · 树路径</div><span class="cn">国产开源</span></div>
+    </div>
+  </div>
+  <div class="matrix">
+    <table>
+      <colgroup><col class="c-cap"><col><col><col><col></colgroup>
+      <tr>
+        <th>能力项<small>Capability</small></th>
+        <th>TimescaleDB<small>默认 · 可外置</small></th>
+        <th>TDengine<small>外置</small></th>
+        <th>InfluxDB<small>外置 · 3.x</small></th>
+        <th>IoTDB<small>外置 · 2.x</small></th>
+      </tr>
+      <tr>
+        <td class="cap">分桶聚合<small>时段统计的基础</small></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">time_bucket</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">INTERVAL</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">date_bin</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">窗口分组</span></span></td>
+      </tr>
+      <tr>
+        <td class="cap">微秒精度<small>高频采样前提</small></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">库级 PRECISION</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">ns 存储</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">需配置项</span></span></td>
+      </tr>
+      <tr class="hl-row">
+        <td class="cap">精确分位数<small>PERCENTILE</small></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">精确</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">子表直查</span></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">声明 false · <b>门面精算</b></span></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">声明 false · <b>门面精算</b></span></span></td>
+      </tr>
+      <tr>
+        <td class="cap">FIRST / LAST（M4）<small>压缩趋势线</small></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">ordered agg</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">FIRST/LAST_VALUE</span></span></td>
+      </tr>
+      <tr class="hl-row">
+        <td class="cap">rollup 分级聚合<small>raw→分钟→小时</small></td>
+        <td><span class="mark"><i class="mp">★</i><span class="yes" style="color:var(--brand-deep)">NATIVE 共享 cagg</span></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">诚实原始扫描</span></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">诚实原始扫描</span></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">诚实原始扫描</span></span></td>
+      </tr>
+      <tr>
+        <td class="cap">按 driver 分组统计<small>租户分析面</small></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">路径模型差异 · <b>如实拒绝</b></span></span></td>
+      </tr>
+      <tr class="hl-row">
+        <td class="cap">范围删除<small>租户注销 / 数据治理</small></td>
+        <td><span class="mark"><i class="my">✓</i></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">上界换算</span></span></td>
+        <td><span class="mark"><i class="mn">✗</i><span class="no2">走分区工具</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">deleteData</span></span></td>
+      </tr>
+      <tr>
+        <td class="cap">契约套件<small>dc3-tsdb-tck</small></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">24/24</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">24/24（2 跳过）</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">24/24（2 跳过）</span></span></td>
+        <td><span class="mark"><i class="my">✓</i><span class="yes">24/24（3 跳过）</span></span></td>
+      </tr>
+    </table>
+  </div>
+  <div class="strip">
+    <span>跳过 = 该库<b>如实声明不支持</b>、套件按能力门控跳过——不是测试失败</span>
+    <span class="sep"></span>
+    <span>不支持的能力由数据中心<b>门面降级</b>：直方图零桶 / 分位数自算</span>
+    <span class="sep"></span>
+    <span><b>宁可少给能力，绝不给错数据</b></span>
+  </div>
+  <div class="note">完整矩阵见仓库 docs/tsdb-stores.md · 本图为节选口径 · 能力随版本演进以文档为准</div>
+</div>
+</body>
+</html>

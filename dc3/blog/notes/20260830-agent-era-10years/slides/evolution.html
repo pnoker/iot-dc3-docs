@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>01 平台演进三阶段</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--planned:#8a98a8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:130px;bottom:150px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.stage{flex:1;position:relative;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 20px 16px;display:flex;flex-direction:column}
+.s3{border:1.5px solid var(--brand-line);box-shadow:0 10px 30px rgba(10,108,178,.14)}
+.zlabel{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.era{font:700 10.5px "Helvetica Neue",Arial;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.sname{font-size:18px;font-weight:700;margin:6px 0 2px}
+.s3 .sname{color:var(--brand-deep)}
+.goal{font-size:11.5px;color:var(--ink-3);margin-bottom:12px}
+.goal b{color:var(--ink-2)}
+.feats{display:flex;flex-direction:column;gap:9px}
+.feat{display:flex;align-items:center;gap:8px;background:var(--brand-tint);border:1px solid var(--brand-tint-2);
+  border-radius:9px;padding:9.5px 10px}
+.feat i{width:7px;height:7px;border-radius:50%;background:var(--brand-bright);flex:none}
+.feat span{font-size:11.2px;color:var(--ink-2);line-height:1.45}
+.feat b{color:var(--ink);font-weight:600}
+.dc3row{margin-top:auto;padding-top:10px;border-top:1px dashed var(--line);display:flex;align-items:center;gap:6px}
+.dc3row .tag{font:700 9.5px "Helvetica Neue",Arial;letter-spacing:1px;color:#fff;background:var(--brand);
+  border-radius:5px;padding:2.5px 7px}
+.dc3row span{font-size:10.5px;color:var(--ink-3)}
+.s3 .dc3row .tag{background:var(--brand-deep)}
+.arr{align-self:center;flex:none;width:26px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.arr .l{width:1.5px;flex:1;background:var(--brand-line)}
+.arr .t{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--brand-line)}
+.policy{position:absolute;left:56px;right:56px;bottom:66px;height:64px;background:rgba(255,255,255,.92);
+  border:1px solid var(--brand-line);border-radius:14px;display:flex;align-items:center;gap:18px;padding:0 20px;z-index:4;
+  box-shadow:0 6px 22px rgba(23,58,94,.06)}
+.policy .pk{font:700 10px "Helvetica Neue",Arial;letter-spacing:1.5px;color:#fff;background:var(--brand-deep);
+  border-radius:6px;padding:4px 9px;flex:none}
+.policy .pitem{display:flex;align-items:center;gap:8px}
+.policy .pitem i{width:6px;height:6px;border-radius:50%;background:var(--brand-bright)}
+.policy .pitem span{font-size:11.5px;color:var(--ink-2)}
+.policy .pitem b{color:var(--brand-deep)}
+.policy .sep{width:1px;height:26px;background:var(--line)}
+.strip{position:absolute;left:56px;right:56px;bottom:16px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.01</span></div>
+    <h1>工业物联网平台的三个阶段：<b>从设备联网到智能体协同</b></h1>
+    <div class="h-sub">DC3 在第一阶段入场，第二阶段补齐云原生与数据链路，第三阶段开局时落在"平台底座"的得分点上</div>
+  </div>
+  <div class="main">
+    <div class="stage">
+      <div class="zlabel">阶段一 · 连接为王</div>
+      <div class="era">≈ 2015 — 2018</div>
+      <div class="sname">设备联网</div>
+      <div class="goal">解决"<b>连得上</b>"：协议碎片化是主题</div>
+      <div class="feats">
+        <div class="feat"><i></i><span><b>协议接入</b>：Modbus / OPC / PLC 各自为战</span></div>
+        <div class="feat"><i></i><span><b>竞争点</b>：谁协议多、谁接入稳</span></div>
+        <div class="feat"><i></i><span><b>典型形态</b>：采集网关 + 组态软件</span></div>
+        <div class="feat"><i></i><span><b>遗留问题</b>：协议知识沉淀在个人经验里，换人就断档</span></div>
+      </div>
+      <div class="dc3row"><span class="tag">DC3</span><span>2016 年以驱动接入框架起家，2018 年开源</span></div>
+    </div>
+    <div class="arr"><div class="l"></div><div class="t"></div></div>
+    <div class="stage">
+      <div class="zlabel">阶段二 · 数据为王</div>
+      <div class="era">≈ 2019 — 2023</div>
+      <div class="sname">数据平台</div>
+      <div class="goal">解决"<b>存得下、看得见</b>"：数据闭环成型</div>
+      <div class="feats">
+        <div class="feat"><i></i><span><b>时序存储</b>：历史数据成为资产</span></div>
+        <div class="feat"><i></i><span><b>规则引擎</b>：告警与联动标准化</span></div>
+        <div class="feat"><i></i><span><b>云原生</b>：微服务与容器化成为标配</span></div>
+        <div class="feat"><i></i><span><b>新问题</b>：数据在了，"用起来"的门槛还很高</span></div>
+      </div>
+      <div class="dc3row"><span class="tag">DC3</span><span>补齐微服务架构与可插拔数据家族</span></div>
+    </div>
+    <div class="arr"><div class="l"></div><div class="t"></div></div>
+    <div class="stage s3">
+      <div class="zlabel">阶段三 · 智能体为王（进行中）</div>
+      <div class="era">2024 —</div>
+      <div class="sname">智能体协同</div>
+      <div class="goal">解决"<b>用得智能</b>"：自然语言操作工业系统成立</div>
+      <div class="feats">
+        <div class="feat"><i></i><span><b>工具化</b>：平台能力变成模型可调的工具</span></div>
+        <div class="feat"><i></i><span><b>标准接口</b>：MCP 成为互操作底座</span></div>
+        <div class="feat"><i></i><span><b>前提</b>：能被安全授权的平台底座</span></div>
+        <div class="feat"><i></i><span><b>新变量</b>：大模型让"开口问"第一次技术上成立</span></div>
+      </div>
+      <div class="dc3row"><span class="tag">DC3</span><span>Agentic Center + MCP，路线：面向智能体演进</span></div>
+    </div>
+  </div>
+  <div class="policy">
+    <span class="pk">2026 政策锚点</span>
+    <div class="pitem"><i></i><span>工信部等八部门《"人工智能+制造"专项行动实施方案》：<b>1000 个高水平工业智能体</b></span></div>
+    <div class="sep"></div>
+    <div class="pitem"><i></i><span>网信办《智能体规范应用与创新发展实施意见》：<b>规范有序 + 创新驱动</b></span></div>
+  </div>
+  <div class="strip">官方定位：<b>多协议接入 · 云原生 · AI 赋能的开源工业物联网平台，面向智能体演进</b></div>
+</div>
+</body>
+</html>

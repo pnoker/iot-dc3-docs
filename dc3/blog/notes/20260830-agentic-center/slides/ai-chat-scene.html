@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>06 一次对话的调用路径</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.qbar{position:absolute;top:130px;left:56px;right:56px;height:52px;border:1px solid #d6d3f3;border-radius:12px;
+  background:linear-gradient(90deg,#f5f4fd,#fff);display:flex;align-items:center;gap:12px;padding:0 18px;z-index:4;
+  box-shadow:0 6px 20px rgba(85,88,201,.08)}
+.qbar .who{font-size:10px;font-weight:700;color:#fff;background:var(--indigo);border-radius:6px;padding:3.5px 9px;flex:none}
+.qbar .qt{font-size:13.5px;font-weight:600;color:var(--ink)}
+.qbar .qm{margin-left:auto;font-size:10px;color:var(--muted)}
+.flow{position:absolute;top:200px;left:56px;right:56px;display:flex;gap:0;align-items:stretch;z-index:4}
+.fs{flex:1;position:relative;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.94);
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:14px 14px 11px;display:flex;flex-direction:column;gap:6px}
+.fs .fn{font:800 10px "Helvetica Neue",Arial;letter-spacing:1.2px;color:var(--brand-mid)}
+.fs .ft{font-size:13px;font-weight:700;line-height:1.35}
+.fs .fd{font-size:10px;color:var(--ink-3);line-height:1.5}
+.fs .tag{align-self:flex-start;font-size:9px;font-weight:700;border-radius:999px;padding:2px 8px;margin-top:auto}
+.tag-data{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.tag-llm{background:#efeefe;color:var(--indigo);border:1px solid #d6d3f3}
+.tag-perm{background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.fa{width:34px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.fa .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.fa .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.fa span{font-size:8.5px;color:var(--muted);white-space:nowrap}
+.res{position:absolute;top:352px;left:56px;right:56px;bottom:118px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:24px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zg{background:#e2f3ec;color:#12795a;border-color:#bfe4d4}
+.p-chat{flex:1.25}
+.p-why{flex:1}
+.msg{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.m2{align-self:flex-start;max-width:92%;border-radius:12px;border-bottom-left-radius:4px;padding:9px 13px;font-size:11px;line-height:1.6}
+.m-user{align-self:flex-end;max-width:88%;border-radius:12px;border-bottom-right-radius:4px;padding:9px 13px;font-size:11px;line-height:1.6;
+  background:var(--brand);color:#fff}
+.m-ai{background:#f5f4fd;border:1px solid #dcdaf5;color:var(--ink)}
+.m-ai b{color:var(--indigo)}
+.m-ai .num{font:800 12px "Helvetica Neue",Arial;color:var(--brand-deep);background:#fff;border:1px solid var(--brand-line);
+  border-radius:5px;padding:0 5px}
+.chart{display:flex;align-items:flex-end;gap:7px;height:64px;margin:6px 0 2px;padding:0 4px}
+.bar{width:26px;border-radius:5px 5px 0 0;background:linear-gradient(180deg,var(--brand-bright),var(--brand-mid));position:relative}
+.bar.hot{background:linear-gradient(180deg,#7fddff,var(--brand-bright));box-shadow:0 0 12px rgba(18,150,219,.35)}
+.bar .v{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font:700 8.5px "Helvetica Neue",Arial;color:var(--brand-deep)}
+.chipnote{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cn{font-size:9px;color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:2.5px 8px;background:#fff}
+.wlist{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.wi{display:flex;gap:9px;align-items:flex-start}
+.wi i{width:18px;height:18px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:9.5px;font-weight:800;background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.wi i.n{background:#fdf1e2;color:#b06a05;border-color:#f3ddba}
+.wi span{font-size:10.8px;color:var(--ink-2);line-height:1.55}
+.wi b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.06</span></div>
+    <h1>一次真实对话的完整路径：<b>数字从数据库来，语言从模型来</b></h1>
+    <div class="h-sub">以 Web AI Chat 的典型问题为例 · 示例数值为演示口径，实际以平台查询结果为准</div>
+  </div>
+  <div class="qbar">
+    <span class="who">运维用户</span>
+    <span class="qt">"3 号车间最近一小时，温度最高的设备是哪台？"</span>
+    <span class="qm">会话上下文与记忆已持久化 · 多轮可追问</span>
+  </div>
+  <div class="flow">
+    <div class="fs">
+      <span class="fn">STEP 1</span><span class="ft">意图理解</span>
+      <span class="fd">模型解析问题：目标 = 车间维度 + 时间窗口 + 极值指标</span>
+      <span class="tag tag-llm">语言层 · 模型</span>
+    </div>
+    <div class="fa"><div class="l"></div><span>工具调用</span></div>
+    <div class="fs">
+      <span class="fn">STEP 2</span><span class="ft">设备清单查询</span>
+      <span class="fd">调用设备查询工具：按<b>租户与权限</b>过滤出 3 号车间在线设备</span>
+      <span class="tag tag-perm">权限内 · 确定数据</span>
+    </div>
+    <div class="fa"><div class="l"></div><span>工具调用</span></div>
+    <div class="fs">
+      <span class="fn">STEP 3</span><span class="ft">点位数据查询</span>
+      <span class="fd">温度点位 · 最近一小时窗口 · 时序库分桶聚合取最大值</span>
+      <span class="tag tag-data">数字来自数据库</span>
+    </div>
+    <div class="fa"><div class="l"></div><span>结果组装</span></div>
+    <div class="fs">
+      <span class="fn">STEP 4</span><span class="ft">回答与可视化</span>
+      <span class="fd">模型组织语言回答极值设备，并生成趋势对比图</span>
+      <span class="tag tag-llm">语言层 · 模型</span>
+    </div>
+  </div>
+  <div class="res">
+    <div class="panel p-chat">
+      <div class="zlabel zi">AI Chat · 回答示意</div>
+      <div class="msg">
+        <div class="m-user">那最近一小时的趋势怎么样？</div>
+        <div class="m2 m-ai">
+          最近一小时 <b>3 号车间</b>温度最高的设备是 <span class="num">#J-03-7</span>（示例编号），峰值 <span class="num">78.4℃</span>，高于车间其余设备均值。四台主要设备对比如下：
+          <div class="chart">
+            <div class="bar" style="height:38%"><span class="v">52℃</span></div>
+            <div class="bar" style="height:52%"><span class="v">61℃</span></div>
+            <div class="bar hot" style="height:78%"><span class="v">78℃</span></div>
+            <div class="bar" style="height:45%"><span class="v">55℃</span></div>
+          </div>
+          <span style="font-size:9px;color:var(--muted)">趋势数据来自时序库分桶聚合 · 图示为演示口径</span>
+        </div>
+      </div>
+      <div class="chipnote">
+        <span class="cn">多轮上下文</span><span class="cn">追问不丢会话</span><span class="cn">图表由查询数据生成</span>
+      </div>
+    </div>
+    <div class="panel p-why">
+      <div class="zlabel zg">为什么这条链路可信</div>
+      <div class="wlist">
+        <div class="wi"><i>✓</i><span><b>极值与数值来自查询结果</b>——模型不生成、不估计任何数字</span></div>
+        <div class="wi"><i>✓</i><span><b>查询范围 = 用户权限范围</b>——跨租户设备根本不在候选集里</span></div>
+        <div class="wi"><i>✓</i><span><b>约束写在代码里</b>——权限收敛是平台层的，不靠提示词自觉</span></div>
+        <div class="wi"><i>n</i><span><b>告警根因分析同理是"辅助"</b>：给运维建议，处置走命令链路人确认</span></div>
+        <div class="wi"><i>n</i><span><b>分析质量取决于点位建模完整度</b>——回到 EP.02：数据不完整，分析没有地基</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">工程分界一句话：<b>模型负责理解与表达，事实由平台数据保证</b></div>
+  <div class="note">对话与数值为示意场景 · 真实效果可在 demo.dc3.site 体验 · 配文：EP.06</div>
+</div>
+</body>
+</html>

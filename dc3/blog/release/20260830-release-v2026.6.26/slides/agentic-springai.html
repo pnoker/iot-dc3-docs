@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R1 AI 中心升级 Spring AI 2</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-mig{flex:1.15}
+.p-cap{flex:1}
+.p-why{width:300px}
+.mig{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.mi{border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:9px 12px}
+.mi .mt{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.mi .mt code{font:700 9.5px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);
+  border:1px solid var(--brand-tint-2);border-radius:5px;padding:1.5px 6px}
+.mi .md{font-size:10px;color:var(--ink-3);margin-top:3px;line-height:1.55}
+.mi .md b{color:var(--ink)}
+.cap{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.ci{display:flex;gap:8px;align-items:flex-start}
+.ci i{width:6px;height:6px;border-radius:50%;background:var(--indigo);margin-top:6px;flex:none}
+.ci span{font-size:10.8px;color:var(--ink-2);line-height:1.55}
+.ci b{color:var(--ink)}
+.why{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.wi{border-radius:10px;padding:10px 12px;font-size:10.6px;line-height:1.6}
+.wi.a{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));color:var(--ink)}
+.wi.a b{color:var(--brand-deep)}
+.wi.b{border:1px dashed var(--line);background:#fbfdfe;color:var(--ink-2)}
+.wi.b b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R3 v2026.6.26 · 特性详解 1/2</span></div>
+    <h1>AI 中心迁移 <b>Spring AI 2.0</b>：做了什么，怎么做的，为什么</h1>
+    <div class="h-sub">dc3-center-agentic 是平台的 AI 编排中枢 · 本次升级让它站在 Spring 官方 AI 栈的最新稳定线上</div>
+  </div>
+  <div class="main">
+    <div class="panel p-mig">
+      <div class="zlabel">怎么做的 · 三步迁移</div>
+      <div class="mig">
+        <div class="mi">
+          <div class="mt">① 工具 API 迁移 <code>spring-ai 2.0.0</code></div>
+          <div class="md">Tool Calling 接口从旧版注解模型切到 Spring AI 2 的工具定义——平台把"查设备、读写点位"注册为<b>标准工具</b>的代码路径整体重写，模型侧调用方式不变。</div>
+        </div>
+        <div class="mi">
+          <div class="mt">② JSON Schema 生成对齐 <code>victools jsonschema 5.0.0</code></div>
+          <div class="md">工具参数的 JSON Schema 由 victools 生成，版本对齐到 5.0.0 消除生成结果与 Spring AI 2 校验器的<b>字段类型漂移</b>，并同步更新工具 API 测试用例。</div>
+        </div>
+        <div class="mi">
+          <div class="mt">③ 依赖治理 <code>okhttp</code></div>
+          <div class="md">补齐模型 HTTP 客户端依赖声明，避免隐式传递依赖在升级后<b>运行期才爆</b>——依赖显式化是这次迁移的纪律。</div>
+        </div>
+      </div>
+    </div>
+    <div class="panel p-cap">
+      <div class="zlabel zi">升级后的能力面</div>
+      <div class="cap">
+        <div class="ci"><i></i><span><b>Tool Calling 受控调用</b>：模型经工具查设备、读写点位，全部落在调用者权限与租户上下文内</span></div>
+        <div class="ci"><i></i><span><b>模型提供者管理</b>（model provider service）：多模型接入与配置化管理</span></div>
+        <div class="ci"><i></i><span><b>动作服务</b>（action service）：AI 产出的动作建议走统一执行通道</span></div>
+        <div class="ci"><i></i><span><b>会话记忆持久化</b>：多轮上下文入库，跨端登录不丢</span></div>
+        <div class="ci"><i></i><span><b>告警根因辅助分析</b>：产出建议供运维决策，处置仍走命令链路</span></div>
+      </div>
+    </div>
+    <div class="panel p-why">
+      <div class="zlabel zt">为什么这样做</div>
+      <div class="why">
+        <div class="wi a"><b>站在官方主线上。</b>Spring AI 2 是 Spring 官方 AI 栈的当前主线，早迁移早收敛：工具 API 的破坏性调整越晚做，改的面积越大。</div>
+        <div class="wi b"><b>为工具面扩展铺路。</b>统一的工具定义与 Schema 生成，是后续把更多平台能力（存储分析、告警深挖）开放给模型的基础设施。</div>
+        <div class="wi b"><b>测试先行。</b>工具 API 测试用例随迁移同步更新——迁移的验收标准不是"能编译"，是行为一致。</div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">升级口径：<b>模型可插拔不变</b>（GPT / Claude / DeepSeek / Qwen），变的是工具调用底座——这正是平台层该守住的边界</div>
+  <div class="note"><span>版本锚点：v2026.6.26（Spring AI 2.0.0 正式版迁移）（能力自 v2026.6.26 窗口陆续合入）</span><span>配文：R1《IoT DC3 v2026.7.3 发布》</span></div>
+</div>
+</body>
+</html>

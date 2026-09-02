@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 发版封面 v2026.6.19</title>
+<style>
+
+:root{
+  --ink:#152335;--ink2:#42546a;--ink3:#64748b;--deep:#07549a;--blue:#0a6cb2;--bright:#1296db;--indigo:#5558c9;
+  --mesh:#4a90c9;--purple:#8d6df4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:545px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:linear-gradient(118deg,#f6fbff 0%,#edf5fd 55%,#e7eef9 100%);}
+.slide::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(760px 430px at 85% 6%, rgba(127,212,242,.32) 0%, rgba(127,212,242,0) 62%),
+             radial-gradient(660px 420px at 5% 102%, rgba(183,165,245,.28) 0%, rgba(183,165,245,0) 58%);}
+.slide::after{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.075) 1.1px,transparent 1.1px);background-size:24px 24px}
+.mesh{position:absolute;inset:0;z-index:1;pointer-events:none}
+.top{position:absolute;top:32px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.lockup{display:flex;align-items:center;gap:13px}
+.lens{width:54px;height:54px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 22%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.6) 34%, rgba(185,240,255,.28) 62%, rgba(85,191,232,.14) 100%);
+  border:1px solid rgba(255,255,255,.98);box-shadow:0 8px 22px rgba(12,89,153,.16), inset 0 0 0 1px rgba(140,137,236,.12);
+  display:flex;align-items:center;justify-content:center}
+.lens img{width:32px;height:31px;display:block}
+.wm .wt{display:block;font:800 24px "Segoe UI","Helvetica Neue",Arial,sans-serif;letter-spacing:.4px;
+  background:linear-gradient(112deg,#07549a 4%,#149ed7 46%,#4f52bf 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wm .wt2{display:block;font:600 8.5px "Segoe UI",Arial,sans-serif;letter-spacing:2.1px;color:#7c8ea3;text-transform:uppercase;margin-top:3px}
+.ep{font:600 11px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:1px;color:var(--blue);border-radius:999px;padding:7px 15px;
+  background:rgba(255,255,255,.75);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 14px rgba(12,89,153,.08)}
+.left{position:absolute;left:64px;top:136px;width:600px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.kbar{width:26px;height:3.5px;border-radius:2px;background:linear-gradient(90deg,#08a9de,#6662d7)}
+.kicker span{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--blue);text-transform:uppercase}
+h1{font-size:35px;line-height:1.32;font-weight:800;letter-spacing:.3px;color:var(--ink);margin-bottom:13px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 40%,#1786d4 62%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:14.5px;line-height:1.8;color:var(--ink2);margin-bottom:20px}
+.sub b{color:var(--deep);font-weight:700}
+.chips{display:flex;gap:9px;flex-wrap:wrap}
+.chip{font-size:12px;color:var(--ink2);border:1px solid rgba(255,255,255,.98);background:rgba(255,255,255,.68);
+  border-radius:999px;padding:7px 14px;box-shadow:0 3px 10px rgba(12,89,153,.07)}
+.chip b{color:var(--deep);font-weight:700}
+.motif{position:absolute;right:56px;top:112px;width:560px;height:360px;z-index:5}
+svg.wires{position:absolute;inset:0;z-index:2;overflow:visible;pointer-events:none}
+.g{position:absolute;border-radius:13px;border:1px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(255,255,255,.62));
+  box-shadow:0 10px 26px rgba(12,89,153,.12), inset 0 0 0 1px rgba(140,137,236,.10)}
+.hero{border:1.5px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(233,244,255,.8));
+  box-shadow:0 16px 40px rgba(18,150,219,.22), inset 0 0 0 1px rgba(128,216,244,.5)}
+.pill{position:absolute;border-radius:999px;font-size:11px;font-weight:600;color:var(--deep);z-index:4;
+  background:rgba(255,255,255,.8);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 12px rgba(12,89,153,.08);
+  display:flex;align-items:center;justify-content:center}
+.mlabel{position:absolute;font-size:11px;font-weight:600;color:var(--ink3);z-index:4}
+.meta{position:absolute;left:64px;right:64px;bottom:20px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.meta .sites{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.meta .sites b{color:var(--deep);font-weight:700}
+.meta .repo{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.vcard{position:absolute;left:20px;top:26px;width:240px;height:118px;border-radius:15px;z-index:4;padding:16px 18px;
+  display:flex;flex-direction:column;justify-content:center;gap:4px;
+  border:1.5px solid rgba(255,255,255,.98);background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(224,240,252,.85));
+  box-shadow:0 16px 40px rgba(18,150,219,.22), inset 0 0 0 1px rgba(128,216,244,.5)}
+.vcard .vv{font:800 25px "Segoe UI",Arial,sans-serif;background:linear-gradient(112deg,#07549a,#149ed7 46%,#4f52bf);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.vcard .vt{font-size:12px;font-weight:700;color:var(--ink)}
+.vcard .vs{font-size:9.5px;color:#12795a;background:rgba(226,243,236,.9);border:1px solid rgba(191,228,212,.8);
+  border-radius:999px;padding:2px 9px;align-self:flex-start;margin-top:2px}
+.chat{position:absolute;left:296px;top:16px;width:264px;height:172px;border-radius:13px;z-index:3;padding:12px 12px;
+  border:1px solid rgba(255,255,255,.98);background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(255,255,255,.65));
+  box-shadow:0 10px 26px rgba(12,89,153,.12);display:flex;flex-direction:column;gap:7px}
+.ub{align-self:flex-end;max-width:78%;background:var(--blue);color:#fff;font-size:9.5px;border-radius:9px 9px 3px 9px;padding:5px 9px}
+.ab{align-self:flex-start;max-width:88%;background:#f5f4fd;border:1px solid #dcdaf5;color:var(--ink);font-size:9.5px;
+  border-radius:9px 9px 9px 3px;padding:6px 9px;line-height:1.5}
+.think{display:flex;align-items:center;gap:5px;font-size:8.5px;color:var(--indigo);background:#efeefe;
+  border:1px dashed #cdcbee;border-radius:999px;padding:2px 8px;align-self:flex-start}
+.think i{width:5px;height:5px;border-radius:50%;background:var(--indigo)}
+.rstat{position:absolute;z-index:4;font-size:10.5px;color:var(--ink2);padding:5px 12px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.98);background:rgba(255,255,255,.75);box-shadow:0 3px 10px rgba(12,89,153,.08)}
+.rstat b{color:var(--deep);font-family:"Segoe UI",Arial;font-weight:800}
+</style>
+</head>
+<body>
+<div class="slide">
+  <!-- R2 发版封面 v2026.6.19 · V4 liquid-glass · 品牌规范：iot-dc3/.github/brand -->
+  <svg class="mesh" viewBox="0 0 1280 545">
+    <path d="M40 508 C 300 498, 560 484, 780 478 C 960 473, 1150 442, 1266 386" fill="none" stroke="#4a90c9" stroke-opacity=".20" stroke-width="1.2"/>
+    <path d="M40 508 C 300 498, 560 484, 780 478 C 960 473, 1150 442, 1266 386" fill="none" stroke="#4a90c9" stroke-opacity=".26" stroke-width="1.7" stroke-dasharray="1 10" stroke-linecap="round"/>
+    <line x1="96" y1="470" x2="126" y2="498" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="126" y1="498" x2="158" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="158" y1="466" x2="190" y2="500" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="190" y1="500" x2="222" y2="474" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="110" y1="436" x2="158" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="204" y1="438" x2="222" y2="474" stroke="#4a90c9" stroke-opacity=".17"/>
+    <path d="M330 472 L338 485 L322 485 Z" fill="none" stroke="#4a90c9" stroke-opacity=".22"/>
+    <path d="M392 462 L400 475 L384 475 Z" fill="none" stroke="#4a90c9" stroke-opacity=".22"/>
+    <circle cx="1060" cy="478" r="17" fill="none" stroke="#4a90c9" stroke-opacity=".24"/>
+    <line x1="1060" y1="478" x2="1060" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1069.2" y2="470.9" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1071.3" y2="473.6" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1065.5" y2="483.4" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1054.5" y2="483.4" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1048.7" y2="473.6" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1050.8" y2="470.9" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="950" y1="442" x2="978" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="950" y1="442" x2="950" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <line x1="950" y1="464" x2="978" y2="464" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="978" y1="442" x2="1006" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="978" y1="442" x2="978" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <line x1="978" y1="464" x2="1006" y2="464" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="1006" y1="442" x2="1034" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="1006" y1="442" x2="1006" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <path d="M880 468 A 108 108 0 0 1 1016 410" fill="none" stroke="#8d6df4" stroke-opacity=".20" stroke-dasharray="2 7"/>
+    <circle cx="96" cy="470" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="126" cy="498" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="158" cy="466" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="190" cy="500" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="222" cy="474" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="110" cy="436" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="204" cy="438" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+  </svg>
+
+  <div class="top">
+    <div class="lockup">
+      <div class="lens"><img src="../../../tools/assets/dc3-logo.svg" alt="IoT DC3"></div>
+      <div class="wm"><span class="wt">IoT DC3</span><span class="wt2">Open Source Industrial IoT Platform</span></div>
+    </div>
+    <div class="ep">IoT DC3 发版快讯 · R2</div>
+  </div>
+
+  <div class="left">
+    <div class="kicker"><div class="kbar"></div><span>Release Notes · Agentic Chat Streaming & OpenAPI</span></div>
+    <h1>IoT DC3 <span class="hl">v2026.6.19</span> 发布：<br>AI Chat 流式与 OpenAPI 文档化</h1>
+    <div class="sub">AI 对话升级为流式输出：推理过程可见、偏好随会话持久化；平台 API 由 springdoc 全量文档化，<br><b>枚举契约全线对齐</b>——AI 的"表达层"与平台的"契约层"同步升级。</div>
+    <div class="chips"><div class="chip">流式输出 + reasoning</div><div class="chip">会话偏好持久化</div><div class="chip">springdoc OpenAPI</div><div class="chip">枚举契约对齐</div></div>
+  </div>
+  <!-- 母题：流式对话卡 + 契约 pill 列 | 对话卡(296,16,264×172)；契约 pill 三枚 (296,200/236/272,264×30) -->
+  <div class="motif">
+    <div class="chat">
+      <div class="ub">3 号车间昨晚温度峰值多少？</div>
+      <div class="think"><i></i>推理过程 reasoning · 可展开</div>
+      <div class="ab">昨晚峰值 <b>78.4℃</b>，出现在 23:10，设备 J-03-7。<br><span style="color:#8a99ab">▍流式生成中…</span></div>
+    </div>
+    <div class="pill" style="left:296px;top:200px;width:264px;height:30px">springdoc OpenAPI · @Schema 全实体注解</div>
+    <div class="pill" style="left:296px;top:238px;width:264px;height:30px">枚举契约：status/type/source 全线 enum index</div>
+    <div class="pill" style="left:296px;top:276px;width:264px;height:30px">numValue 数值投影下推驱动侧</div>
+    <div class="g hero vcard"><span class="vv">v2026.6.19</span><span class="vt">AI 体验与契约升级</span><span class="vs">2026 上半年 · 800+ commits</span></div>
+    <div class="rstat" style="left:20px;top:170px"><b>Spring AI 2.0.0-M6</b> 里程碑跟进</div>
+    <div class="rstat" style="left:20px;top:210px"><b>会话偏好</b> 持久化（模型/温度/推理）</div>
+    <div class="rstat" style="left:20px;top:250px"><b>pnpm + Pinia</b> 前端工程化</div>
+    <div class="rstat" style="left:20px;top:290px"><b>Netty</b> MultiThreadIoEventLoopGroup</div>
+  </div>
+  <div class="meta">
+    <div class="sites"><b>dc3.site</b> &nbsp;·&nbsp; docs.dc3.site &nbsp;·&nbsp; book.dc3.site &nbsp;·&nbsp; demo.dc3.site</div>
+    <div class="repo">GitHub pnoker/iot-dc3 · Gitee GVP</div>
+  </div>
+
+</div>
+</body>
+</html>

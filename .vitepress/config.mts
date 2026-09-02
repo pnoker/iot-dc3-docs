@@ -270,7 +270,8 @@ export default defineConfig({
     // maintainer-internal material is excluded from the public site build
     // README.md is the repo readme (not a docs page) — exclude it so dead-link checks ignore it
     // dc3/doc/** holds @include source snapshots (CHANGE.md/USAGE.md), not browsable pages
-    srcExclude: ['superpowers/**', 'README.md', 'dc3/doc/**'],
+    // dc3/blog/** holds the dc3-wechat content repo (article sources for WeChat/Zhihu/CSDN), not browsable pages
+    srcExclude: ['superpowers/**', 'README.md', 'dc3/doc/**', 'dc3/blog/**'],
 
     head: [
         ['link', {rel: 'icon', href: '/images/logo.svg', type: 'image/svg+xml'}],

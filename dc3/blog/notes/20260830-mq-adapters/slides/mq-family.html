@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>04 MQ 家族与 TCK</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5;display:flex;justify-content:space-between;align-items:flex-start}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.badge6{display:flex;flex-direction:column;align-items:center;gap:2px}
+.badge6 .n{font:800 44px "Helvetica Neue",Arial;color:var(--brand-deep);line-height:1}
+.badge6 .t{font-size:11px;color:var(--ink-3)}
+.flow{position:absolute;top:132px;left:56px;right:56px;height:296px;display:flex;align-items:stretch;gap:14px;z-index:4}
+.srcol{width:172px;display:flex;flex-direction:column;gap:10px}
+.src{flex:1;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.93);box-shadow:0 5px 18px rgba(23,58,94,.05);
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:9px 13px;gap:3px}
+.src .t{font:700 12.5px "Helvetica Neue",Arial,"PingFang SC"}
+.src .d{font-size:10px;color:var(--ink-3)}
+.src .st{font-size:9px;font-weight:700;border-radius:999px;padding:2px 8px;margin-top:2px}
+.st-def{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.st-opt{background:#f1f4f7;color:var(--ink-3);border:1px solid var(--line)}
+.hzone{flex:none;display:flex;flex-direction:column;justify-content:center;gap:6px;width:120px}
+.hl{height:1.5px;background:var(--brand-line);position:relative}
+.hl::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.hcap{font-size:9.5px;color:var(--muted);text-align:center}
+.core{width:250px;border:1.5px solid var(--brand-line);border-radius:14px;background:linear-gradient(160deg,#fff,var(--brand-tint));
+  box-shadow:0 10px 28px rgba(10,108,178,.14);display:flex;flex-direction:column;justify-content:center;padding:14px 16px;gap:10px}
+.core .ct{display:flex;align-items:baseline;gap:8px}
+.core .cn{font-size:16px;font-weight:800;color:var(--brand-deep)}
+.core .ce{font:700 9px "Helvetica Neue",Arial;letter-spacing:1.5px;color:var(--brand-mid);text-transform:uppercase}
+.core .cd{font-size:10px;color:var(--ink-3);line-height:1.5}
+.ifaces{display:flex;flex-wrap:wrap;gap:6px}
+.ifi{font-size:10px;color:var(--ink-2);border:1px solid var(--brand-line);background:#fff;border-radius:7px;padding:3.5px 8px}
+.tck{flex:1;border:1px solid #cde8d9;border-radius:14px;background:linear-gradient(160deg,#fff,#f2faf6);
+  box-shadow:0 10px 28px rgba(18,183,106,.1);display:flex;flex-direction:column;justify-content:center;padding:14px 16px;gap:10px}
+.tck .ct{display:flex;align-items:baseline;gap:8px}
+.tck .cn{font-size:16px;font-weight:800;color:#12795a}
+.tck .ce{font:700 9px "Helvetica Neue",Arial;letter-spacing:1.5px;color:var(--teal);text-transform:uppercase}
+.tck .cd{font-size:10px;color:var(--ink-3);line-height:1.5}
+.tl{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tli{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--ink-2);border:1px solid #d9ede2;border-radius:7px;
+  background:#fff;padding:4.5px 8px}
+.tli i{color:var(--green);font-weight:800;font-style:normal}
+.tckfoot{margin-top:auto;display:flex;align-items:center;justify-content:space-between}
+.tckfoot .pass{font-size:10px;color:#12795a;background:#e2f3ec;border:1px solid #bfe4d4;border-radius:999px;padding:3.5px 10px;font-weight:700}
+.tckfoot .why{font-size:9.5px;color:var(--ink-3)}
+.low{position:absolute;left:56px;right:56px;top:448px;bottom:118px;display:flex;gap:20px;z-index:4}
+.lpanel{position:relative;flex:1;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:24px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zg{background:#e2f3ec;color:#12795a;border-color:#bfe4d4}
+.val{display:flex;flex-direction:column;gap:8px}
+.va{display:flex;align-items:flex-start;gap:9px}
+.va i{width:6px;height:6px;border-radius:50%;background:var(--green);margin-top:5px;flex:none}
+.va span{font-size:11px;color:var(--ink-2);line-height:1.5}
+.va b{color:var(--ink)}
+.lfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:10px;color:var(--muted);line-height:1.5}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.04</span></div>
+      <h1><b>六适配器</b>一条总线：关键不是数量，是 TCK 契约测试</h1>
+      <div class="h-sub">业务方只依赖 core 的端口语义 · 六种实现分别跑通同一套契约，才算等价</div>
+    </div>
+    <div class="badge6"><div class="n">×6</div><div class="t">MQ Adapters</div></div>
+  </div>
+  <div class="flow">
+    <div class="srcol">
+      <div class="src"><span class="t">RabbitMQ</span><span class="d">中等规模 · 路由灵活</span><span class="st st-def">默认启用</span></div>
+      <div class="src"><span class="t">Kafka</span><span class="d">高吞吐 · 回放扇出</span><span class="st st-opt">可选适配</span></div>
+      <div class="src"><span class="t">Pulsar</span><span class="d">存算分离 · 多租户</span><span class="st st-opt">可选适配</span></div>
+    </div>
+    <div class="srcol">
+      <div class="src"><span class="t">MQTT</span><span class="d">复用边缘 broker（EMQX 等）</span><span class="st st-opt">可选适配</span></div>
+      <div class="src"><span class="t">ActiveMQ</span><span class="d">存量中间件资产</span><span class="st st-opt">可选适配</span></div>
+      <div class="src"><span class="t">RocketMQ</span><span class="d">国产技术栈适配</span><span class="st st-opt">可选适配</span></div>
+    </div>
+    <div class="hzone"><div class="hcap">实现 core 端口</div><div class="hl"></div><div class="hcap">同一套语义</div></div>
+    <div class="core">
+      <div class="ct"><span class="cn">dc3-mq-core</span><span class="ce">SPI Port</span></div>
+      <div class="cd">与实现无关的消息端口：业务代码只 import 这一层</div>
+      <div class="ifaces">
+        <span class="ifi">发送 send</span><span class="ifi">消费 consume</span><span class="ifi">确认 ack</span>
+        <span class="ifi">异常语义</span><span class="ifi">订阅模型</span>
+      </div>
+    </div>
+    <div class="hzone"><div class="hcap">逐适配器验证</div><div class="hl"></div><div class="hcap">契约门禁</div></div>
+    <div class="tck">
+      <div class="ct"><span class="cn">dc3-mq-tck</span><span class="ce">契约测试套件</span></div>
+      <div class="cd">一套与实现无关的用例，定义消息总线必须满足的全部契约</div>
+      <div class="tl">
+        <div class="tli"><i>✓</i>发送与消费语义一致</div>
+        <div class="tli"><i>✓</i>确认 / 重投递行为一致</div>
+        <div class="tli"><i>✓</i>异常场景行为一致</div>
+        <div class="tli"><i>✓</i>订阅与解绑语义一致</div>
+      </div>
+      <div class="tckfoot"><span class="pass">×6 全通过</span><span class="why">换型不是"理论上能跑"，是契约验证过的等价行为</span></div>
+    </div>
+  </div>
+  <div class="low">
+    <div class="lpanel">
+      <div class="zlabel">这带来什么</div>
+      <div class="val">
+        <div class="va"><i></i><span><b>换型可信</b>：从 RabbitMQ 切到 Kafka，是同一套契约验证过的等价行为，不是重写</span></div>
+        <div class="va"><i></i><span><b>新增有据</b>：实现 core 接口 + 跑通 TCK = 完整验收标准，新适配器不用口头承诺</span></div>
+        <div class="va"><i></i><span><b>成本可控</b>：默认适配器随服务打包，其余按部署显式引入——不用的队列不付 jar 与启动开销</span></div>
+      </div>
+      <div class="lfoot">同款约定也用于 TSDB 家族（EP.05）：dc3-tsdb-core + 四适配器 + 24 例契约套件</div>
+    </div>
+    <div class="lpanel">
+      <div class="zlabel zg">诚实的边界</div>
+      <div class="val">
+        <div class="va"><i></i><span>抽象层只覆盖各队列的<b>公共语义子集</b>——这是设计，不是疏漏</span></div>
+        <div class="va"><i></i><span>Kafka 消费组精细控制、RabbitMQ 死信路由等<b>高级特性不经 core 暴露</b></span></div>
+        <div class="va"><i></i><span>需要这些特性时，直接用对应队列的<b>原生客户端</b>，不硬塞进抽象层</span></div>
+      </div>
+      <div class="lfoot">选型明细见仓库 docs/mq-brokers.md · 换型操作见下篇配图与 EP.04 文章</div>
+    </div>
+  </div>
+  <div class="strip">驱动采集的数据不直写数据库，先过消息总线：<b>削峰、解耦，驱动与数据中心互不拖累</b></div>
+  <div class="note"><span>六适配器 = RabbitMQ / Kafka / Pulsar / MQTT / ActiveMQ / RocketMQ</span><span>状态图例：默认启用 / 可选适配（以部署配置为准）</span></div>
+</div>
+</body>
+</html>

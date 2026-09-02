@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>09 四层纵深防御</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:132px;bottom:118px;left:56px;right:400px;display:flex;flex-direction:column;gap:10px;z-index:4}
+.layer{flex:1;position:relative;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.94);
+  box-shadow:0 6px 22px rgba(23,58,94,.06);display:flex;align-items:center;gap:16px;padding:0 18px}
+.layer.l4{border:1.5px solid var(--brand-line);background:linear-gradient(90deg,#fff,var(--brand-tint));
+  box-shadow:0 8px 26px rgba(10,108,178,.12)}
+.ln{width:64px;height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.ln .n{font:800 15px "Helvetica Neue",Arial;color:#fff}
+.ln .e{font:700 7.5px "Helvetica Neue",Arial;letter-spacing:1px;color:rgba(255,255,255,.75)}
+.l1 .ln{background:linear-gradient(135deg,#1296db,#0a6cb2)}
+.l2 .ln{background:linear-gradient(135deg,#1183c9,#07549a)}
+.l3 .ln{background:linear-gradient(135deg,#0a6cb2,#07549a)}
+.l4 .ln{background:linear-gradient(135deg,#07549a,#3d3f9e)}
+.lt{width:148px;flex:none;display:flex;flex-direction:column;gap:2px}
+.lt .nm{font-size:14.5px;font-weight:800}
+.lt .en{font:700 8.5px "Helvetica Neue",Arial;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase}
+.mods{flex:1;display:flex;gap:9px;flex-wrap:wrap}
+.mod{border:1px solid var(--line);background:#fbfdfe;border-radius:8px;padding:5.5px 10px;
+  font-size:10.3px;color:var(--ink-2);display:flex;flex-direction:column;gap:1px}
+.mod b{font-size:10.8px;color:var(--ink);font-weight:600}
+.mod small{font-size:8.8px;color:var(--muted)}
+.ltag{margin-left:auto;flex:none;font-size:9.8px;color:var(--ink-3);border:1px dashed var(--line);
+  border-radius:999px;padding:3.5px 10px;background:#fff;max-width:150px;line-height:1.45}
+/* right rail: one call walks four layers */
+.rail{position:absolute;right:56px;top:132px;bottom:118px;width:324px;display:flex;flex-direction:column;z-index:4}
+.rp{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 15px 12px;display:flex;flex-direction:column}
+.rz{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.walk{display:flex;flex-direction:column;flex:1;justify-content:center}
+.wl{display:flex;gap:9px}
+.wl .rail2{width:18px;display:flex;flex-direction:column;align-items:center}
+.wl .dot{width:18px;height:18px;border-radius:6px;color:#fff;display:flex;align-items:center;justify-content:center;
+  font:800 9.5px "Helvetica Neue",Arial;flex:none}
+.wl .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:5px}
+.wl .bx{flex:1;padding:5px 9px;margin-bottom:7px;border-radius:8px;border:1px solid var(--line);background:#fbfdfe}
+.wl .bt{font-size:10.6px;font-weight:700}
+.wl .bd{font-size:9.2px;color:var(--ink-3);line-height:1.45;margin-top:1px}
+.w1 .dot{background:#1296db}.w2 .dot{background:#1183c9}.w3 .dot{background:#0a6cb2}.w4 .dot{background:#07549a}
+.w1 .bx{border-color:#bcd9f0}.w4 .bx{border-color:#cde8d9;background:#f6fbf9}
+.walkfoot{padding-top:8px;border-top:1px dashed var(--line);font-size:9.6px;color:var(--muted);line-height:1.5}
+.walkfoot b{color:var(--red)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:14px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.strip .sep{width:1px;height:20px;background:var(--line)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.09</span></div>
+    <h1>四层纵深防御：<b>写进架构，而不是写进文档</b></h1>
+    <div class="h-sub">智能体治理要求"可追溯"——通俗含义是：说清楚每次调用是谁授权的、做了什么、怎么追责</div>
+  </div>
+  <div class="main">
+    <div class="layer l1">
+      <div class="ln"><span class="n">01</span><span class="e">TRANSPORT</span></div>
+      <div class="lt"><span class="nm">传输层</span><span class="en">TLS / SSL</span></div>
+      <div class="mods">
+        <div class="mod"><b>网关对外 TLS</b><small>数据在路上不被窃听</small></div>
+        <div class="mod"><b>内部连接按部署加密</b><small>总线与存储连接可配</small></div>
+      </div>
+      <div class="ltag">底线，不是亮点</div>
+    </div>
+    <div class="layer l2">
+      <div class="ln"><span class="n">02</span><span class="e">IDENTITY</span></div>
+      <div class="lt"><span class="nm">身份层</span><span class="en">JWT + RBAC</span></div>
+      <div class="mods">
+        <div class="mod"><b>一套身份三个入口</b><small>Web / CLI / 智能体同一 OAuth 签发</small></div>
+        <div class="mod"><b>RBAC 角色权限</b><small>MCP scope 由 RBAC 投影</small></div>
+        <div class="mod"><b>风险分层 TTL</b><small>高危短令牌 + step-up</small></div>
+      </div>
+      <div class="ltag">不给智能体特权模型</div>
+    </div>
+    <div class="layer l3">
+      <div class="ln"><span class="n">03</span><span class="e">TENANCY</span></div>
+      <div class="lt"><span class="nm">租户层</span><span class="en">Isolation</span></div>
+      <div class="mods">
+        <div class="mod"><b>数据库</b><small>查询强制带租户范围</small></div>
+        <div class="mod"><b>缓存</b><small>键必含租户上下文</small></div>
+        <div class="mod"><b>API / gRPC</b><small>请求进入即解析租户 · 服务间携带</small></div>
+      </div>
+      <div class="ltag">不提供绕过租户的捷径</div>
+    </div>
+    <div class="layer l4">
+      <div class="ln"><span class="n">04</span><span class="e">AUDIT</span></div>
+      <div class="lt"><span class="nm">审计层</span><span class="en">Traceability</span></div>
+      <div class="mods">
+        <div class="mod"><b>命令下发全量留痕</b><small>谁 · 何时 · 对哪个设备 · 做了什么</small></div>
+        <div class="mod"><b>事件与操作日志</b><small>系统事件同样入账</small></div>
+        <div class="mod"><b>智能体调用入审计</b><small>令牌 + 授权来源可回溯</small></div>
+      </div>
+      <div class="ltag">账本能翻到具体一次调用</div>
+    </div>
+  </div>
+  <div class="rail">
+    <div class="rp">
+      <div class="rz">一次智能体调用 · 逐层穿行</div>
+      <div class="walk">
+        <div class="wl w1">
+          <div class="rail2"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">进入 TLS 通道</div><div class="bd">智能体客户端携带令牌请求 /mcp</div></div>
+        </div>
+        <div class="wl w2">
+          <div class="rail2"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">网关验签 + scope 检查</div><div class="bd">RS256 验签 · 确认"只读"能力边界</div></div>
+        </div>
+        <div class="wl w3">
+          <div class="rail2"><div class="dot">3</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">租户上下文贯穿查询</div><div class="bd">跨租户设备不在候选集</div></div>
+        </div>
+        <div class="wl w4">
+          <div class="rail2"><div class="dot">4</div></div>
+          <div class="bx"><div class="bt">调用与结果入审计</div><div class="bd">具体令牌、授权来源可回溯</div></div>
+        </div>
+      </div>
+      <div class="walkfoot"><b>任何一层不满足，调用终止</b> · 高危动作另需人确认执行</div>
+    </div>
+  </div>
+  <div class="strip">
+    <span>诚实口径：纵深防御 = <b>提高攻击成本 + 保留追责证据</b>，不是承诺零风险</span>
+    <span class="sep"></span>
+    <span>漏洞响应见仓库 <b>SECURITY.md</b></span>
+  </div>
+  <div class="note"><span>热点对照：网信办《智能体规范应用与创新发展实施意见》（2026-05）"规范有序 + 创新驱动"</span><span>配文：EP.09《工业数据的安全账本》</span></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 OpenAPI 与枚举契约</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;left:56px;right:56px;bottom:170px;display:flex;flex-direction:column;gap:14px;z-index:4}
+.row{flex:1;display:flex;gap:18px}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.lst{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.li{display:flex;gap:8px;font-size:10.4px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.li i{width:6px;height:6px;border-radius:50%;background:var(--brand-bright);margin-top:5px;flex:none}
+.li.z i{background:var(--indigo)}
+.li b{color:var(--ink)}
+.li code{font:600 9.2px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border-radius:4px;padding:1px 5px}
+.demo{border:1px dashed var(--line);border-radius:9px;background:#fbfdfe;padding:8px 11px;margin-top:8px}
+.demo .et{font-size:9.3px;color:var(--muted);margin-bottom:4px}
+.demo .er{display:flex;align-items:center;gap:6px;font-size:9.8px;flex-wrap:wrap}
+.demo .seg{border-radius:5px;padding:2px 7px}
+.sg-bad{background:#fdf5f4;border:1px solid #efc4c0;color:#8c3830;font-family:Menlo,monospace;font-size:8.8px}
+.sg-good{background:#e2f3ec;border:1px solid #bfe4d4;color:#12795a;font-family:Menlo,monospace;font-size:8.8px}
+.demo .ea{color:var(--muted)}
+.strip{position:absolute;left:56px;right:56px;bottom:112px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.low2{position:absolute;left:56px;right:56px;bottom:56px;display:flex;gap:14px;z-index:4}
+.mini{flex:1;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.9);padding:8px 12px;
+  font-size:10.2px;color:var(--ink-2);line-height:1.5}
+.mini b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R2 v2026.6.19 · 特性详解 2/3</span></div>
+    <h1>契约层升级：<b>springdoc OpenAPI</b> 全量文档化与枚举规范化</h1>
+    <div class="h-sub">AI 的"表达层"升级之外，平台的"契约层"同步收敛——对接方从此照文档写代码</div>
+  </div>
+  <div class="main">
+    <div class="row">
+      <div class="panel" style="flex:1.15">
+        <div class="zlabel">OpenAPI 文档化：做了什么</div>
+        <div class="lst">
+          <div class="li"><i></i><span><b>springdoc 接线</b>：OpenAPI 文档端点上线，安全链加载同步修正</span></div>
+          <div class="li"><i></i><span><b>@Schema 全实体注解</b>：dc3-common-dal 实体类全量标注——文档里的每个字段都有出处</span></div>
+          <div class="li"><i></i><span><b>文档化工具链</b>：API 文档指南、导出工具与书写约定成文（提交 8a2a87f96）</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="zlabel zi">为什么值得做</div>
+        <div class="lst">
+          <div class="li z"><i></i><span>开源平台的集成方<b>第一件事是读 API 文档</b>——文档即门户，比任何推广语都有说服力</span></div>
+          <div class="li z"><i></i><span>注解跟着实体走，<b>代码与文档不会分叉</b>——这是活文档，不是一次性截图</span></div>
+          <div class="li z"><i></i><span>为 MCP 工具面的参数 Schema 打前站：同一套实体，两处消费</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel" style="flex:1.15">
+        <div class="zlabel">枚举规范化：怎么做的</div>
+        <div class="lst">
+          <div class="li z"><i></i><span><b>领域枚举标准化</b>（提交 72515d9f3）：command history 的 source / type / status 统一为 <code>enum index</code> 契约</span></div>
+          <div class="li z"><i></i><span>命令历史来源字段类型化为枚举名，前后端类型对齐（提交 b61cc0f5a / 0d55b4d86）</span></div>
+          <div class="li z"><i></i><span>对象边界（object boundaries）一并整理，测试随枚举重命名对齐</span></div>
+          <div class="demo">
+            <div class="et">契约形态示例</div>
+            <div class="er"><span class="seg sg-bad">"source": "manual..."（自由字符串）</span><span class="ea">→</span><span class="seg sg-good">"source": 2 (enum index，语义确定)</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="zlabel">为什么现在做</div>
+        <div class="lst">
+          <div class="li z"><i></i><span>枚举是<b>最小单位的契约</b>：自由字符串早晚长成脏数据</span></div>
+          <div class="li z"><i></i><span>AI 工具面即将消费这些字段——<b>模型需要确定的取值域</b>，不是模糊文本</span></div>
+          <div class="li z"><i></i><span>与对象边界一起收敛，避免"枚举规整了、边界还乱着"的半成品状态</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">发布口径：<b>文档与代码同源</b>（注解驱动），枚举契约影响对接方取值方式——升级说明见 release notes</div>
+  <div class="low2">
+    <div class="mini"><b>同期工程化</b>：前端迁移 pnpm + Pinia 组合式 store，utils.ts 拆分聚焦模块；Netty UDP/TCP 服务升级 MultiThreadIoEventLoopGroup——底座小步现代化</div>
+    <div class="mini"><b>文档重构</b>：仓库文档大重组与工程笔记归档（提交 69e5fbe0a），为后续在线书与 docs 站五支柱重构铺路</div>
+  </div>
+  <div class="note"><span>版本锚点：v2026.6.19</span><span>配文：R2《IoT DC3 v2026.6.19 发布》</span></div>
+</div>
+</body>
+</html>

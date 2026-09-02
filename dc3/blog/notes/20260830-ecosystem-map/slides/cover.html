@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>10 封面</title>
+<style>
+
+:root{
+  --ink:#152335;--ink2:#42546a;--ink3:#64748b;--deep:#07549a;--blue:#0a6cb2;--bright:#1296db;--indigo:#5558c9;
+  --mesh:#4a90c9;--purple:#8d6df4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:545px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:linear-gradient(118deg,#f6fbff 0%,#edf5fd 55%,#e7eef9 100%);}
+.slide::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(760px 430px at 85% 6%, rgba(127,212,242,.32) 0%, rgba(127,212,242,0) 62%),
+             radial-gradient(660px 420px at 5% 102%, rgba(183,165,245,.28) 0%, rgba(183,165,245,0) 58%);}
+.slide::after{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.075) 1.1px,transparent 1.1px);background-size:24px 24px}
+.mesh{position:absolute;inset:0;z-index:1;pointer-events:none}
+.top{position:absolute;top:32px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.lockup{display:flex;align-items:center;gap:13px}
+.lens{width:54px;height:54px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 22%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.6) 34%, rgba(185,240,255,.28) 62%, rgba(85,191,232,.14) 100%);
+  border:1px solid rgba(255,255,255,.98);box-shadow:0 8px 22px rgba(12,89,153,.16), inset 0 0 0 1px rgba(140,137,236,.12);
+  display:flex;align-items:center;justify-content:center}
+.lens img{width:32px;height:31px;display:block}
+.wm .wt{display:block;font:800 24px "Segoe UI","Helvetica Neue",Arial,sans-serif;letter-spacing:.4px;
+  background:linear-gradient(112deg,#07549a 4%,#149ed7 46%,#4f52bf 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wm .wt2{display:block;font:600 8.5px "Segoe UI",Arial,sans-serif;letter-spacing:2.1px;color:#7c8ea3;text-transform:uppercase;margin-top:3px}
+.ep{font:600 11px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:1px;color:var(--blue);border-radius:999px;padding:7px 15px;
+  background:rgba(255,255,255,.75);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 14px rgba(12,89,153,.08)}
+.left{position:absolute;left:64px;top:136px;width:600px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.kbar{width:26px;height:3.5px;border-radius:2px;background:linear-gradient(90deg,#08a9de,#6662d7)}
+.kicker span{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--blue);text-transform:uppercase}
+h1{font-size:38px;line-height:1.32;font-weight:800;letter-spacing:.3px;color:var(--ink);margin-bottom:13px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 40%,#1786d4 62%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:14.5px;line-height:1.8;color:var(--ink2);margin-bottom:20px}
+.sub b{color:var(--deep);font-weight:700}
+.chips{display:flex;gap:9px;flex-wrap:wrap}
+.chip{font-size:12px;color:var(--ink2);border:1px solid rgba(255,255,255,.98);background:rgba(255,255,255,.68);
+  border-radius:999px;padding:7px 14px;box-shadow:0 3px 10px rgba(12,89,153,.07)}
+.chip b{color:var(--deep);font-weight:700}
+.motif{position:absolute;right:56px;top:112px;width:560px;height:360px;z-index:5}
+svg.wires{position:absolute;inset:0;z-index:2;overflow:visible;pointer-events:none}
+.g{position:absolute;border-radius:13px;border:1px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(255,255,255,.62));
+  box-shadow:0 10px 26px rgba(12,89,153,.12), inset 0 0 0 1px rgba(140,137,236,.10)}
+.hero{border:1.5px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(233,244,255,.8));
+  box-shadow:0 16px 40px rgba(18,150,219,.22), inset 0 0 0 1px rgba(128,216,244,.5)}
+.pill{position:absolute;border-radius:999px;font-size:11px;font-weight:600;color:var(--deep);z-index:4;
+  background:rgba(255,255,255,.8);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 12px rgba(12,89,153,.08);
+  display:flex;align-items:center;justify-content:center}
+.mlabel{position:absolute;font-size:11px;font-weight:600;color:var(--ink3);z-index:4}
+.meta{position:absolute;left:64px;right:64px;bottom:20px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.meta .sites{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.meta .sites b{color:var(--deep);font-weight:700}
+.meta .repo{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.sat{position:absolute;border-radius:11px;z-index:3;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;gap:2px;
+  border:1px solid rgba(255,255,255,.98);background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(255,255,255,.62));
+  box-shadow:0 6px 16px rgba(12,89,153,.10)}
+.sat .sn{font:700 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;color:var(--ink)}
+.sat .sd{font-size:9px;color:#8a99ab}
+.hub10{position:absolute;left:180px;top:92px;width:200px;height:124px;border-radius:16px;z-index:4;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  border:1.5px solid rgba(255,255,255,.98);background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(224,240,252,.85));
+  box-shadow:0 18px 42px rgba(18,150,219,.24), inset 0 0 0 1px rgba(128,216,244,.5)}
+.hub10 .t{font:800 21px "Segoe UI",Arial,sans-serif;background:linear-gradient(112deg,#07549a,#149ed7 46%,#4f52bf);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.hub10 .e{font:700 8px "Segoe UI",Arial;letter-spacing:1.8px;color:#8a99ab}
+.hub10 .s{font-size:9.5px;color:var(--ink2);background:rgba(255,255,255,.8);border:1px solid rgba(128,216,244,.5);border-radius:999px;padding:2.5px 10px}
+.stat10{position:absolute;z-index:4;border-radius:999px;font-size:10.5px;color:var(--ink2);padding:5px 12px;
+  border:1px solid rgba(255,255,255,.98);background:rgba(255,255,255,.75);box-shadow:0 3px 10px rgba(12,89,153,.08)}
+.stat10 b{color:var(--deep);font-family:"Segoe UI",Arial;font-weight:800}
+</style>
+</head>
+<body>
+<div class="slide">
+  <!-- 10 封面 · V4 liquid-glass · 品牌规范：iot-dc3/.github/brand -->
+  <svg class="mesh" viewBox="0 0 1280 545">
+    <path d="M40 508 C 300 498, 560 484, 780 478 C 960 473, 1150 442, 1266 386" fill="none" stroke="#4a90c9" stroke-opacity=".20" stroke-width="1.2"/>
+    <path d="M40 508 C 300 498, 560 484, 780 478 C 960 473, 1150 442, 1266 386" fill="none" stroke="#4a90c9" stroke-opacity=".26" stroke-width="1.7" stroke-dasharray="1 10" stroke-linecap="round"/>
+    <line x1="96" y1="470" x2="126" y2="498" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="126" y1="498" x2="158" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="158" y1="466" x2="190" y2="500" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="190" y1="500" x2="222" y2="474" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="110" y1="436" x2="158" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="204" y1="438" x2="222" y2="474" stroke="#4a90c9" stroke-opacity=".17"/>
+    <path d="M330 472 L338 485 L322 485 Z" fill="none" stroke="#4a90c9" stroke-opacity=".22"/>
+    <path d="M392 462 L400 475 L384 475 Z" fill="none" stroke="#4a90c9" stroke-opacity=".22"/>
+    <circle cx="1060" cy="478" r="17" fill="none" stroke="#4a90c9" stroke-opacity=".24"/>
+    <line x1="1060" y1="478" x2="1060" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1069.2" y2="470.9" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1071.3" y2="473.6" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1065.5" y2="483.4" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1054.5" y2="483.4" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1048.7" y2="473.6" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1050.8" y2="470.9" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="950" y1="442" x2="978" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="950" y1="442" x2="950" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <line x1="950" y1="464" x2="978" y2="464" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="978" y1="442" x2="1006" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="978" y1="442" x2="978" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <line x1="978" y1="464" x2="1006" y2="464" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="1006" y1="442" x2="1034" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="1006" y1="442" x2="1006" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <path d="M880 468 A 108 108 0 0 1 1016 410" fill="none" stroke="#8d6df4" stroke-opacity=".20" stroke-dasharray="2 7"/>
+    <circle cx="96" cy="470" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="126" cy="498" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="158" cy="466" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="190" cy="500" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="222" cy="474" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="110" cy="436" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="204" cy="438" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+  </svg>
+
+  <div class="top">
+    <div class="lockup">
+      <div class="lens"><img src="../../../tools/assets/dc3-logo.svg" alt="IoT DC3"></div>
+      <div class="wm"><span class="wt">IoT DC3</span><span class="wt2">Open Source Industrial IoT Platform</span></div>
+    </div>
+    <div class="ep">开源工业物联网手记 · EP.10 · 收官</div>
+  </div>
+
+  <div class="left">
+    <div class="kicker"><div class="kbar"></div><span>Join The Project</span></div>
+    <h1>一本书、一个 Demo、一个 CLI：<br>参与 <span class="hl">IoT DC3</span> 的完整地图</h1>
+    <div class="sub">十年仓库、GVP 认证、双语在线书——比数字更有用的是参与路径：<br>看效果、学架构、接设备、写驱动、提 PR，<b>每个入口都给全。</b></div>
+    <div class="chips"><div class="chip">AGPL 3.0 大白话</div><div class="chip">贡献路径 fork → PR</div><div class="chip">系列 10 篇回顾</div></div>
+  </div>
+  <!-- 母题：生态星座 | hub(180,92,200×124)；五卫星；连线端点全部落在卡片边缘（见 E10 坐标表） -->
+  <div class="motif">
+    <svg class="wires" viewBox="0 0 560 360"><line x1="152" y1="38" x2="180" y2="116" stroke="#4a90c9" stroke-opacity=".45" stroke-width="1.5"/><circle cx="152" cy="38" r="2.6" fill="#1296db"/><circle cx="180" cy="116" r="2.6" fill="#1296db"/><line x1="285" y1="56" x2="285" y2="92" stroke="#4a90c9" stroke-opacity=".45" stroke-width="1.5"/><circle cx="285" cy="56" r="2.6" fill="#1296db"/><circle cx="285" cy="92" r="2.6" fill="#1296db"/><line x1="412" y1="50" x2="380" y2="116" stroke="#4a90c9" stroke-opacity=".45" stroke-width="1.5"/><circle cx="412" cy="50" r="2.6" fill="#1296db"/><circle cx="380" cy="116" r="2.6" fill="#1296db"/><line x1="150" y1="262" x2="204" y2="216" stroke="#4a90c9" stroke-opacity=".45" stroke-width="1.5"/><circle cx="150" cy="262" r="2.6" fill="#1296db"/><circle cx="204" cy="216" r="2.6" fill="#1296db"/><line x1="424" y1="258" x2="356" y2="216" stroke="#4a90c9" stroke-opacity=".45" stroke-width="1.5"/><circle cx="424" cy="258" r="2.6" fill="#1296db"/><circle cx="356" cy="216" r="2.6" fill="#1296db"/></svg>
+    <div class="sat" style="left:0px;top:10px;width:152px;height:56px"><span class="sn">docs.dc3.site</span><span class="sd">操作手册 · 排障</span></div>
+    <div class="sat" style="left:210px;top:4px;width:150px;height:52px"><span class="sn">demo.dc3.site</span><span class="sd">在线演示</span></div>
+    <div class="sat" style="left:412px;top:22px;width:148px;height:56px"><span class="sn">book.dc3.site</span><span class="sd">双语在线书</span></div>
+    <div class="sat" style="left:6px;top:258px;width:148px;height:54px"><span class="sn">dc3-cli</span><span class="sd">终端 & 智能体客户端</span></div>
+    <div class="sat" style="left:414px;top:254px;width:146px;height:54px"><span class="sn">GitHub · Gitee</span><span class="sd">源码 · Issue · PR</span></div>
+    <div class="g hero hub10"><span class="t">IoT DC3</span><span class="e">OPEN SOURCE · AGPL 3.0</span><span class="s">六层微服务 · 36 驱动 · Agentic Center</span></div>
+    <div class="stat10" style="left:130px;top:322px"><b>9,736</b> Gitee star</div>
+    <div class="stat10" style="left:268px;top:322px"><b>4,076</b> fork</div>
+    <div class="stat10" style="left:392px;top:322px"><b>10</b> 年</div>
+  </div>
+  <div class="meta">
+    <div class="sites"><b>dc3.site</b> &nbsp;·&nbsp; docs.dc3.site &nbsp;·&nbsp; book.dc3.site &nbsp;·&nbsp; demo.dc3.site</div>
+    <div class="repo">GitHub pnoker/iot-dc3 · Gitee GVP</div>
+  </div>
+
+</div>
+</body>
+</html>

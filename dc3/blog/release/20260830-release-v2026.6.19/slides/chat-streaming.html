@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 AI Chat 流式体验</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-what{flex:1.1}
+.p-how{flex:1}
+.p-why{width:300px}
+.lst{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.li{display:flex;gap:8px;font-size:10.5px;color:var(--ink-2);line-height:1.6;align-items:flex-start}
+.li i{width:6px;height:6px;border-radius:50%;background:var(--indigo);margin-top:6px;flex:none}
+.li b{color:var(--ink)}
+.li code{font:600 9.2px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border-radius:4px;padding:1px 5px}
+.why{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.wi{border-radius:10px;padding:10px 12px;font-size:10.5px;line-height:1.6}
+.wi.a{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));color:var(--ink)}
+.wi.a b{color:var(--brand-deep)}
+.wi.b{border:1px dashed var(--line);background:#fbfdfe;color:var(--ink-2)}
+.wi.b b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R2 v2026.6.19 · 特性详解 1/3</span></div>
+    <h1>AI Chat 流式体验：<b>推理可见、偏好跟随、回答即答即流</b></h1>
+    <div class="h-sub">2026 上半年 800+ 提交的 AI 主线，落在用户体验上的三个点</div>
+  </div>
+  <div class="main">
+    <div class="panel p-what">
+      <div class="zlabel">做了什么</div>
+      <div class="lst">
+        <div class="li"><i></i><span><b>流式输出</b>：回答按 token 流式呈现，配 streaming 性能优化——首字时间与长回答的体感大幅改善</span></div>
+        <div class="li"><i></i><span><b>推理过程展示</b>：reasoning 内容独立渲染、可展开收起——模型"怎么想的"不再黑箱</span></div>
+        <div class="li"><i></i><span><b>i18n 全覆盖</b>：AI 界面文案多语言化</span></div>
+      </div>
+    </div>
+    <div class="panel p-how">
+      <div class="zlabel zi">怎么做的 · 两个关键决策</div>
+      <div class="lst">
+        <div class="li"><i></i><span><b>偏好持久化到会话</b>：模型选择 / temperature / 推理开关 / requireConfirmation 等用户设置从 localStorage 迁到<b>会话持久化</b>——换设备登录偏好还在（提交 42ee486f9 与其前置修复）</span></div>
+        <div class="li"><i></i><span><b>里程碑全程跟进</b>：Spring AI 从 2.0.0-M5 升到 <b>M6</b>（提交 67f1f7c2c），流式 API 的行为变化在平台侧吸收，前端只感知最终形态</span></div>
+        <div class="li"><i></i><span><b>numValue 数值投影下推驱动侧</b>（提交 712506b32）：数值过滤在数据源头完成——AI 查数更快，数据中心更省</span></div>
+      </div>
+    </div>
+    <div class="panel p-why">
+      <div class="zlabel zt">为什么这样做</div>
+      <div class="why">
+        <div class="wi a"><b>流式是 AI 产品的呼吸感。</b>工业问答往往要聚合大量点位数据，等待整段返回的体感是"卡死"；流式 + 推理可见，让用户知道系统在思考什么。</div>
+        <div class="wi b"><b>偏好属于会话不属于浏览器。</b>localStorage 换台机器就丢——运维人员在值班室和大屏上会切换使用，偏好跟随账号才是正解。</div>
+        <div class="wi b"><b>计算下推是数据库常识。</b>能在驱动侧过滤就不在数据中心过滤，这条从数据库界抄来的纪律同样适用于采集链路。</div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">里程碑口径说明：M5 / M6 为 Spring AI 2.0 的开发里程碑，<b>2.0.0 正式版迁移在下一个版本（v2026.6.26）完成</b></div>
+  <div class="note"><span>版本锚点：v2026.6.19（工作自 4–6 月陆续合入）</span><span>配文：R2《IoT DC3 v2026.6.19 发布》</span></div>
+</div>
+</body>
+</html>

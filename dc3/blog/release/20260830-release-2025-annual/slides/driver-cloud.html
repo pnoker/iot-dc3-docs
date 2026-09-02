@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R1 驱动交付清单</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.bignum{display:flex;align-items:baseline;gap:8px}
+.bignum .n{font:800 54px "Helvetica Neue",Arial;color:var(--brand-deep);line-height:1}
+.bignum .t{font-size:11px;color:var(--ink-3);width:70px;line-height:1.5}
+.grid{position:absolute;top:118px;left:56px;right:56px;bottom:196px;display:grid;
+  grid-template-columns:1.5fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;z-index:4}
+.cat{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:13px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:22px 14px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line);display:flex;gap:6px}
+.zlabel em{font:800 10.5px "Helvetica Neue",Arial;font-style:normal}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.za{background:#fdf1e2;color:#b06a05;border-color:#f3ddba}
+.zlabel.zm{background:#f1f4f7;color:var(--ink-3);border-color:#dbe2e9}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-content:center;flex:1}
+.dchip{font:600 10.5px "Helvetica Neue",Arial,"PingFang SC";color:var(--ink-2);
+  border:1px solid var(--line);background:#fbfdfe;border-radius:7px;padding:5px 8px}
+.c-ind .dchip{border-color:#cfe6f6;background:var(--brand-tint)}
+.c-iot .dchip{border-color:#c8e8e2;background:#eef9f6}
+.c-db .dchip{border-color:#dedcf6;background:#f3f2fc}
+.c-com .dchip{border-color:#f4e0bf;background:#fdf6ea}
+.c-sim .dchip{border-color:#dbe2e9;background:#f5f7f9}
+.cnote{margin-top:auto;padding-top:7px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--muted);line-height:1.45;flex:none}
+.big{grid-row:span 2}
+.big .chips{gap:7px}
+.big .dchip{font-size:11px;padding:6.5px 9px}
+.sdk{position:absolute;left:56px;right:56px;bottom:106px;height:74px;background:rgba(255,255,255,.94);
+  border:1px solid var(--brand-line);border-radius:13px;box-shadow:0 8px 24px rgba(23,58,94,.06);
+  display:flex;align-items:center;gap:0;padding:0 18px;z-index:4}
+.sdk .st{font:700 10px "Helvetica Neue",Arial;letter-spacing:1.2px;color:#fff;background:var(--brand-deep);
+  border-radius:6px;padding:4px 9px;flex:none;margin-right:16px}
+.sstep{flex:1;display:flex;flex-direction:column;gap:2px;align-items:center;text-align:center}
+.sstep .a{font-size:11.5px;font-weight:700;color:var(--ink)}
+.sstep .b{font-size:9.5px;color:var(--ink-3)}
+.sarr{flex:none;width:34px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.sarr .l{width:100%;height:1.5px;background:var(--brand-line);position:relative}
+.sarr .l::after{content:"";position:absolute;right:-1px;top:-3.5px;border-top:4px solid transparent;
+  border-bottom:4px solid transparent;border-left:6px solid var(--brand-line)}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release Notes · R1</span></div>
+      <h1>本版本交付清单：<b>36 个驱动模块</b>与 Driver SDK</h1>
+      <div class="h-sub">发布视角：每个驱动是独立微服务交付物，按需组合部署 · 清单与仓库 dc3-driver/ 一致</div>
+    </div>
+    <div class="bignum"><div class="n">36</div><div class="t">driver<br>modules</div></div>
+  </div>
+  <div class="grid">
+    <div class="cat big c-ind">
+      <div class="zlabel">工业协议 <em>×17</em></div>
+      <div class="chips">
+        <span class="dchip">Modbus TCP</span><span class="dchip">Modbus RTU</span><span class="dchip">OPC UA</span>
+        <span class="dchip">OPC DA</span><span class="dchip">Siemens S7</span><span class="dchip">BACnet/IP</span>
+        <span class="dchip">EtherNet/IP</span><span class="dchip">Omron FINS</span><span class="dchip">MELSEC</span>
+        <span class="dchip">IEC 60870-5-104</span><span class="dchip">IEC 61850</span><span class="dchip">DNP3</span>
+        <span class="dchip">DLMS</span><span class="dchip">DLT645</span><span class="dchip">KNX</span>
+        <span class="dchip">M-Bus</span><span class="dchip">SL651</span>
+      </div>
+      <div class="cnote" style="border-top:none;padding-top:6px;display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:9.5px;color:var(--ink-3)">
+        <b style="color:var(--brand-deep);text-align:right">工厂自动化</b><span>Modbus · OPC UA · S7 · FINS · MELSEC · EtherNet/IP</span>
+        <b style="color:var(--brand-deep);text-align:right">电力能源</b><span>IEC 104 · IEC 61850 · DNP3 · DLMS · DLT645</span>
+        <b style="color:var(--brand-deep);text-align:right">楼宇市政</b><span>BACnet/IP · KNX · M-Bus</span>
+        <b style="color:var(--brand-deep);text-align:right">水利水文</b><span>SL651 水文规约家族</span>
+      </div>
+      <div class="cnote">交付口径：清单与仓库 dc3-driver/ 一致，新驱动随版本持续合入</div>
+    </div>
+    <div class="cat c-iot">
+      <div class="zlabel zt">IoT 协议 <em>×7</em></div>
+      <div class="chips">
+        <span class="dchip">MQTT</span><span class="dchip">CoAP</span><span class="dchip">LwM2M</span>
+        <span class="dchip">HTTP</span><span class="dchip">BLE</span><span class="dchip">Zigbee</span><span class="dchip">LoRaWAN</span>
+      </div>
+      <div class="cnote">云边协同 · 无线低功耗</div>
+    </div>
+    <div class="cat c-db">
+      <div class="zlabel zi">数据桥接 <em>×5</em></div>
+      <div class="chips">
+        <span class="dchip">MySQL</span><span class="dchip">PostgreSQL</span><span class="dchip">Oracle</span>
+        <span class="dchip">SQL Server</span><span class="dchip">Redis</span>
+      </div>
+      <div class="cnote">存量库数据搬入平台</div>
+    </div>
+    <div class="cat c-com">
+      <div class="zlabel za">基础通信 <em>×5</em></div>
+      <div class="chips">
+        <span class="dchip">TCP/UDP</span><span class="dchip">Serial</span><span class="dchip">SNMP</span>
+        <span class="dchip">CAN</span><span class="dchip">Kafka</span>
+      </div>
+      <div class="cnote">自定义协议底座 · 网络管理</div>
+    </div>
+    <div class="cat c-sim">
+      <div class="zlabel zm">仿真调试 <em>×2</em></div>
+      <div class="chips">
+        <span class="dchip">Virtual</span><span class="dchip">Listening Virtual</span>
+      </div>
+      <div class="cnote">部署验收第一步：不接真设备先验证链路</div>
+    </div>
+  </div>
+  <div class="sdk">
+    <span class="st">Driver SDK 路径</span>
+    <div class="sstep"><span class="a">实现协议解析</span><span class="b">报文 + 点位映射</span></div>
+    <div class="sarr"><div class="l"></div></div>
+    <div class="sstep"><span class="a">接入 SDK 基类</span><span class="b">注册/心跳/调度由运行时承担</span></div>
+    <div class="sarr"><div class="l"></div></div>
+    <div class="sstep"><span class="a">打包为镜像</span><span class="b">独立微服务</span></div>
+    <div class="sarr"><div class="l"></div></div>
+    <div class="sstep"><span class="a">注册统一管理</span><span class="b">docs: Driver Authoring Guide</span></div>
+  </div>
+  <div class="strip">发布口径：<b>成熟度存在差异</b>——Modbus / OPC UA / MQTT 高频协议实战检验最多，建议先 Virtual 驱动验证再接真设备</div>
+  <div class="note">配文：R1《IoT DC3 v2026.9.15 发布》· 驱动清单以仓库 dc3-driver/ 为准，新驱动随版本持续合入</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "cardUrl": "https://i-blog.csdnimg.cn/direct/6bbe8bba55004914a558276223b74ec6.jpeg",
+  "cardAlt": "IoT DC3 · 多协议 · 云原生 · 开源工业物联网平台",
+  "cardLink": "https://github.com/pnoker/iot-dc3",
+  "linkRow": "**IoT DC3** · [GitHub](https://github.com/pnoker/iot-dc3) | [Gitee](https://gitee.com/pnoker/iot-dc3) | [文档 docs.dc3.site](https://docs.dc3.site) | [在线书 book.dc3.site](https://book.dc3.site) | [演示 demo.dc3.site](https://demo.dc3.site) | [官网 dc3.site](https://dc3.site)",
+  "note": "源稿文末用 PROMO_CARD 令牌,发布流程替换为 [![cardAlt](cardUrl)](cardLink);卡片源 tools/assets/promo-card.svg(取自 iot-dc3 banner.zh,28+ 已修 36+)"
+}

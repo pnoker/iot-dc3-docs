@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>10 贡献路径与许可决策</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:132px;bottom:118px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.p-flow{flex:1.15}
+.p-lic{flex:1}
+/* flow */
+.steps{display:flex;flex-direction:column;gap:0;flex:1}
+.st{display:flex;gap:10px}
+.st .rail{width:22px;display:flex;flex-direction:column;align-items:center}
+.st .dot{width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 11px "Helvetica Neue",Arial;flex:none}
+.st:nth-child(2) .dot{background:var(--brand-mid)}
+.st:nth-child(3) .dot{background:#0d5c98}
+.st:nth-child(4) .dot{background:var(--brand-deep)}
+.st .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:6px}
+.st .bx{flex:1;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:7px 11px;margin-bottom:8px}
+.st .bt{font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.st .bd{font-size:9.6px;color:var(--ink-3);margin-top:2px;line-height:1.45}
+.st code{font:600 9px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);
+  border:1px solid var(--brand-tint-2);border-radius:5px;padding:1px 6px}
+.st .pill{font-size:8.5px;font-weight:700;border-radius:999px;padding:1.5px 8px;background:var(--brand-tint);
+  color:var(--brand-deep);border:1px solid var(--brand-line)}
+.dirs{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px}
+.dir{font-size:9.6px;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:#fff}
+.dir b{color:var(--brand-deep)}
+/* license decision */
+.dec{display:flex;flex-direction:column;gap:9px;flex:1;justify-content:center}
+.dc{display:flex;gap:11px;align-items:flex-start;border-radius:11px;padding:10px 13px}
+.dc .mark{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;flex:none;margin-top:1px}
+.dc .tt{font-size:12px;font-weight:700}
+.dc .dd{font-size:9.9px;color:var(--ink-2);line-height:1.5;margin-top:2px}
+.dc .dd b{font-weight:700}
+.d-ok{border:1px solid #cde8d9;background:#f2faf6}
+.d-ok .mark{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.d-ok .tt{color:#22694a}
+.d-warn{border:1px solid #f3ddba;background:#fdf8ef}
+.d-warn .mark{background:#fdf1e2;color:#b06a05;border:1px solid #f3ddba}
+.d-warn .tt{color:#7c4d0a}
+.licfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:9.8px;color:var(--muted);line-height:1.5}
+.licfoot b{color:var(--brand-deep)}
+/* series recap */
+.recap{position:absolute;left:56px;right:56px;top:472px;height:88px;background:rgba(255,255,255,.94);
+  border:1px solid var(--brand-line);border-radius:13px;box-shadow:0 8px 26px rgba(23,58,94,.07);
+  padding:18px 18px 10px;display:flex;flex-direction:column;z-index:4}
+.rz{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.episodes{display:flex;gap:8px;flex:1;align-items:center}
+.ep{flex:1;border-radius:9px;border:1px solid var(--line);background:#fbfdfe;padding:6px 8px;text-align:center}
+.ep .n{font:800 11px "Helvetica Neue",Arial;color:var(--brand-mid)}
+.ep .t{font-size:9.2px;color:var(--ink-2);margin-top:1px;line-height:1.3}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:40px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:15px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.10 · 收官</span></div>
+    <h1>贡献路径与许可决策：<b>规则清楚，合作才长久</b></h1>
+    <div class="h-sub">标准开源协作流 · AGPL 3.0 三条大白话 · 系列十篇回顾</div>
+  </div>
+  <div class="main">
+    <div class="panel p-flow">
+      <div class="zlabel">贡献代码 · 四步标准流</div>
+      <div class="steps">
+        <div class="st">
+          <div class="rail"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">Fork 仓库，拉 feature 分支 <span class="pill">从 main 拉出</span></div>
+          <div class="bd">分支命名：<code>feature/你的名字/功能描述</code>，例如 feature/pnoker/mqtt_driver</div></div>
+        </div>
+        <div class="st">
+          <div class="rail"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">开发并提交 <span class="pill">Conventional Commits</span></div>
+          <div class="bd"><code>feat:</code> / <code>fix:</code> / <code>docs:</code> 前缀 · 仓库装有提交信息校验钩子（make install-hooks）</div></div>
+        </div>
+        <div class="st">
+          <div class="rail"><div class="dot">3</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">PR 提交到 develop 分支</div>
+          <div class="bd">维护者 review 后合并 · 提交前按改动跑对应验证（编译 / 测试 / compose 校验）</div></div>
+        </div>
+        <div class="st">
+          <div class="rail"><div class="dot">4</div></div>
+          <div class="bx"><div class="bt">非代码贡献同样欢迎</div>
+          <div class="bd">文档纠错、双语书英文校对、Issue 复现信息，都是高价值贡献</div></div>
+        </div>
+      </div>
+      <div class="dirs">
+        <span class="dir"><b>热门方向</b></span>
+        <span class="dir">新协议驱动（SDK 路径）</span>
+        <span class="dir">文档与翻译</span>
+        <span class="dir">前端体验（Vue 3 + TS）</span>
+        <span class="dir">CLI 工具面扩展</span>
+      </div>
+    </div>
+    <div class="panel p-lic">
+      <div class="zlabel zi">AGPL 3.0 · 三条大白话</div>
+      <div class="dec">
+        <div class="dc d-ok">
+          <span class="mark">✓</span>
+          <div><div class="tt">个人学习、研究、公司内部使用：免费</div>
+          <div class="dd">不需要开源你的内部业务代码，放心用</div></div>
+        </div>
+        <div class="dc d-ok">
+          <span class="mark">✓</span>
+          <div><div class="tt">修改了代码：按 AGPL 3.0 开源你的修改</div>
+          <div class="dd">改好了回馈社区，正是项目十年来的演进方式</div></div>
+        </div>
+        <div class="dc d-warn">
+          <span class="mark">!</span>
+          <div><div class="tt">闭源商用：需要商业授权</div>
+          <div class="dd">对第三方提供商业服务而不开源修改 → 联系仓库 <b>LICENSE.txt</b> 渠道洽谈</div></div>
+        </div>
+      </div>
+      <div class="licfoot">开源不是"随便拿"，也不是"不能用"——<b>规则清楚，合作才长久</b>；许可原文以仓库 LICENSE 文件为准</div>
+    </div>
+  </div>
+  <div class="recap">
+    <span class="rz">系列回顾 · 开源工业物联网手记 EP.01—10</span>
+    <div class="episodes">
+      <div class="ep"><div class="n">01</div><div class="t">智能体时代</div></div>
+      <div class="ep"><div class="n">02</div><div class="t">36 驱动</div></div>
+      <div class="ep"><div class="n">03</div><div class="t">六层架构</div></div>
+      <div class="ep"><div class="n">04</div><div class="t">MQ 六适配</div></div>
+      <div class="ep"><div class="n">05</div><div class="t">时序四库</div></div>
+      <div class="ep"><div class="n">06</div><div class="t">AI Center</div></div>
+      <div class="ep"><div class="n">07</div><div class="t">MCP 接口</div></div>
+      <div class="ep"><div class="n">08</div><div class="t">部署实录</div></div>
+      <div class="ep"><div class="n">09</div><div class="t">安全账本</div></div>
+      <div class="ep"><div class="n">10</div><div class="t">参与地图</div></div>
+    </div>
+  </div>
+  <div class="strip">十年，36 个驱动，四个可插拔存储家族，一套 MCP 智能体接口——<b>下一个十年，欢迎同行</b></div>
+  <div class="note">配文：EP.10《一本书、一个 Demo、一个 CLI：参与开源项目 DC3 的完整地图》· 系列完结</div>
+</div>
+</body>
+</html>

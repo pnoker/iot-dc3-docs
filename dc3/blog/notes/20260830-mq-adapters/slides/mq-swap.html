@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>04 换型操作与选型指引</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:132px;bottom:118px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-sel{flex:1.45}
+.p-op{flex:1}
+/* selection table */
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;color:var(--muted);font-weight:600;text-align:left;padding:5px 8px;border-bottom:1.5px solid var(--line)}
+td{font-size:11px;color:var(--ink-2);padding:10.5px 8px;border-bottom:1px solid var(--line-2,#eef2f6);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:none}
+td .mq{font:700 11px "Helvetica Neue",Arial,"PingFang SC";color:var(--ink)}
+td .mq small{display:block;font:600 8.5px "Helvetica Neue",Arial;color:var(--brand-mid);letter-spacing:.5px;margin-top:1px}
+.fit{display:inline-block;font-size:9.5px;border-radius:999px;padding:2px 8px;font-weight:600}
+.f-def{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.f-good{background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.selnote{margin-top:auto;padding-top:9px;border-top:1px dashed var(--line);font-size:10.3px;color:var(--ink-2);line-height:1.6;
+  background:#fbfdfe;border:1px dashed var(--brand-line);border-radius:9px;padding:8px 12px}
+.selnote b{color:var(--brand-deep)}
+.selnote .lbl{font-weight:700;color:var(--brand-deep);margin-right:6px}
+/* swap steps */
+.steps{display:flex;flex-direction:column;gap:11px;flex:1;justify-content:center}
+.step{border:1px solid var(--line);border-radius:11px;background:#fbfdfe;padding:11px 13px}
+.step .sn{display:flex;align-items:center;gap:8px}
+.step .no{width:23px;height:23px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 12px "Helvetica Neue",Arial;flex:none}
+.step .tt{font-size:12.5px;font-weight:700}
+.step code{display:block;margin-top:7px;font:600 10.2px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);
+  background:var(--brand-tint);border:1px solid var(--brand-tint-2);border-radius:7px;padding:6.5px 9px;line-height:1.5}
+.step .dd{font-size:9.8px;color:var(--ink-3);margin-top:5px;line-height:1.5}
+.zero{margin-top:10px;border:1px solid #cde8d9;background:#f2faf6;border-radius:10px;padding:10px 12px;
+  display:flex;align-items:center;gap:9px}
+.zero i{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
+.zero span{font-size:11px;color:#22694a;line-height:1.45}
+.zero b{font-weight:700}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.04</span></div>
+    <h1>什么场景选什么队列，以及<b>换型三步</b>怎么走</h1>
+    <div class="h-sub">选型明细见仓库 docs/mq-brokers.md · 下表为概括口径，部署配置以文档为准</div>
+  </div>
+  <div class="main">
+    <div class="panel p-sel">
+      <div class="zlabel zt">六种队列 × 场景适配</div>
+      <table>
+        <tr><th style="width:23%">消息队列</th><th style="width:44%">适合的场景</th><th>适配状态</th></tr>
+        <tr>
+          <td><span class="mq">RabbitMQ<small>DEFAULT</small></span></td>
+          <td>中等规模、路由灵活、开箱即用——<b>绝大多数部署从它开始</b></td>
+          <td><span class="fit f-def">默认启用</span></td>
+        </tr>
+        <tr>
+          <td><span class="mq">Kafka</span></td>
+          <td>高吞吐管道 · 需要回放与多消费者扇出的数据链路</td>
+          <td><span class="fit f-good">可选适配</span></td>
+        </tr>
+        <tr>
+          <td><span class="mq">Pulsar</span></td>
+          <td>存算分离 · 多租户队列需求突出的平台化场景</td>
+          <td><span class="fit f-good">可选适配</span></td>
+        </tr>
+        <tr>
+          <td><span class="mq">MQTT</span></td>
+          <td>边缘侧已有 MQTT broker（如 EMQX）的基础设施复用</td>
+          <td><span class="fit f-good">可选适配</span></td>
+        </tr>
+        <tr>
+          <td><span class="mq">ActiveMQ</span></td>
+          <td>存量中间件资产的平滑接入与迁移过渡</td>
+          <td><span class="fit f-good">可选适配</span></td>
+        </tr>
+        <tr>
+          <td><span class="mq">RocketMQ</span></td>
+          <td>国产化技术栈适配——事务消息与顺序场景生态</td>
+          <td><span class="fit f-good">可选适配</span></td>
+        </tr>
+      </table>
+      <div class="selnote"><span class="lbl">搭配记忆点</span><b>默认的随服务打包，可选的按部署引入</b>——与 TSDB 家族同一个约定，不为不用的组件付出 jar 体积与启动开销</div>
+    </div>
+    <div class="panel p-op">
+      <div class="zlabel">换型三步 · 业务代码零改动</div>
+      <div class="steps">
+        <div class="step">
+          <div class="sn"><span class="no">1</span><span class="tt">起目标队列容器</span></div>
+          <code>podman compose -f dc3/docker-compose-db.yml up -d</code>
+          <div class="dd">按所选队列启动对应容器（或复用已有集群）</div>
+        </div>
+        <div class="step">
+          <div class="sn"><span class="no">2</span><span class="tt">改环境变量指向新队列</span></div>
+          <code>DC3_MQ_TYPE=kafka &nbsp;# 默认 rabbitmq</code>
+          <div class="dd">连接参数按需覆盖 · 队列 / 交换机语义由适配器映射</div>
+        </div>
+        <div class="step">
+          <div class="sn"><span class="no">3</span><span class="tt">换数据中心依赖打包</span></div>
+          <code>&lt;artifactId&gt;dc3-mq-kafka&lt;/artifactId&gt;</code>
+          <div class="dd">只打包所选适配器 · 跑通 TCK 的行为契约不变</div>
+        </div>
+      </div>
+      <div class="zero"><i></i><span><b>业务代码改动量：0 行</b> —— 发送方 / 消费方代码不感知底层是哪家队列</span></div>
+    </div>
+  </div>
+  <div class="strip">诚实提醒：抽象层覆盖<b>公共语义子集</b>；死信路由、消费组精细控制等高级特性请直接用原生客户端</div>
+  <div class="note">配文：EP.04《换个消息队列，不改一行业务代码》· 环境变量名以仓库 docs/mq-brokers.md 为准</div>
+</div>
+</body>
+</html>

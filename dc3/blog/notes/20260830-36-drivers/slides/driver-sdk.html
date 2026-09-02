@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>02 统一建模与 Driver SDK</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--planned:#8a98a8;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:130px;bottom:118px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:24px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.p-model{width:335px}
+.p-sdk{flex:1}
+.p-bound{width:300px}
+/* model stack */
+.ent{border:1px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint));
+  border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:11px}
+.ent .nm{font:800 13px "Helvetica Neue",Arial,"PingFang SC";color:var(--brand-deep);width:76px;flex:none}
+.ent .ds{font-size:10.8px;color:var(--ink-2);line-height:1.45}
+.link{display:flex;flex-direction:column;align-items:center;height:18px;justify-content:center;position:relative}
+.link i{width:1.5px;flex:1;background:var(--brand-line)}
+.link span{position:absolute;left:calc(50% + 8px);top:50%;transform:translateY(-50%);font-size:8.5px;color:var(--muted);white-space:nowrap}
+.model-note{margin-top:auto;padding-top:9px;border-top:1px dashed var(--line);font-size:10.3px;color:var(--muted);line-height:1.55}
+.model-note b{color:var(--brand-deep)}
+/* sdk steps */
+.steps{display:flex;flex-direction:column;gap:10px;flex:1}
+.step{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;
+  background:#fbfdfe;padding:11px 13px}
+.step .sn{width:26px;height:26px;border-radius:8px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 12.5px "Helvetica Neue",Arial;flex:none}
+.step:nth-child(4) .sn{background:var(--brand-deep)}
+.step .tt{font-size:12.5px;font-weight:700}
+.step .dd{font-size:10.5px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+.step .dd code{font:600 10px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);
+  border:1px solid var(--brand-tint-2);border-radius:5px;padding:1.5px 5px}
+.sdk-foot{margin-top:auto;padding-top:9px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.sdk-foot .q{font-size:10px;color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:3.5px 10px;background:#fff}
+.sdk-foot .q b{color:var(--brand-deep)}
+.steps{display:flex;flex-direction:column;gap:11px;flex:1;justify-content:center}
+.step{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:11px;
+  background:#fbfdfe;padding:12px 13px}
+.step .sn{width:27px;height:27px;border-radius:8px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 13px "Helvetica Neue",Arial;flex:none}
+.step:nth-child(4) .sn{background:var(--brand-deep)}
+.step .tt{font-size:12.8px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step .tt .who{font-size:8.5px;font-weight:700;border-radius:999px;padding:1.5px 8px;background:var(--brand-tint);
+  color:var(--brand-deep);border:1px solid var(--brand-line)}
+.step .dd{font-size:10.6px;color:var(--ink-3);margin-top:4px;line-height:1.55}
+.step .dd code{font:600 10px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);
+  border:1px solid var(--brand-tint-2);border-radius:5px;padding:1.5px 5px}
+/* boundary */
+.blist{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center}
+.bitem{border-radius:10px;padding:10px 12px;font-size:10.8px;line-height:1.55}
+.bitem.neg{border:1px dashed #efc4c0;background:#fdf5f4;color:#9c4438}
+.bitem.pos{border:1px solid #cde8d9;background:#f2faf6;color:#22694a}
+.bitem b{font-weight:700}
+.bfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:10px;color:var(--muted);line-height:1.5}
+.bfoot code{font:600 9.5px Menlo,monospace;color:var(--brand-deep)}
+.flow-arr{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
+  font-size:11px;color:var(--brand-deep);background:#fff;border:1px solid var(--brand-line);border-radius:999px;
+  padding:4px 12px;z-index:6;white-space:nowrap}
+.strip{position:absolute;left:56px;right:56px;bottom:56px;height:44px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.02</span></div>
+    <h1>比"36"更重要的：<b>统一建模</b>与 Driver SDK</h1>
+    <div class="h-sub">四个核心实体把所有协议翻译成同一种语言 · 第 37 个驱动应该来自真实工位的真实需求</div>
+  </div>
+  <div class="main">
+    <div class="panel p-model">
+      <div class="zlabel">四层实体模型</div>
+      <div class="ent"><span class="nm">Driver</span><span class="ds">驱动实例：一个协议一种连接方式的运行载体</span></div>
+      <div class="link"><i></i><span>挂接</span></div>
+      <div class="ent"><span class="nm">Device</span><span class="ds">设备：挂接在驱动下的真实物理设备</span></div>
+      <div class="link"><i></i><span>套用模板</span></div>
+      <div class="ent"><span class="nm">Profile</span><span class="ds">位号模板：同类设备的点位结构复用</span></div>
+      <div class="link"><i></i><span>实例化 ×N</span></div>
+      <div class="ent"><span class="nm">Point</span><span class="ds">位号：类型 / 读写标志 / 采集频率 / 归属租户</span></div>
+      <div class="model-note">Modbus 的寄存器地址、OPC UA 的 NodeId、S7 的 DB 块偏移——<b>进到平台里都是同一个 Point 模型</b></div>
+    </div>
+    <div class="panel p-sdk">
+      <div class="zlabel">Driver SDK：新增一个驱动的路径</div>
+      <div class="steps">
+        <div class="step"><div class="sn">1</div><div><div class="tt">实现协议解析与点位映射 <span class="who">开发者写</span></div><div class="dd">只写协议本身：报文解析、连接管理、点位地址翻译</div></div></div>
+        <div class="step"><div class="sn">2</div><div><div class="tt">接入 SDK 基类 <span class="who">框架承担</span></div><div class="dd">注册、心跳、调度、数据上行、租户隔离由运行时统一处理</div></div></div>
+        <div class="step"><div class="sn">3</div><div><div class="tt">打包为镜像 <span class="who">独立进程</span></div><div class="dd">驱动是独立微服务，按需部署、按需启停、按需扩容</div></div></div>
+        <div class="step"><div class="sn">4</div><div><div class="tt">注册进平台，统一管理 <span class="who">统一运维</span></div><div class="dd">文档：<code>docs.dc3.site · Driver Authoring Guide</code></div></div></div>
+      </div>
+      <div class="sdk-foot">
+        <span class="q">平台共性 <b>SDK 承担</b></span>
+        <span class="q">协议差异 <b>开发者专注</b></span>
+        <span class="q">镜像化部署 <b>独立进程</b></span>
+      </div>
+    </div>
+    <div class="panel p-bound">
+      <div class="zlabel">诚实的边界</div>
+      <div class="blist">
+        <div class="bitem neg"><b>SDK 不消除协议本身的复杂度</b>：行业规约的报文加密、私有扩展仍需现场适配工作量</div>
+        <div class="bitem neg"><b>36 个驱动成熟度不一</b>：小众协议实战检验少于高频协议，先仿真后上真机</div>
+        <div class="bitem pos"><b>结构问题是平台的事</b>：统一模型、统一运维、统一数据语义由平台兜底</div>
+        <div class="bitem pos"><b>文档与教程齐备</b>：docs 站 Driver Authoring Guide 从零讲一个驱动的完整开发</div>
+      </div>
+      <div class="bfoot">高频协议参考：Modbus / OPC UA / MQTT / S7 · 新驱动随版本持续合入 <code>dc3-driver/</code></div>
+    </div>
+  </div>
+  <div class="strip">工程价值一句话：<b>协议接入的复杂度被限制在驱动层内部，平台层永远面对统一的点位语义</b></div>
+  <div class="note">配文：EP.02《36 个驱动模块背后：协议碎片化的长期战争》· 图内驱动清单与仓库 dc3-driver/ 一致</div>
+</div>
+</body>
+</html>

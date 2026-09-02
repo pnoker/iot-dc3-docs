@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 可观测性与配套</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-otel{flex:1.25}
+.stps{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
+.sp{display:flex;gap:10px}
+.sp .rail{width:20px;display:flex;flex-direction:column;align-items:center}
+.sp .dot{width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 11px "Helvetica Neue",Arial;flex:none}
+.sp .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:7px}
+.sp .bx{flex:1;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 11px;margin-bottom:9px}
+.sp .bt{font-size:11.3px;font-weight:700;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.sp .bd{font-size:9.8px;color:var(--ink-3);margin-top:2px;line-height:1.5}
+.sp .bd b{color:var(--ink)}
+.tag{font-size:8.5px;font-weight:700;border-radius:999px;padding:1.5px 8px;background:var(--brand-tint);
+  color:var(--brand-deep);border:1px solid var(--brand-line)}
+.s2 .dot{background:var(--brand-mid)}
+.s3 .dot{background:var(--indigo)}
+.p-sec{flex:1}
+.p-doc{flex:1}
+.sl{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.si{border:1px solid var(--line);border-radius:9px;background:#fbfdfe;padding:8px 11px;font-size:10.3px;color:var(--ink-2);line-height:1.55}
+.si b{color:var(--ink)}
+.si code{font:600 9px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border-radius:4px;padding:1px 5px}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R5 v2026.7.27 · 特性详解 3/3</span></div>
+    <h1>配套底座：<b>OpenTelemetry 全链路追踪</b>、日志脱敏与供应链加固</h1>
+    <div class="h-sub">缓冲解决"不丢数"，可观测解决"出了问题找得到"——两者是同一件事的两面</div>
+  </div>
+  <div class="main">
+    <div class="panel p-otel">
+      <div class="zlabel">OpenTelemetry 怎么接入的</div>
+      <div class="stps">
+        <div class="sp">
+          <div class="rail"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">引入 OTel BOM <span class="tag">依赖治理</span></div>
+          <div class="bd">追踪相关依赖统一由 BOM 管版本，避免各模块自带版本漂移</div></div>
+        </div>
+        <div class="sp s2">
+          <div class="rail"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">融入 request-id 机制 <span class="tag">关键设计</span></div>
+          <div class="bd">不是另起一套 trace 标识，而是把 <b>span 上下文织入既有 request-id 传递链</b>——日志里的 request-id 与 Jaeger 里的 trace 同源，两套系统互查无翻译成本</div></div>
+        </div>
+        <div class="sp s3">
+          <div class="rail"><div class="dot">3</div></div>
+          <div class="bx"><div class="bt">Jaeger 进可选栈 <span class="tag">零成本试用</span></div>
+          <div class="bd">Jaeger 后端加入<b>可选 docker-compose 栈</b>：想要全链路追踪时一条命令拉起，不想要则零开销</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel p-sec">
+      <div class="zlabel zi">同窗口的安全加固</div>
+      <div class="sl">
+        <div class="si"><b>日志脱敏</b>：标识符与模型名（identifiers &amp; model names）在日志输出前<b>脱敏</b>——排查问题与合规两不误</div>
+        <div class="si"><b>供应链</b>：GitHub Actions 与 CodeQL 工作流<b>固定到不可变 commit 哈希</b>，杜绝 tag 被动后注入</div>
+        <div class="si"><b>健壮性</b>：数字解析统一防御 <code>NumberFormatException</code>，脏数据进不来就不抛未捕获异常</div>
+        <div class="si"><b>为什么一起做</b>：可观测与安全共用同一套"看得清"的基建——看得清才能守得住</div>
+      </div>
+    </div>
+    <div class="panel p-doc">
+      <div class="zlabel zt">文档工程同步升级</div>
+      <div class="sl">
+        <div class="si"><b>文档版本化系统</b>：docs 站支持多版本文档并存，随发版节奏对齐</div>
+        <div class="si"><b>107 张 mermaid 图转自包含 SVG</b>：渲染不再依赖运行时 JS，加载更快、离线可读</div>
+        <div class="si"><b>SEO 与统计</b>：sitemap / robots.txt / llms.txt、GA4 与百度统计接入、图缩放增强</div>
+        <div class="si"><b>构建目标</b>：Makefile 新增文档构建 targets 并固定 Node 版本，<b>文档也能一键复现</b></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">本版本完整口径：<b>不丢数（缓冲）+ 找得到（追踪）+ 看得清（脱敏与供应链）</b>——可靠性是一组工程，不是一个开关</div>
+  <div class="note"><span>版本锚点：v2026.7.27（7.15–7.27 窗口合入）</span><span>配文：R2《IoT DC3 v2026.7.27 发布》</span></div>
+</div>
+</body>
+</html>

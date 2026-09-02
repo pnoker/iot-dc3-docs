@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R3 部署矩阵与契约收敛</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-dep{flex:1.2}
+.matrix{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.mx{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 12px}
+.mx .nm{font:800 11.5px "Segoe UI",Arial,"PingFang SC";color:var(--brand-deep);width:96px;flex:none}
+.mx .d{font-size:10px;color:var(--ink-2);line-height:1.5;flex:1}
+.mx .d b{color:var(--ink)}
+.mx .mk{font-size:8.5px;font-weight:700;border-radius:999px;padding:1.5px 8px;flex:none}
+.mk1{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.mk2{background:#f1f4f7;color:var(--ink-3);border:1px solid var(--line)}
+.depfoot{margin-top:auto;padding-top:7px;border-top:1px dashed var(--line);font-size:9.5px;color:var(--muted);line-height:1.45}
+.depfoot b{color:var(--brand-deep)}
+.p-id{flex:1}
+.iddemo{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.id{border:1px solid var(--line);border-radius:9px;background:#fbfdfe;padding:8px 11px}
+.id .et{font-size:9.3px;color:var(--muted);margin-bottom:3px}
+.id .er{display:flex;align-items:center;gap:6px;font-size:10px}
+.id .seg{border-radius:5px;padding:2px 7px}
+.seg.bad{background:#fdf5f4;border:1px solid #efc4c0;color:#8c3830;font-family:Menlo,monospace;font-size:9px;text-decoration:line-through}
+.seg.good{background:#e2f3ec;border:1px solid #bfe4d4;color:#12795a;font-family:Menlo,monospace;font-size:9px}
+.id .ea{color:var(--muted)}
+.p-qual{flex:1}
+.ql{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.qi{display:flex;gap:7px;font-size:10.3px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.qi i{width:5.5px;height:5.5px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
+.qi b{color:var(--ink)}
+.qi code{font:600 9px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border-radius:4px;padding:1px 5px}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R6 v2026.8.19 · 特性详解 3/3</span></div>
+    <h1>交付矩阵与契约收敛：<b>四种部署形态</b>、ID 字符串化、质量底座</h1>
+    <div class="h-sub">收官窗口（8.9–8.19）的工程收口动作：让平台"在哪都能跑、数据不会错、发布可验证"</div>
+  </div>
+  <div class="main">
+    <div class="panel p-dep">
+      <div class="zlabel">部署矩阵 · 本版本交付</div>
+      <div class="matrix">
+        <div class="mx"><span class="nm">Compose</span><span class="d">scale 服务扩缩配置——<b>单机到小集群的平滑档</b></span><span class="mk mk1">已有 + 扩展</span></div>
+        <div class="mx"><span class="nm">Swarm</span><span class="d">swarm 编排配置，存量 Docker 环境直接接管</span><span class="mk mk1">本版本交付</span></div>
+        <div class="mx"><span class="nm">Kubernetes</span><span class="d">原生 manifests + <b>make targets</b>，web 镜像 tag 精确固定</span><span class="mk mk1">本版本交付</span></div>
+        <div class="mx"><span class="nm">Helm</span><span class="d">chart 化参数化安装，值文件覆盖环境差异</span><span class="mk mk1">本版本交付</span></div>
+      </div>
+      <div class="depfoot">配套：<b>部署指南去重</b>（usage 与 deployment 两章口径合并）+ 英文版部署文档 + PostgreSQL 初始化修复并验证 · 为什么先修初始化：部署矩阵的第一步永远是"起得来"</div>
+    </div>
+    <div class="panel p-id">
+      <div class="zlabel zi">ID 全线字符串化 · 怎么做的</div>
+      <div class="iddemo">
+        <div class="id">
+          <div class="et">问题：JS Number 只能安全表示 2⁵³，雪花 ID 更长</div>
+          <div class="er"><span class="seg bad">1936547295000000000 (精度丢失)</span><span class="ea">→</span><span class="seg good">"1936547295000000000" (string)</span></div>
+        </div>
+        <div class="id">
+          <div class="er" style="flex-direction:column;align-items:flex-start;gap:4px">
+            <span style="font-size:10px;color:var(--ink-2);line-height:1.55">HTTP 契约<b style="color:var(--ink)">统一以字符串下发标识符</b>；前端按字符串解析、<b>移除 json-bigint 补丁库</b>（补丁库是症状治疗，契约收敛才是根治）；顺带修复 nanoid 高危通告（3.3.18）。</span>
+            <span style="font-size:10px;color:var(--ink-2);line-height:1.55">web 侧类型债同步清理：设备/驱动/详情模型从 <b>{} as any</b> 收敛为显式 Partial 类型。</span>
+          </div>
+        </div>
+        <div class="id">
+          <div class="er"><span style="font-size:10px;color:var(--ink-2);line-height:1.55"><b style="color:var(--ink)">为什么现在做</b>：ID 精度问题在数据量上来后必然爆发，趁驱动大版本一起收敛，一次破坏、长期干净。</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel p-qual">
+      <div class="zlabel zt">质量底座 · 发布可验证</div>
+      <div class="ql">
+        <div class="qi"><i></i><span><b>真实覆盖率强制</b>：测试门禁从"跑过"升级为"行为质量 + 覆盖真实性"</span></div>
+        <div class="qi"><i></i><span><b>契约边界约束</b>：shared contract 边界强制执行，公共模块不裸奔</span></div>
+        <div class="qi"><i></i><span><b>日志规范化</b>：应用日志统一格式，配合 R2 的脱敏与追踪</span></div>
+        <div class="qi"><i></i><span><b>发布前校验</b>：<code>ci(release)</code> 工件发布前先验证——<b>不发布没验证过的东西</b></span></div>
+        <div class="qi"><i></i><span><b>品牌与口径</b>：多语言 banner（protocol mesh）+ 全 README 收敛到官方定位语</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">收官窗口的取向：<b>部署形态补齐、契约一次收敛、发布自带校验</b>——这是"当前最新发布版"应有的完成度</div>
+  <div class="note"><span>版本锚点：v2026.8.19（当前最新发布版，本系列与线上版本对齐）</span><span>配文：R3《IoT DC3 v2026.8.19 发布》</span></div>
+</div>
+</body>
+</html>

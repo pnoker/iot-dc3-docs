@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R3 文档站重构与发布流</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-ia{flex:1.2}
+.pillars{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.pi{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 12px}
+.pi .n{font:800 11px "Segoe UI",Arial;color:#fff;background:var(--brand);border-radius:6px;padding:3px 8px;flex:none}
+.pi .d{font-size:10.2px;color:var(--ink-2);line-height:1.5}
+.pi .d b{color:var(--ink)}
+.p-flow{flex:1}
+.p-why{flex:1}
+.lst{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.li{display:flex;gap:8px;font-size:10.4px;color:var(--ink-2);line-height:1.55;align-items:flex-start}
+.li i{width:6px;height:6px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
+.li.z i{background:var(--indigo)}
+.li b{color:var(--ink)}
+.li code{font:600 9.2px Menlo,monospace;color:var(--brand-deep);background:var(--brand-tint);border-radius:4px;padding:1px 5px}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R3 v2026.6.26 · 特性详解 2/2</span></div>
+    <h1>文档站信息架构重构与 <b>semver 发布流</b></h1>
+    <div class="h-sub">docs.dc3.site 从"文档堆"变成"知识站"；发版从"凭手感"变成 semver 流程</div>
+  </div>
+  <div class="main">
+    <div class="panel p-ia">
+      <div class="zlabel">文档站五支柱信息架构</div>
+      <div class="pillars">
+        <div class="pi"><span class="n">1</span><span class="d"><b>Foundations 支柱</b>：四层 IoT 知识体系与 DC3 实践交织——先讲通用知识，再落到平台</span></div>
+        <div class="pi"><span class="n">2</span><span class="d"><b>驱动矩阵</b>：28 个驱动逐一建立<b>双语参考页</b>并加深内容，附目录总览</span></div>
+        <div class="pi"><span class="n">3</span><span class="d"><b>核心概念</b>：9 个双语核心概念参考页，术语表（glossary）随导航就位</span></div>
+        <div class="pi"><span class="n">4</span><span class="d"><b>视觉与导航</b>：hero 渐变 logo、粒子汇聚动效、mermaid 重样式、语言切换修复</span></div>
+        <div class="pi"><span class="n">5</span><span class="d"><b>事实核查</b>：独立来源校验发现的事实性问题逐条修复——<b>文档也过验收</b></span></div>
+      </div>
+    </div>
+    <div class="panel p-flow">
+      <div class="zlabel zi">发布流程 semver 化：怎么做的</div>
+      <div class="lst">
+        <div class="li"><i></i><span><b>tag.sh 重写</b>：main 分支上的 semver dry-run——打 tag 前先看结果</span></div>
+        <div class="li"><i></i><span><b>分支模型成文</b>：develop/main 双分支职责写清，release 分支退场，CI 触发改挂 <code>develop/main + v* tags</code></span></div>
+        <div class="li"><i></i><span><b>PR / Issue 模板</b>与 git workflow 设计规格成文（提交 17eceb7ad / e89f4cc1d / 2ba4f73b7）</span></div>
+        <div class="li"><i></i><span><b>为什么</b>：高频 tag（8 月里两天一个）没有 semver 规则会失控——流程先行，频率才有意义</span></div>
+      </div>
+    </div>
+    <div class="panel p-why">
+      <div class="zlabel zt">同窗口的质量收口</div>
+      <div class="lst">
+        <div class="li z"><i></i><span><b>CI 修复</b>：timezone 敏感用例修复、覆盖率检查收敛到聚合 job（提交 b8d4169e1）</span></div>
+        <div class="li z"><i></i><span><b>权限审计</b>：OAuth2.1 / MCP 协议端点标注 <code>@PublicEndpoint</code> 通过控制器权限审计</span></div>
+        <div class="li z"><i></i><span><b>依赖治理</b>：docs npm 依赖交 dependabot 管理，CodeQL 权限收敛到 job 级</span></div>
+        <div class="li z"><i></i><span><b>为什么放一起</b>：AI 中心升级（特性一）与这些收口同窗口交付——<b>功能升级与质量收口从来是同一件事的两面</b></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">为什么重要：这套 IA 与 semver 流程沿用至今——<b>你现在访问的 docs.dc3.site 和本系列的每一个 tag，都是这一版定的规矩</b></div>
+  <div class="note"><span>版本锚点：v2026.6.26（6.10–6.26 窗口合入）</span><span>配文：R3《IoT DC3 v2026.6.26 发布》</span></div>
+</div>
+</body>
+</html>

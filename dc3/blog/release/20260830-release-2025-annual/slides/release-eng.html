@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R1 发布工程</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+             radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+             linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.main{position:absolute;top:130px;bottom:112px;left:56px;right:56px;display:flex;gap:18px;z-index:4}
+.panel{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:26px 16px 10px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.p-ci{flex:1.2}
+.stps{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
+.sp{display:flex;gap:10px}
+.sp .rail{width:20px;display:flex;flex-direction:column;align-items:center}
+.sp .dot{width:22px;height:22px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 11px "Helvetica Neue",Arial;flex:none}
+.sp .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:7px}
+.sp .bx{flex:1;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:8px 11px;margin-bottom:9px}
+.sp .bt{font-size:11.3px;font-weight:700}
+.sp .bd{font-size:9.8px;color:var(--ink-3);margin-top:2px;line-height:1.5}
+.sp .bd b{color:var(--ink)}
+.s2 .dot{background:var(--brand-mid)}
+.s3 .dot{background:var(--indigo)}
+.p-res{flex:1}
+.rl{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center}
+.ri{border:1px solid var(--line);border-radius:9px;background:#fbfdfe;padding:8px 11px;font-size:10.3px;color:var(--ink-2);line-height:1.55}
+.ri b{color:var(--ink)}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release R1 · 2025 年度版 · 特性详解 3/3</span></div>
+    <h1>发布工程：<b>docker-ci 自动发布波次</b>与运行时资源画像</h1>
+    <div class="h-sub">2025 年 8 月上线的工作流，让"打 tag 即出双语文档的 GitHub Release"成为常态</div>
+  </div>
+  <div class="main">
+    <div class="panel p-ci">
+      <div class="zlabel">docker-ci 工作流 · 怎么做的</div>
+      <div class="stps">
+        <div class="sp">
+          <div class="rail"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">tag 触发</div><div class="bd"><b>dc3.release.* / dc3.develop.*</b> 双模式：release 出正式镜像，develop 出日常构建——发布与日常验证同一条流水线</div></div>
+        </div>
+        <div class="sp s2">
+          <div class="rail"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">双语 Release Notes 自动生成</div><div class="bd">CHANGE / TITLE / USAGE 模板 + <b>envsubst 变量展开</b>，GitHub Release 带可折叠双语段落与架构图——发版文档不再手写</div></div>
+        </div>
+        <div class="sp s3">
+          <div class="rail"><div class="dot">3</div></div>
+          <div class="bx"><div class="bt">产物归档</div><div class="bd">使用文档（USAGE.md）与变更记录（CHANGE.md）随 release 归档到 dc3/doc，<b>每个版本自带说明书</b></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel p-res">
+      <div class="zlabel zi">运行时资源画像</div>
+      <div class="rl">
+        <div class="ri"><b>APM agent 接入</b>：所有 Dockerfile 与 compose 增加统一的 APM agent 环境变量与 dc3-apm 服务位——生产可观测从容器层开始</div>
+        <div class="ri"><b>JVM 堆 1024m → 512m</b>：逐服务实测后统一收紧，容器密度翻倍，资源画像更贴近真实负载</div>
+        <div class="ri"><b>JAVA_OPS 顺序规范</b>与 GC 日志配置补齐——同类参数写法一致，排障不再猜</div>
+        <div class="ri"><b>center-single 测试档</b>：单体形态补齐 RabbitMQ / Mongo / gRPC / MQTT 测试配置</div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">为什么单独讲：这一套发布工程沿用至今——<b>本系列 6 篇文章对应的每一个 tag，都是这条流水线产出的</b></div>
+  <div class="note"><span>版本锚点：dc3.release.20250425 系列（工作流于 2025-08 迭代成型）</span><span>配文：R1《IoT DC3 2025 年度版》</span></div>
+</div>
+</body>
+</html>

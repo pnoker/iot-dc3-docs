@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>06 封面</title>
+<style>
+
+:root{
+  --ink:#152335;--ink2:#42546a;--ink3:#64748b;--deep:#07549a;--blue:#0a6cb2;--bright:#1296db;--indigo:#5558c9;
+  --mesh:#4a90c9;--purple:#8d6df4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:545px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:linear-gradient(118deg,#f6fbff 0%,#edf5fd 55%,#e7eef9 100%);}
+.slide::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(760px 430px at 85% 6%, rgba(127,212,242,.32) 0%, rgba(127,212,242,0) 62%),
+             radial-gradient(660px 420px at 5% 102%, rgba(183,165,245,.28) 0%, rgba(183,165,245,0) 58%);}
+.slide::after{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.075) 1.1px,transparent 1.1px);background-size:24px 24px}
+.mesh{position:absolute;inset:0;z-index:1;pointer-events:none}
+.top{position:absolute;top:32px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.lockup{display:flex;align-items:center;gap:13px}
+.lens{width:54px;height:54px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 22%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.6) 34%, rgba(185,240,255,.28) 62%, rgba(85,191,232,.14) 100%);
+  border:1px solid rgba(255,255,255,.98);box-shadow:0 8px 22px rgba(12,89,153,.16), inset 0 0 0 1px rgba(140,137,236,.12);
+  display:flex;align-items:center;justify-content:center}
+.lens img{width:32px;height:31px;display:block}
+.wm .wt{display:block;font:800 24px "Segoe UI","Helvetica Neue",Arial,sans-serif;letter-spacing:.4px;
+  background:linear-gradient(112deg,#07549a 4%,#149ed7 46%,#4f52bf 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wm .wt2{display:block;font:600 8.5px "Segoe UI",Arial,sans-serif;letter-spacing:2.1px;color:#7c8ea3;text-transform:uppercase;margin-top:3px}
+.ep{font:600 11px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:1px;color:var(--blue);border-radius:999px;padding:7px 15px;
+  background:rgba(255,255,255,.75);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 14px rgba(12,89,153,.08)}
+.left{position:absolute;left:64px;top:136px;width:600px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.kbar{width:26px;height:3.5px;border-radius:2px;background:linear-gradient(90deg,#08a9de,#6662d7)}
+.kicker span{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--blue);text-transform:uppercase}
+h1{font-size:36px;line-height:1.32;font-weight:800;letter-spacing:.3px;color:var(--ink);margin-bottom:13px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 40%,#1786d4 62%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:14.5px;line-height:1.8;color:var(--ink2);margin-bottom:20px}
+.sub b{color:var(--deep);font-weight:700}
+.chips{display:flex;gap:9px;flex-wrap:wrap}
+.chip{font-size:12px;color:var(--ink2);border:1px solid rgba(255,255,255,.98);background:rgba(255,255,255,.68);
+  border-radius:999px;padding:7px 14px;box-shadow:0 3px 10px rgba(12,89,153,.07)}
+.chip b{color:var(--deep);font-weight:700}
+.motif{position:absolute;right:56px;top:112px;width:560px;height:360px;z-index:5}
+svg.wires{position:absolute;inset:0;z-index:2;overflow:visible;pointer-events:none}
+.g{position:absolute;border-radius:13px;border:1px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(255,255,255,.62));
+  box-shadow:0 10px 26px rgba(12,89,153,.12), inset 0 0 0 1px rgba(140,137,236,.10)}
+.hero{border:1.5px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(233,244,255,.8));
+  box-shadow:0 16px 40px rgba(18,150,219,.22), inset 0 0 0 1px rgba(128,216,244,.5)}
+.pill{position:absolute;border-radius:999px;font-size:11px;font-weight:600;color:var(--deep);z-index:4;
+  background:rgba(255,255,255,.8);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 12px rgba(12,89,153,.08);
+  display:flex;align-items:center;justify-content:center}
+.mlabel{position:absolute;font-size:11px;font-weight:600;color:var(--ink3);z-index:4}
+.meta{position:absolute;left:64px;right:64px;bottom:20px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.meta .sites{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.meta .sites b{color:var(--deep);font-weight:700}
+.meta .repo{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.ring{position:absolute;left:160px;top:30px;width:240px;height:240px;border-radius:50%;z-index:2;
+  border:1.4px dashed rgba(18,150,219,.45)}
+.corec{position:absolute;left:196px;top:66px;width:168px;height:168px;border-radius:50%;z-index:3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;
+  border:1.5px solid rgba(255,255,255,.98);
+  background:radial-gradient(circle at 32% 22%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.72) 38%, rgba(219,238,252,.82) 100%);
+  box-shadow:0 18px 44px rgba(18,150,219,.24), inset 0 0 0 1px rgba(128,216,244,.5)}
+.corec .ce{font:700 8.5px "Segoe UI",Arial;letter-spacing:1.8px;color:#8a99ab;text-transform:uppercase}
+.corec .ct{font-size:15.5px;font-weight:800;color:var(--deep)}
+.corec .cd{font-size:10px;color:var(--ink2)}
+.tk{position:absolute;width:128px;height:54px;border-radius:11px;z-index:4;padding:8px 11px;
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  border:1px solid rgba(255,255,255,.98);background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(255,255,255,.66));
+  box-shadow:0 8px 20px rgba(12,89,153,.12)}
+.tk .tt{font-size:10.8px;font-weight:700;color:var(--ink)}
+.tk .td{font-size:8.8px;color:#8a99ab}
+</style>
+</head>
+<body>
+<div class="slide">
+  <!-- 06 封面 · V4 liquid-glass · 品牌规范：iot-dc3/.github/brand -->
+  <svg class="mesh" viewBox="0 0 1280 545">
+    <path d="M40 508 C 300 498, 560 484, 780 478 C 960 473, 1150 442, 1266 386" fill="none" stroke="#4a90c9" stroke-opacity=".20" stroke-width="1.2"/>
+    <path d="M40 508 C 300 498, 560 484, 780 478 C 960 473, 1150 442, 1266 386" fill="none" stroke="#4a90c9" stroke-opacity=".26" stroke-width="1.7" stroke-dasharray="1 10" stroke-linecap="round"/>
+    <line x1="96" y1="470" x2="126" y2="498" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="126" y1="498" x2="158" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="158" y1="466" x2="190" y2="500" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="190" y1="500" x2="222" y2="474" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="110" y1="436" x2="158" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="204" y1="438" x2="222" y2="474" stroke="#4a90c9" stroke-opacity=".17"/>
+    <path d="M330 472 L338 485 L322 485 Z" fill="none" stroke="#4a90c9" stroke-opacity=".22"/>
+    <path d="M392 462 L400 475 L384 475 Z" fill="none" stroke="#4a90c9" stroke-opacity=".22"/>
+    <circle cx="1060" cy="478" r="17" fill="none" stroke="#4a90c9" stroke-opacity=".24"/>
+    <line x1="1060" y1="478" x2="1060" y2="466" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1069.2" y2="470.9" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1071.3" y2="473.6" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1065.5" y2="483.4" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1054.5" y2="483.4" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1048.7" y2="473.6" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="1060" y1="478" x2="1050.8" y2="470.9" stroke="#4a90c9" stroke-opacity=".17"/>
+    <line x1="950" y1="442" x2="978" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="950" y1="442" x2="950" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <line x1="950" y1="464" x2="978" y2="464" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="978" y1="442" x2="1006" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="978" y1="442" x2="978" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <line x1="978" y1="464" x2="1006" y2="464" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="1006" y1="442" x2="1034" y2="442" stroke="#8d6df4" stroke-opacity=".18"/>
+    <line x1="1006" y1="442" x2="1006" y2="464" stroke="#8d6df4" stroke-opacity=".15"/>
+    <path d="M880 468 A 108 108 0 0 1 1016 410" fill="none" stroke="#8d6df4" stroke-opacity=".20" stroke-dasharray="2 7"/>
+    <circle cx="96" cy="470" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="126" cy="498" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="158" cy="466" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="190" cy="500" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="222" cy="474" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="110" cy="436" r="1.7" fill="#4a90c9" fill-opacity=".24"/>
+    <circle cx="204" cy="438" r="2.2" fill="#4a90c9" fill-opacity=".24"/>
+  </svg>
+
+  <div class="top">
+    <div class="lockup">
+      <div class="lens"><img src="../../../tools/assets/dc3-logo.svg" alt="IoT DC3"></div>
+      <div class="wm"><span class="wt">IoT DC3</span><span class="wt2">Open Source Industrial IoT Platform</span></div>
+    </div>
+    <div class="ep">开源工业物联网手记 · EP.06</div>
+  </div>
+
+  <div class="left">
+    <div class="kicker"><div class="kbar"></div><span>AI Agentic Center · Spring AI 2</span></div>
+    <h1>把大模型接进车间：<br>AI Agentic Center 的<span class="hl">能力与边界</span></h1>
+    <div class="sub">连不上现场数据、不敢放开权限、答不出准话——工业 AI 落地的三道坎，<br>各有一套工程解法：<b>数字从数据库来，语言从模型来。</b></div>
+    <div class="chips"><div class="chip">Tool Calling 受控调用</div><div class="chip">告警根因<b>辅助</b>分析</div><div class="chip">多模型兼容</div><div class="chip">会话记忆持久化</div></div>
+  </div>
+  <!-- 母题：AI 核心环 | 核心圆 C(280,150) r84；虚线环 r120；四工具卡中心在环上 45°/135°/225°/315° -->
+  <div class="motif">
+    <div class="ring"></div>
+    <svg class="wires" viewBox="0 0 560 360">
+      <line x1="280" y1="236" x2="280" y2="296" stroke="#8d6df4" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="3 4"/>
+      <circle cx="280" cy="236" r="2.6" fill="#8d6df4"/><circle cx="280" cy="296" r="2.6" fill="#8d6df4"/>
+    </svg>
+    <div class="g hero corec"><span class="ce">Agentic Center</span><span class="ct">会话 · 工具</span><span class="ct">编排中枢</span><span class="cd">Spring AI 2</span></div>
+    <div class="tk" style="left:300.9px;top:38.1px"><span class="tt">查询设备 / 点位</span><span class="td">权限内 · 确定数据</span></div>
+    <div class="tk" style="left:300.9px;top:207.9px"><span class="tt">告警根因分析</span><span class="td">建议产出 · 人决策</span></div>
+    <div class="tk" style="left:131.1px;top:38.1px"><span class="tt">点位读写</span><span class="td">访问控制之下</span></div>
+    <div class="tk" style="left:131.1px;top:207.9px"><span class="tt">趋势图生成</span><span class="td">自然语言查询</span></div>
+    <div class="g" style="left:180px;top:296px;width:200px;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+      <span style="font-size:10.5px;font-weight:700;color:var(--indigo)">GPT · Claude · DeepSeek · Qwen</span>
+      <span style="font-size:8.8px;color:#8a99ab">多模型可插拔 · 不绑定厂商</span>
+    </div>
+  </div>
+  <div class="meta">
+    <div class="sites"><b>dc3.site</b> &nbsp;·&nbsp; docs.dc3.site &nbsp;·&nbsp; book.dc3.site &nbsp;·&nbsp; demo.dc3.site</div>
+    <div class="repo">GitHub pnoker/iot-dc3 · Gitee GVP</div>
+  </div>
+
+</div>
+</body>
+</html>

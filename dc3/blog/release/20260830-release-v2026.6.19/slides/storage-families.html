@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>R2 存储家族全景</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:38px;left:56px;right:56px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:25px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.vbadge{display:flex;flex-direction:column;align-items:center;gap:2px;background:rgba(255,255,255,.95);
+  border:1px solid var(--brand-line);border-radius:12px;padding:8px 18px;box-shadow:0 8px 22px rgba(10,108,178,.12)}
+.vbadge .v{font:800 22px "Helvetica Neue",Arial;background:linear-gradient(112deg,#07549a,#149ed7 46%,#4f52bf);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.vbadge .k{font-size:9.5px;color:var(--muted)}
+.fams{position:absolute;top:130px;left:56px;right:380px;bottom:180px;display:flex;flex-direction:column;gap:14px;z-index:4}
+.fam{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:24px 16px 10px;display:flex;align-items:center;gap:12px}
+.zlabel{position:absolute;top:-11px;left:14px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zt{background:#e6f5f2;color:var(--teal);border-color:#bce4dc}
+.zlabel.zi{background:#efeefe;color:var(--indigo);border-color:#cdcbee}
+.adp{flex:1;border:1px solid var(--line);background:#fbfdfe;border-radius:9px;padding:7px 9px;text-align:center;
+  display:flex;flex-direction:column;gap:1px;justify-content:center}
+.adp .n{font:700 11px "Helvetica Neue",Arial,"PingFang SC";color:var(--ink)}
+.adp .d{font-size:8.8px;color:var(--muted)}
+.adp .st{font-size:8.5px;font-weight:700;border-radius:999px;padding:1px 7px;align-self:center;margin-top:2px}
+.st-def{background:#e2f3ec;color:#12795a;border:1px solid #bfe4d4}
+.st-opt{background:#f1f4f7;color:var(--ink-3);border:1px solid var(--line)}
+.adp.hero{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.famnote{flex:none;width:118px;font-size:10px;color:var(--ink-3);line-height:1.5;padding-right:4px}
+.famnote b{color:var(--brand-deep)}
+.coreband{position:absolute;right:56px;top:130px;width:300px;bottom:180px;display:flex;flex-direction:column;gap:12px;z-index:4}
+.cb{position:relative;flex:1;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 20px rgba(23,58,94,.05);padding:24px 14px 10px;display:flex;flex-direction:column}
+.cb .zlabel{left:12px}
+.cbl{display:flex;flex-direction:column;gap:7px;flex:1;justify-content:center}
+.cli2{display:flex;gap:7px;font-size:10.3px;color:var(--ink-2);line-height:1.5;align-items:flex-start}
+.cli2 i{width:5.5px;height:5.5px;border-radius:50%;background:var(--green);margin-top:5px;flex:none}
+.cli2 b{color:var(--ink)}
+.tckband{position:absolute;left:56px;right:56px;bottom:104px;height:60px;background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(242,250,246,.9));
+  border:1.5px solid #bfe4d4;border-radius:14px;display:flex;align-items:center;gap:18px;padding:0 22px;z-index:4;
+  box-shadow:0 8px 24px rgba(18,183,106,.10)}
+.tckband .tk{font:800 11px "Helvetica Neue",Arial;color:#fff;background:var(--green);border-radius:6px;padding:4px 10px;flex:none}
+.tckband .tx{font-size:11.5px;color:#22694a;line-height:1.5}
+.tckband .tx b{font-weight:800}
+.strip{position:absolute;left:56px;right:56px;bottom:52px;height:38px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:14px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div>
+      <div class="kicker"><div class="kbar"></div><span>IoT DC3 · Release Notes · R2</span></div>
+      <h1><b>v2026.9.30</b> 交付全景：三大家族，一个端口，一套契约</h1>
+      <div class="h-sub">发布视角：默认适配器随服务打包，其余按部署显式引入——不为不用的组件付出 jar 与启动开销</div>
+    </div>
+    <div class="vbadge"><div class="v">v2026.9.30</div><div class="k">Release R2</div></div>
+  </div>
+  <div class="fams">
+    <div class="fam">
+      <div class="zlabel">消息总线家族 <em style="font-style:normal">MQ ×6</em></div>
+      <div class="adp hero"><span class="n">RabbitMQ</span><span class="d">路由灵活</span><span class="st st-def">默认启用</span></div>
+      <div class="adp"><span class="n">Kafka</span><span class="d">高吞吐回放</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">Pulsar</span><span class="d">存算分离</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">MQTT 5</span><span class="d">边缘复用</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">ActiveMQ</span><span class="d">存量资产</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">RocketMQ</span><span class="d">国产栈</span><span class="st st-opt">可选</span></div>
+      <div class="famnote"><b>选型口径</b>：中小规模从 RabbitMQ 开始；数据管道看 Kafka；国产化看 RocketMQ / ActiveMQ</div>
+    </div>
+    <div class="fam">
+      <div class="zlabel zt">时序存储家族 <em style="font-style:normal">TSDB ×4</em></div>
+      <div class="adp hero"><span class="n">TimescaleDB</span><span class="d">内嵌 PG · rollup</span><span class="st st-def">默认启用</span></div>
+      <div class="adp"><span class="n">TDengine</span><span class="d">超级表 · 国产</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">InfluxDB</span><span class="d">3.x HTTP API</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">IoTDB</span><span class="d">树路径 · 国产</span><span class="st st-opt">可选</span></div>
+      <div class="famnote"><b>选型口径</b>：信创场景 TDengine / IoTDB 已过契约验证；运维成本最低选默认</div>
+    </div>
+    <div class="fam">
+      <div class="zlabel zi">关系存储家族 <em style="font-style:normal">DB ×3</em></div>
+      <div class="adp hero"><span class="n">PostgreSQL</span><span class="d">默认引擎</span><span class="st st-def">默认启用</span></div>
+      <div class="adp"><span class="n">MySQL</span><span class="d">广泛存量</span><span class="st st-opt">可选</span></div>
+      <div class="adp"><span class="n">MariaDB</span><span class="d">MySQL 生态</span><span class="st st-opt">可选</span></div>
+      <div class="famnote" style="width:158px"><b>说明</b>：另有 R2DBC 响应式访问层设计文档（响应式变体），落地排期见 R3 路线图</div>
+    </div>
+  </div>
+  <div class="coreband">
+    <div class="cb">
+      <div class="zlabel">发布要点 · 端口与打包</div>
+      <div class="cbl">
+        <div class="cli2"><i></i><span><b>core 端口</b>：业务代码只依赖 dc3-mq-core / dc3-tsdb-core / dc3-db-core</span></div>
+        <div class="cli2"><i></i><span><b>按需打包</b>：默认适配器随服务，其余显式引入依赖</span></div>
+        <div class="cli2"><i></i><span><b>同时只激活一个</b>：dc3.tsdb.type 等一条配置切换</span></div>
+      </div>
+    </div>
+    <div class="cb">
+      <div class="zlabel zt">诚实边界</div>
+      <div class="cbl">
+        <div class="cli2"><i></i><span>抽象层覆盖<b>公共语义子集</b>——高级特性（死信路由、消费组细控）走原生客户端</span></div>
+        <div class="cli2"><i></i><span>时序四库能力<b>按实际声明发布</b>：不支持的显式声明 false，由门面降级</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="tckband">
+    <span class="tk">TCK</span>
+    <span class="tx"><b>契约测试套件随家族交付</b>：MQ 六适配器 × 同一套契约全通过；TSDB 四库 × 24 例契约（跳过数如实声明）；<b>换型不是"理论上能跑"，是契约验证过的等价行为</b></span>
+  </div>
+  <div class="strip">升级说明：<b>无破坏性变更</b>；新启用非默认适配器需在部署侧加依赖与容器 · 选型指南 docs/mq-brokers.md · docs/tsdb-stores.md</div>
+  <div class="note">版本档案：R2 · 主题「可插拔存储家族」· 能力基线为主干 main 分支 · 配文：R2 发版文</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>05 换型路径与诚实降级</title>
+<style>
+:root{
+  --brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--card:#fff;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--indigo:#5558c9;--amber:#f79009;--green:#12b76a;--red:#c93f37;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;
+  background:
+    radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:40px;left:56px;right:56px;z-index:5}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,var(--brand-bright),var(--brand-deep));border-radius:2px}
+.kicker span{font:700 12px "Helvetica Neue",Arial;letter-spacing:2.5px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:700}
+h1 b{color:var(--brand-deep)}
+.h-sub{font-size:12px;color:var(--ink-3);margin-top:6px}
+.main{position:absolute;top:132px;bottom:118px;left:56px;right:56px;display:flex;gap:20px;z-index:4}
+.panel{position:relative;background:rgba(255,255,255,.93);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 6px 22px rgba(23,58,94,.06);padding:26px 16px 12px;display:flex;flex-direction:column}
+.zlabel{position:absolute;top:-11px;left:12px;font-size:11px;font-weight:600;padding:3px 11px;border-radius:999px;
+  background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)}
+.zlabel.zo{background:#fdf1e2;color:#b06a05;border-color:#f3ddba}
+.p-swap{flex:1.15}
+.p-deg{flex:1}
+.p-edge{width:295px}
+/* swap steps */
+.steps{display:flex;flex-direction:column;gap:11px;flex:1;justify-content:center}
+.step{border:1px solid var(--line);border-radius:11px;background:#fbfdfe;padding:11px 13px}
+.step .sn{display:flex;align-items:center;gap:8px}
+.step .no{width:23px;height:23px;border-radius:7px;background:var(--brand);color:#fff;display:flex;align-items:center;
+  justify-content:center;font:800 12px "Helvetica Neue",Arial;flex:none}
+.step .tt{font-size:12.5px;font-weight:700}
+.step code{display:block;margin-top:6px;font:600 10px "SFMono-Regular",Menlo,monospace;color:var(--brand-deep);
+  background:var(--brand-tint);border:1px solid var(--brand-tint-2);border-radius:7px;padding:6px 9px;line-height:1.6;white-space:pre-wrap}
+.step .dd{font-size:9.8px;color:var(--ink-3);margin-top:5px;line-height:1.5}
+.swapfoot{margin-top:auto;padding-top:8px;border-top:1px dashed var(--line);font-size:10px;color:var(--muted);line-height:1.5}
+.swapfoot b{color:var(--brand-deep)}
+/* degrade flow */
+.dg{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
+.dgi{display:flex;gap:10px}
+.dgi .rail{width:20px;display:flex;flex-direction:column;align-items:center}
+.dgi .dot{width:23px;height:23px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font:800 11.5px "Helvetica Neue",Arial;color:#fff;flex:none}
+.dgi .vl{width:1.5px;flex:1;background:var(--brand-line);min-height:10px}
+.dgi .bx{flex:1;border:1px solid var(--line);border-radius:10px;background:#fbfdfe;padding:9px 12px;margin-bottom:10px}
+.dgi .bt{font-size:12px;font-weight:700}
+.dgi .bd{font-size:10.2px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+.d1 .dot{background:var(--red)}
+.d1 .bx{border-color:#efc4c0;background:#fdf5f4}
+.d1 .bt{color:var(--red)}
+.d2 .dot{background:var(--amber)}
+.d2 .bt{color:#b06a05}
+.d3 .dot{background:var(--brand-mid)}
+.d3 .bt{color:var(--brand-deep)}
+.d4 .dot{background:var(--green)}
+.d4 .bx{border-color:#cde8d9;background:#f2faf6}
+.d4 .bt{color:#12795a}
+/* edges */
+.elist{display:flex;flex-direction:column;gap:11px;flex:1;justify-content:center}
+.ei{border-radius:10px;padding:11px 12px;font-size:10.8px;line-height:1.6}
+.ei.b1{border:1px dashed var(--line);background:#fbfdfe;color:var(--ink-2)}
+.ei.b2{border:1px solid #cde8d9;background:#f2faf6;color:#22694a}
+.ei b{font-weight:700}
+.strip{position:absolute;left:56px;right:56px;bottom:60px;height:42px;border:1px dashed var(--brand-line);
+  border-radius:10px;background:linear-gradient(90deg,var(--brand-tint),rgba(236,245,252,.35));
+  display:flex;align-items:center;justify-content:center;gap:12px;font-size:11.5px;color:var(--ink-2);z-index:4}
+.strip b{color:var(--brand-deep)}
+.note{position:absolute;left:56px;right:56px;bottom:18px;text-align:center;font-size:10.5px;color:var(--muted);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>IoT DC3 · 开源工业物联网手记 · EP.05</span></div>
+    <h1>换型三步走，以及<b>"诚实降级"</b>的完整链路</h1>
+    <div class="h-sub">同一时刻只激活一个时序库 · 数据库不支持的能力由门面接住，语义不变形</div>
+  </div>
+  <div class="main">
+    <div class="panel p-swap">
+      <div class="zlabel">换型操作 · 三步</div>
+      <div class="steps">
+        <div class="step">
+          <div class="sn"><span class="no">1</span><span class="tt">起目标存储容器</span></div>
+          <code>make up STACK=optional SERVICES="tdengine"</code>
+          <div class="dd">influxdb / iotdb 同款写法 · IoTDB 首启自动挂载微秒精度配置（必需）</div>
+        </div>
+        <div class="step">
+          <div class="sn"><span class="no">2</span><span class="tt">改激活类型与连接变量</span></div>
+          <code>DC3_TSDB_TYPE=tdengine   # 默认 timescale</code>
+          <div class="dd">URL / Token / Host 按需覆盖 · 同时只激活一个适配器</div>
+        </div>
+        <div class="step">
+          <div class="sn"><span class="no">3</span><span class="tt">数据中心换依赖打包</span></div>
+          <code>&lt;artifactId&gt;dc3-tsdb-tdengine&lt;/artifactId&gt;</code>
+          <div class="dd">默认只打包 timescale · 其余按部署显式引入，不付无用 jar 开销</div>
+        </div>
+      </div>
+      <div class="swapfoot">与 MQ 家族同款约定 · 时区口径全家族锁定 <b>DEFAULT_ZONEID</b>，不是 UTC</div>
+    </div>
+    <div class="panel p-deg">
+      <div class="zlabel zo">数据库不支持时，会发生什么</div>
+      <div class="dg">
+        <div class="dgi d1">
+          <div class="rail"><div class="dot">1</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">某能力该库没有</div><div class="bd">例：InfluxDB / IoTDB 无 PERCENTILE 函数</div></div>
+        </div>
+        <div class="dgi d2">
+          <div class="rail"><div class="dot">2</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">适配器如实声明 false</div><div class="bd">能力矩阵显式登记，不猜、不模拟、不报错糊弄</div></div>
+        </div>
+        <div class="dgi d3">
+          <div class="rail"><div class="dot">3</div><div class="vl"></div></div>
+          <div class="bx"><div class="bt">TCK 按能力门控跳过</div><div class="bd">跳过数公开（2 / 2 / 3 例）· 跳过不是测试失败</div></div>
+        </div>
+        <div class="dgi d4">
+          <div class="rail"><div class="dot">4</div></div>
+          <div class="bx"><div class="bt">数据中心门面降级接住</div><div class="bd">延迟直方图返回零桶 · 分位数 / 相关系数由门面从有界拉取数据中自算 · 面板空桶自行补零</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel p-edge">
+      <div class="zlabel">选型与使用边界</div>
+      <div class="elist">
+        <div class="ei b1"><b>空桶补零四库均不做</b>：分桶读省略空桶（gapFill=false），由消费端补零——刻意的语义统一</div>
+        <div class="ei b1"><b>rollup 仅 Timescale 原生</b>：共享 real-time 连续聚合；纯 PG 部署启动时协商降级为 NONE，读走原始扫描</div>
+        <div class="ei b1"><b>信创场景</b>：TDengine / IoTDB 已过契约验证；生产容量规划仍需按自身数据量实测</div>
+        <div class="ei b1"><b>时区口径</b>：全家族锁定 DEFAULT_ZONEID（随部署时区），不是 UTC——隐性差异最容易被忽略</div>
+        <div class="ei b2"><b>价值取向</b>：宁可少给能力，绝不给错数据——抽象层不悄悄改变语义</div>
+      </div>
+    </div>
+  </div>
+  <div class="strip">换型成本排序：<b>改配置 &lt; 换依赖</b>，永远不用改业务代码 · 时序家族与 MQ 家族同一套 core + TCK 范式</div>
+  <div class="note">配文：EP.05《测点数据存哪？四款时序数据库可插拔背后的工程决策》· 命令与变量名以 docs/tsdb-stores.md 为准</div>
+</div>
+</body>
+</html>

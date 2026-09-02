@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh"><head><meta charset="UTF-8"><title>dc3 concept</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-deep:#07549a;--brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+--ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+--teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;--indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+--amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;--gray:#8a98a8;--gray-tint:#f1f4f7}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",-apple-system,sans-serif;background:var(--bg-0)}
+.head{position:absolute;left:64px;right:64px;top:36px}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.kbar{width:26px;height:3.5px;border-radius:2px;background:linear-gradient(90deg,#08a9de,#6662d7)}
+.kicker span{font:700 12px "Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:31px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{position:absolute;border-radius:13px;border:1px solid #fff;background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(255,255,255,.72));
+  box-shadow:0 8px 22px rgba(12,89,153,.10);padding:16px 18px;z-index:3}
+.card .ct{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card .ct i{width:9px;height:9px;border-radius:3px;flex:none}
+.row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);padding:5.5px 9px;border-radius:7px;margin-bottom:5px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+.row b{color:var(--ink);font-weight:700}
+.row .tag{margin-left:auto;font:700 10px "Segoe UI",Arial,sans-serif;color:var(--brand-deep);background:var(--brand-tint);border:1px solid var(--brand-line);border-radius:5px;padding:2px 7px}
+.pill{position:absolute;border-radius:999px;font-size:12px;font-weight:600;color:var(--brand-deep);z-index:4;
+  background:rgba(255,255,255,.85);border:1px solid var(--brand-line);box-shadow:0 4px 12px rgba(12,89,153,.08);display:flex;align-items:center;justify-content:center}
+svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
+.lab{position:absolute;font-size:11px;font-weight:600;color:var(--ink-3);z-index:4}
+.band{position:absolute;left:64px;right:64px;border-radius:13px;border:1px solid #fff;z-index:3;
+  background:linear-gradient(160deg,rgba(255,255,255,.94),rgba(238,245,251,.85));box-shadow:0 8px 22px rgba(12,89,153,.10);padding:14px 20px}
+</style>
+</head><body><div class="slide">
+<div class="head"><div class="kicker"><div class="kbar"></div><span>DC3 Concept · 03 Point</span></div><h1>位号模型与数据流向：<span class="hl">从设备读取到应用消费</span></h1></div>
+
+<div class="card" style="left:64px;top:146px;width:1152px;height:212px">
+  <div class="ct"><i style="background:var(--brand)"></i>位号属性 · Point（数据的最小语义单元）</div>
+  <div style="display:flex;gap:10px">
+    <div style="flex:1.35">
+      <div class="row"><b>数据类型</b><span class="tag">string · byte · short · int · long · float · double · boolean</span></div>
+      <div class="row"><b>读写标志</b><span class="tag">r 只读 · w 只写 · rw 读写</span></div>
+    </div>
+    <div style="flex:1">
+      <div class="row"><b>基值 × 倍率</b><span class="tag">base_value · multiple</span></div>
+      <div class="row"><b>精度 · 单位</b><span class="tag">value_decimal · unit</span></div>
+      <div class="row"><b>采集配置</b><span class="tag">随驱动调度</span></div>
+    </div>
+  </div>
+</div>
+<svg class="wires" viewBox="0 0 1280 720">
+  <line x1="252" y1="470" x2="292" y2="470" stroke="#4a90c9" stroke-opacity=".55" stroke-width="1.8"/>
+  <line x1="500" y1="470" x2="540" y2="470" stroke="#4a90c9" stroke-opacity=".55" stroke-width="1.8"/>
+  <line x1="748" y1="470" x2="788" y2="470" stroke="#4a90c9" stroke-opacity=".55" stroke-width="1.8"/>
+  <line x1="996" y1="470" x2="1036" y2="470" stroke="#4a90c9" stroke-opacity=".55" stroke-width="1.8"/>
+  <path d="M298 470 L289 465.5 L289 474.5 Z" fill="#1296db"/><path d="M546 470 L537 465.5 L537 474.5 Z" fill="#1296db"/>
+  <path d="M794 470 L785 465.5 L785 474.5 Z" fill="#1296db"/><path d="M1042 470 L1033 465.5 L1033 474.5 Z" fill="#1296db"/>
+</svg>
+<div class="card" style="left:64px;top:404px;width:200px;height:132px;text-align:center">
+  <div class="ct" style="justify-content:center"><i style="background:var(--amber)"></i>驱动</div>
+  <div class="lab" style="position:static;font-size:11.5px">按采集配置<br>读取设备</div>
+</div>
+<div class="card" style="left:312px;top:404px;width:200px;height:132px;text-align:center">
+  <div class="ct" style="justify-content:center"><i style="background:var(--brand)"></i>消息总线</div>
+  <div class="lab" style="position:static;font-size:11.5px">统一消息语义<br>六适配器可插拔</div>
+</div>
+<div class="card" style="left:560px;top:404px;width:200px;height:132px;text-align:center">
+  <div class="ct" style="justify-content:center"><i style="background:var(--brand)"></i>数据中心</div>
+  <div class="lab" style="position:static;font-size:11.5px">校验 · 处理<br>有界缓冲背压</div>
+</div>
+<div class="card" style="left:808px;top:404px;width:200px;height:132px;text-align:center">
+  <div class="ct" style="justify-content:center"><i style="background:var(--teal)"></i>时序存储</div>
+  <div class="lab" style="position:static;font-size:11.5px">原始值 · 聚合层<br>四库可插拔</div>
+</div>
+<div class="card" style="left:1056px;top:404px;width:160px;height:132px;text-align:center;border:1.5px solid #fff;background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(224,240,252,.88))">
+  <div class="ct" style="justify-content:center"><i style="background:var(--indigo)"></i>应用</div>
+  <div class="lab" style="position:static;font-size:11.5px">监控 · 告警<br>分析 · AI</div>
+</div>
+<div class="band" style="top:586px;display:flex;align-items:center;gap:12px;justify-content:center">
+  <span style="font:800 13px "Segoe UI",Arial;letter-spacing:1.5px;color:var(--brand-deep);flex:none">四个场景</span>
+  <span style="font-size:13px;color:var(--ink-2)">实时监控（转速 · 电流）</span><span style="color:var(--line)">|</span>
+  <span style="font-size:13px;color:var(--ink-2)">报警管理（温度越限）</span><span style="color:var(--line)">|</span>
+  <span style="font-size:13px;color:var(--ink-2)">趋势分析（能效优化）</span><span style="color:var(--line)">|</span>
+  <span style="font-size:13px;color:var(--ink-2)">预测维护（振动检测）</span>
+</div>
+
+</div></body></html>
