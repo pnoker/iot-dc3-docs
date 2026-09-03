@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>五类对象,两条路径</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;
+  --indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+  --amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;
+  --green:#12b76a;--green-tint:#eaf7f0;--green-line:#b9e6d0;
+  --gray:#8a98a8;--gray-tint:#f1f4f7}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:32px;left:64px;right:64px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,#08a9de,#6662d7);border-radius:2px}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.path{position:absolute;width:568px;height:96px;border-radius:12px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.9));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);z-index:4;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.path .t{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+.path .t i{width:9px;height:9px;border-radius:3px;flex:none}
+.path .cs{display:flex;gap:6px;flex-wrap:wrap}
+.path .cs span{font-size:9.8px;color:var(--ink-2);background:rgba(244,248,252,.9);border:1px solid #eef2f6;
+  border-radius:6px;padding:2.5px 8px;line-height:1.4}
+.path .cs span b{color:var(--ink);font-weight:700}
+.obj{position:absolute;width:216px;height:302px;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.88));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);padding:13px 12px;z-index:4;display:flex;flex-direction:column}
+.obj .bar{position:absolute;left:0;top:0;right:0;height:3.5px;border-radius:13px 13px 0 0}
+.obj .ct{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;margin:2px 0 1px}
+.obj .ct i{width:8px;height:8px;border-radius:3px;flex:none}
+.obj .ct .tb{margin-left:auto;font:600 8.5px "Segoe UI",Arial,"PingFang SC",sans-serif;color:var(--ink-3);
+  background:#f4f7fa;border:1px solid var(--line);border-radius:5px;padding:1.5px 6px}
+.obj .dd{font-size:9.3px;color:var(--ink-3);margin-bottom:8px;line-height:1.45}
+.obj .r{display:flex;align-items:flex-start;gap:6px;font-size:9.5px;color:var(--ink-2);line-height:1.5;
+  padding:4.5px 7px;border-radius:6px;margin-bottom:4px;background:rgba(244,248,252,.8);border:1px solid #eef2f6}
+.obj .r .mk{flex:none;width:5px;height:5px;border-radius:2px;margin-top:5px}
+.obj .r b{color:var(--ink);font-weight:700}
+.strip{position:absolute;left:64px;right:64px;height:86px;border-radius:13px;border:1px solid var(--brand-line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
+  box-shadow:0 8px 22px rgba(23,58,94,.08);z-index:4;padding:12px 18px}
+.strip .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.half{position:absolute;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.half .t{font-size:12px;font-weight:800;display:flex;align-items:center;gap:7px}
+.half .t i{width:8px;height:8px;border-radius:3px;flex:none}
+.half .cs{display:flex;gap:6px;flex-wrap:wrap}
+.half .cs span{font-size:9.8px;color:var(--ink-2);background:rgba(255,255,255,.9);border:1px solid #e6edf3;
+  border-radius:6px;padding:2.5px 8px}
+.half .cs span b{color:var(--ink);font-weight:700}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · 05 Semantic Profile</span></div>
+    <h1>如何配置：<span class="hl">五类对象，两条路径</span></h1>
+    <div class="h-sub">模板层定义能力（一次定义、百台复用），设备层落实连接（逐台填写）——每类对象都是字段清单 + 示例 + 注意事项。</div>
+  </div>
+
+  <!-- 两条路径: y136 h66 -->
+  <div class="path" style="left:64px;top:136px">
+    <div class="t"><i style="background:#0a6cb2"></i>前端路径</div>
+    <div class="cs"><span><b>/profile</b> 卡片网格 · 五个标签页</span><span>工具条 + 卡片 + 弹窗编辑 + 抽屉详情</span><span>设备编辑页 · <b>四级属性填值矩阵</b></span></div>
+  </div>
+  <div class="path" style="left:648px;top:136px">
+    <div class="t"><i style="background:#5558c9"></i>API 路径<span style="font-weight:600;font-size:9.5px;color:var(--muted)">路径即语义 · 单一资源用 get_by_id，集合用 list</span></div>
+    <div class="cs"><span><b>manager</b> 四组 CRUD：profile / point / command / event</span><span><b>data</b> 三端点：point_command write·read · command_history call · event_history report</span></div>
+  </div>
+
+  <!-- 五类对象: y216 h302 -->
+  <div class="obj" style="left:64px;top:240px">
+    <div class="bar" style="background:linear-gradient(90deg,#07549a,#1296db)"></div>
+    <div class="ct"><i style="background:#0a6cb2"></i>模板 Profile<span class="tb">dc3_profile</span></div>
+    <div class="dd">能力定义的容器 · 配置项最少</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>名称</b> · 租户内不可重复</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>编码</b> · 可留空，平台自动生成</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>共享范围</b> · 租户 / 驱动 / 用户</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>创建来源</b> · 系统 / 驱动 / 用户</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>版本</b> · 递增 + 乐观锁，更新需带当前版本</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>profileExt</b> · JSONB 弱结构化扩展</div>
+    <div class="r" style="background:var(--brand-tint);border-color:var(--brand-line)">命名建议：<b>设备型号 + 用途</b>，共享范围创建时确定</div>
+  </div>
+  <div class="obj" style="left:298px;top:240px">
+    <div class="bar" style="background:linear-gradient(90deg,#1296db,#4ab4ea)"></div>
+    <div class="ct"><i style="background:#1296db"></i>位号 Point<span class="tb">dc3_point</span></div>
+    <div class="dd">数据面 · 配"量"的语义</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>名称 / 编码</b> · 租户 + 模板内唯一</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>数据类型</b> · 八种，默认 string</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>读写标志</b> · r / w / rw，默认 r</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>单位</b> · 自由文本</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>基值 / 倍率</b> · 线性换算，默认 0 / 1</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>小数位</b> · 默认 6</div>
+    <div class="r" style="background:#eaf3fc;border-color:#c4dff2">MOTOR_TEMPERATURE：float · 只读 · ℃ · 倍率 0.01 · 小数位 2</div>
+  </div>
+  <div class="obj" style="left:532px;top:240px">
+    <div class="bar" style="background:linear-gradient(90deg,#5558c9,#7c7fe0)"></div>
+    <div class="ct"><i style="background:#5558c9"></i>指令 Command<span class="tb">dc3_command</span></div>
+    <div class="dd">动作面 · 配"动作"的契约</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>名称 / 编码</b> · 租户 + 模板内唯一</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>类型</b> · custom / config / action</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>调用方式</b> · sync / async</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>超时</b> · 秒，默认 30</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>参数</b> · 方向 · 类型 · 必填 · 默认值</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span>MOTOR_SET_SPEED：config · sync · 入参 speed 必填</div>
+    <div class="r" style="background:var(--indigo-tint);border-color:var(--indigo-line)">本体变更不广播 · 参数增删改会广播</div>
+  </div>
+  <div class="obj" style="left:766px;top:240px">
+    <div class="bar" style="background:linear-gradient(90deg,#0e9384,#2ab8a8)"></div>
+    <div class="ct"><i style="background:#0e9384"></i>事件 Event<span class="tb">dc3_event</span></div>
+    <div class="dd">上报面 · 配"发生"的分级</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><b>名称 / 编码</b> · 租户 + 模板内唯一</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><b>类型</b> · info / alert / fault / lifecycle</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><b>级别</b> · low / medium / high / critical</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><b>参数</b> · 复用八种类型，JSONB 落库</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span>MOTOR_OVERHEAT：alert · critical · temperature</div>
+    <div class="r" style="background:var(--teal-tint);border-color:var(--teal-line)">类型与级别是告警规则条件变量</div>
+    <div class="r" style="background:var(--amber-tint);border-color:var(--amber-line)">修改会改变既有规则匹配行为</div>
+  </div>
+  <div class="obj" style="left:1000px;top:240px">
+    <div class="bar" style="background:linear-gradient(90deg,#8a98a8,#aab6c2)"></div>
+    <div class="ct"><i style="background:#8a98a8"></i>设备 Device<span class="tb">dc3_device</span></div>
+    <div class="dd">缝合定义与连接 · 设备层填值</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>名称 / 编码</b> · 租户内标识一台设备</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>模板绑定</b> · 单一 profileId</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>驱动绑定</b> · 单一 driverId</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>deviceExt</b> · 补充信息</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>启用标志</b> · 停用后读写、指令、上报全拒</div>
+    <div class="r" style="background:var(--gray-tint);border-color:#e2e7ec">先绑模板再填配置</div>
+    <div class="r" style="background:var(--amber-tint);border-color:var(--amber-line)">改绑模板 = 整体更换能力集</div>
+  </div>
+
+  <!-- 底部: 四级属性 + 三层结构 y538 h86 -->
+  <div class="strip" style="top:552px">
+    <div class="zt">属性四级 · 三层结构</div>
+    <div class="half" style="left:0;width:560px;padding-left:18px">
+      <div class="t"><i style="background:#1296db"></i>属性配置四个层级——驱动注册定形状，设备逐项填值</div>
+      <div class="cs"><span><b>驱动级</b> · IP 端口</span><span><b>位号级</b> · 从站 · 功能码 · 偏移量</span><span><b>指令级</b> · 执行配置</span><span><b>事件级</b> · 上报配置</span></div>
+    </div>
+    <div class="half" style="left:590px;width:540px">
+      <div class="t"><i style="background:#12b76a"></i>配置三层——驱动属性是协议的形状，模板定义是业务的形状</div>
+      <div class="cs"><span><b>Param 业务层</b> · 与协议无关</span><span><b>Attribute 协议层</b> · 驱动注册</span><span><b>Config 实例层</b> · 租户 + 设备 + 位号 + 属性</span></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>指令下发的八态状态机</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;
+  --indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+  --amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;
+  --green:#12b76a;--green-tint:#eaf7f0;--red:#e5484d;--red-tint:#fdeeee;--red-line:#f3c1c3;
+  --gray:#8a98a8;--gray-tint:#f1f4f7}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:32px;left:64px;right:64px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,#08a9de,#6662d7);border-radius:2px}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.panel{position:absolute;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.9));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);z-index:4;padding:14px 16px}
+.panel .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.node{position:absolute;width:172px;height:92px;border-radius:11px;border:1px solid var(--line);
+  background:linear-gradient(160deg,#fff,rgba(244,248,252,.95));box-shadow:0 5px 14px rgba(23,58,94,.06);
+  padding:9px 11px;z-index:4;display:flex;flex-direction:column}
+.node .t{font-size:11.5px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.node .t i{width:8px;height:8px;border-radius:3px;flex:none}
+.node .d{font-size:9px;color:var(--ink-3);line-height:1.5}
+.node .d b{color:var(--ink-2);font-weight:700}
+.node.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.node.hot .t{color:var(--brand-deep)}
+.node.ok{border:1.5px solid #b9e6d0;background:linear-gradient(160deg,#fff,#f2fbf6)}
+.node.ok .t{color:#0d8a50}
+.aw{position:absolute;z-index:5;display:flex;align-items:center;justify-content:center}
+.aw i{width:0;height:0;border-left:6px solid #a8b8c8;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.chkrow{display:flex;align-items:center;gap:8px;font-size:10.8px;color:var(--ink-2);padding:6px 9px;border-radius:7px;
+  background:rgba(244,248,252,.85);border:1px solid #eef2f6;margin-bottom:6px}
+.chkrow .mk{flex:none;width:17px;height:17px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font:800 10px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#fff;background:linear-gradient(135deg,#1296db,#07549a)}
+.chkrow b{color:var(--ink)}
+.state{display:flex;flex-direction:column;justify-content:center;gap:3px;width:130px;height:54px;border-radius:9px;
+  border:1px solid var(--line);background:rgba(255,255,255,.92);padding:6px 9px}
+.state .t{font:800 11px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;display:flex;align-items:center;gap:6px}
+.state .t i{width:7px;height:7px;border-radius:50%;flex:none}
+.state .d{font-size:8.8px;color:var(--ink-3);line-height:1.4}
+.srow{display:flex;gap:8px;margin-bottom:8px}
+.strip{position:absolute;left:64px;right:64px;height:60px;border-radius:13px;border:1px solid var(--brand-line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
+  box-shadow:0 8px 22px rgba(23,58,94,.08);z-index:4;display:flex;align-items:center;gap:12px;padding:0 20px}
+.strip .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.strip .d{font-size:11px;color:var(--ink-2);line-height:1.55}
+.strip .d b{color:var(--ink);font-weight:700}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · 05 Semantic Profile</span></div>
+    <h1>实现原理：指令下发 · <span class="hl">一条带状态机的异步链路</span></h1>
+    <div class="h-sub">POST /api/v3/data/point_command/write — 校验五项 → PENDING 落库 → 总线派发 → 驱动执行 → 回显回传，全程可查。</div>
+  </div>
+
+  <!-- 下发链路带: y140 h110 -->
+  <div class="node" style="left:64px;top:140px">
+    <div class="t"><i style="background:#0a6cb2"></i>API 网关</div>
+    <div class="d">POST <b>point_command/write</b><br>写位号 · 立即返回</div>
+  </div>
+  <div class="aw" style="left:236px;top:140px;width:24px;height:92px"><i></i></div>
+  <div class="node hot" style="left:260px;top:140px">
+    <div class="t"><i style="background:#f79009"></i>校验五项</div>
+    <div class="d">设备启用 · 租约活跃<br>位号启用 · profileId 一致<br><b>rwFlag 只写 / 读写</b></div>
+  </div>
+  <div class="aw" style="left:432px;top:140px;width:24px;height:92px"><i></i></div>
+  <div class="node" style="left:456px;top:140px">
+    <div class="t"><i style="background:#1296db"></i>数据中心</div>
+    <div class="d">指令号 <b>UUIDv7</b><br>PENDING 落库 · <b>过期 10s</b></div>
+  </div>
+  <div class="aw" style="left:628px;top:140px;width:24px;height:92px"><i></i></div>
+  <div class="node" style="left:652px;top:140px">
+    <div class="t"><i style="background:#5558c9"></i>point_command 主题</div>
+    <div class="d">消息总线派发<br>只发目标驱动实例</div>
+  </div>
+  <div class="aw" style="left:824px;top:140px;width:24px;height:92px"><i></i></div>
+  <div class="node" style="left:848px;top:140px">
+    <div class="t"><i style="background:#5558c9"></i>驱动实例</div>
+    <div class="d">去重 · 过期检查<br>ownerNode · fencingToken<br><b>设备级加锁串行</b></div>
+  </div>
+  <div class="aw" style="left:1020px;top:140px;width:24px;height:92px"><i></i></div>
+  <div class="node ok" style="left:1044px;top:140px">
+    <div class="t"><i style="background:#12b76a"></i>设备写入</div>
+    <div class="d">DriverWriteService<br><b>write()</b> 写入设备</div>
+  </div>
+
+  <!-- 左: 校验五项 panel y278 h264 -->
+  <div class="panel" style="left:64px;top:278px;width:560px;height:264px">
+    <div class="zt">写路径校验 · 五项全过后才受理</div>
+    <div class="chkrow"><span class="mk">1</span>设备<b>存在且启用</b></div>
+    <div class="chkrow"><span class="mk">2</span>设备持有<b>活跃的驱动租约</b></div>
+    <div class="chkrow"><span class="mk">3</span>位号<b>存在且启用</b></div>
+    <div class="chkrow"><span class="mk">4</span>位号 profileId 与设备 <b>一致</b></div>
+    <div class="chkrow" style="margin-bottom:10px"><span class="mk">5</span>写操作要求 rwFlag 为<b>只写或读写</b></div>
+    <div style="display:flex;gap:8px">
+      <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:#b3261e;background:var(--red-tint);border:1px solid var(--red-line);border-radius:8px;padding:7px 8px">只读位号的写请求<br>在此被拒</span>
+      <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--brand-deep);background:var(--brand-tint);border:1px solid var(--brand-line);border-radius:8px;padding:7px 8px">HTTP 202<br>Location 指向查询端点</span>
+      <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:#0d8a50;background:var(--green-tint);border:1px solid #b9e6d0;border-radius:8px;padding:7px 8px">凭指令号轮询<br>而非阻塞等待</span>
+    </div>
+  </div>
+
+  <!-- 右: 回显 + 八态 y278 h264 -->
+  <div class="panel" style="left:640px;top:278px;width:576px;height:264px">
+    <div class="zt">回显与八态状态机</div>
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0 10px">
+      <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink-2);background:rgba(244,248,252,.85);border:1px solid #eef2f6;border-radius:8px;padding:6px 4px">设备写入成功</span>
+      <span style="font-size:10px;color:var(--ink-3)">回发<b style="color:var(--brand-deep)">写入值</b>做回显</span>
+      <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--brand-deep);background:var(--brand-tint);border:1px solid var(--brand-line);border-radius:8px;padding:6px 4px">point_command_result 主题</span>
+      <span style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--ink-2);background:rgba(244,248,252,.85);border:1px solid #eef2f6;border-radius:8px;padding:6px 4px">数据中心更新终态</span>
+    </div>
+    <div class="srow">
+      <div class="state"><span class="t"><i style="background:var(--brand)"></i>PENDING</span><span class="d">已受理，待发送</span></div>
+      <div class="state"><span class="t"><i style="background:var(--brand-bright)"></i>SENT</span><span class="d">已送达驱动，执行中</span></div>
+      <div class="state"><span class="t"><i style="background:var(--green)"></i>SUCCESS</span><span class="d">执行成功 · 回显写入值</span></div>
+      <div class="state"><span class="t"><i style="background:var(--red)"></i>FAILED</span><span class="d">驱动执行失败</span></div>
+    </div>
+    <div class="srow">
+      <div class="state"><span class="t"><i style="background:var(--amber)"></i>TIMEOUT</span><span class="d">超时未回执</span></div>
+      <div class="state"><span class="t"><i style="background:var(--amber)"></i>EXPIRED</span><span class="d">入队后过期，未执行</span></div>
+      <div class="state"><span class="t"><i style="background:var(--gray)"></i>DEAD</span><span class="d">发布失败等不可恢复</span></div>
+      <div class="state"><span class="t"><i style="background:var(--gray)"></i>DUPLICATE</span><span class="d">重复指令，被去重</span></div>
+    </div>
+    <div style="margin-top:8px;font-size:9.5px;color:var(--ink-3)">八态中除成功外，失败、超时、过期、不可恢复与重复各有独立终态——下发是否送达、执行是否成功、超时归因于哪一侧，均有记录可查。</div>
+  </div>
+
+  <!-- 同构链路说明: y556 h60 -->
+  <div class="strip" style="top:556px">
+    <div class="zt">同构链路</div>
+    <div class="d">设备级自定义指令 <b>POST /api/v3/data/command_history/call</b> 走同构链路，差异只在执行入口 <b>DriverCustomService.execute()</b>，超时取指令声明的 timeout（默认 30 秒）。两条链路共享同一套设计：<b>异步受理 · 状态机跟踪 · 幂等去重 · 设备级串行</b>。</div>
+  </div>
+
+</div>
+</body>
+</html>

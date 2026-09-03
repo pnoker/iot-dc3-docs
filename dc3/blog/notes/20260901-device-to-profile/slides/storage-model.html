@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>存储模型关系图</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;
+  --indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+  --amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;
+  --green:#12b76a;--green-tint:#eaf7f0;--green-line:#b9e6d0}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:32px;left:64px;right:64px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,#08a9de,#6662d7);border-radius:2px}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+svg.wires{position:absolute;inset:0;z-index:2;pointer-events:none}
+.ec{position:absolute;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.9));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);z-index:4;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.ec .zt{position:absolute;top:-10px;left:12px;font-size:9.5px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 10px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.ec .t{font-size:12px;font-weight:800;display:flex;align-items:center;gap:7px}
+.ec .t i{width:8px;height:8px;border-radius:3px;flex:none}
+.ec .t .tb{margin-left:auto;font:600 8.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"PingFang SC",sans-serif;color:var(--ink-3);
+  background:#f4f7fa;border:1px solid var(--line);border-radius:5px;padding:1.5px 6px}
+.ec .r{display:flex;align-items:center;gap:7px;font-size:9.2px;color:var(--ink-2);line-height:1.45;
+  padding:3.5px 8px;border-radius:6px;background:rgba(244,248,252,.8);border:1px solid #eef2f6}
+.ec .r b{color:var(--ink);font-weight:700}
+.ec .r .fk{margin-left:auto;flex:none;font:700 8.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"PingFang SC",sans-serif;border-radius:5px;padding:1.5px 6px}
+.ec.hero{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(236,245,252,.94));
+  box-shadow:0 16px 38px rgba(18,150,219,.2), inset 0 0 0 1px rgba(128,216,244,.45)}
+.ec.hero .zt{background:linear-gradient(90deg,#1296db,#07549a)}
+.ec.seam{border:1.5px solid var(--amber-line);background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(253,243,227,.9));
+  box-shadow:0 14px 32px rgba(247,144,9,.16), inset 0 0 0 1px rgba(243,217,172,.5)}
+.ec.seam .zt{background:linear-gradient(90deg,#f79009,#e0760a)}
+.ec.dark{border:1px solid #2a3a4d;background:linear-gradient(160deg,#1b2733,#223245);box-shadow:0 8px 20px rgba(15,30,48,.25)}
+.ec.dark .t{color:#eaf3fb}
+.ec.dark .d{font-size:9.6px;color:#9fb4c8;line-height:1.5}
+.ec.dark .d b{color:#cfe2f2}
+.ghost{position:absolute;border-radius:13px;border:1px solid #dde5ec;
+  background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(240,244,248,.78));
+  box-shadow:0 4px 10px rgba(23,58,94,.05);z-index:1;padding:12px 14px}
+.ghost i{display:block;height:6px;border-radius:3px;background:rgba(138,152,168,.16);margin-bottom:8px}
+.bpill{position:absolute;z-index:5;display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;font-weight:700;color:var(--brand-deep);background:rgba(255,255,255,.9);
+  border:1px solid var(--brand-line);border-radius:999px;padding:2.5px 10px;box-shadow:0 3px 8px rgba(12,89,153,.1)}
+.bpill.amber{color:#b26a00;border-color:var(--amber-line)}
+.bpill.teal{color:#0a7d70;border-color:var(--teal-line)}
+.strip{position:absolute;left:64px;right:64px;height:72px;border-radius:13px;border:1px solid var(--brand-line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
+  box-shadow:0 8px 22px rgba(23,58,94,.08);z-index:4;padding:0 18px}
+.strip .zt{position:absolute;top:-10px;left:12px;font-size:9.5px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 10px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.strip .flow{display:flex;align-items:center;gap:0;height:100%}
+.jchip{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:6px 10px;border-radius:8px;
+  border:1px solid #e6edf3;background:rgba(255,255,255,.92);text-align:center}
+.jchip .t{font-size:10.5px;font-weight:800}
+.jchip .d{font-size:8.6px;color:var(--ink-3);line-height:1.4}
+.jchip.dark{border-color:#2a3a4d;background:#1b2733}
+.jchip.dark .t{color:#9ed6ff}
+.jchip.dark .d{color:#8fa6bc}
+.jchip.ok{border-color:var(--green-line);background:var(--green-tint)}
+.jchip.ok .t{color:#0d8a50}
+.jarr{flex:none;display:flex;align-items:center;justify-content:center;width:26px}
+.jarr i{width:0;height:0;border-left:6px solid #a8b8c8;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.note{position:absolute;left:64px;right:64px;text-align:center;font-size:9.8px;color:var(--ink-3);z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · Semantic Profile</span></div>
+    <h1>存储模型：<span class="hl">一个归属根，七张表</span></h1>
+    <div class="h-sub">定义域与实例域之间，只有设备这一个缝合点——两条单一外键，把语义与连接接到同一台设备上。</div>
+  </div>
+
+  <!-- 连线层 -->
+  <svg class="wires" viewBox="0 0 1280 720">
+    <defs>
+      <linearGradient id="fanFill" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#1296db" stop-opacity=".12"/>
+        <stop offset="1" stop-color="#1296db" stop-opacity=".02"/>
+      </linearGradient>
+    </defs>
+    <polygon points="300,206 300,494 322,350" fill="url(#fanFill)"/>
+    <line x1="300" y1="206" x2="300" y2="494" stroke="#8fb8d8" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="300" y1="206" x2="322" y2="350" stroke="#8fb8d8" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="300" y1="494" x2="322" y2="350" stroke="#8fb8d8" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="520" y1="325" x2="640" y2="325" stroke="#0a6cb2" stroke-opacity=".7" stroke-width="2"/>
+    <path d="M642 325 L633 320.5 L633 329.5 Z" fill="#0a6cb2"/>
+    <line x1="870" y1="325" x2="950" y2="325" stroke="#f79009" stroke-opacity=".75" stroke-width="2"/>
+    <path d="M952 325 L943 320.5 L943 329.5 Z" fill="#f79009"/>
+    <line x1="1083" y1="246" x2="1083" y2="274" stroke="#8a98a8" stroke-opacity=".65" stroke-width="1.8"/>
+    <path d="M1083 276 L1078.5 267 L1087.5 267 Z" fill="#8a98a8"/>
+  </svg>
+
+  <!-- 定义域: 三个能力实体 -->
+  <div class="ec" style="left:64px;top:140px;width:226px;height:132px">
+    <div class="t"><i style="background:#1296db"></i>位号 Point<span class="tb">dc3_point</span></div>
+    <div class="r"><b>数据面</b> · 可读或可写的量</div>
+    <div class="r">类型 · 读写方向 · 线性换算</div>
+    <div class="r">最小语义单元<span class="fk" style="color:#0f6ca6;background:#eaf3fc;border:1px solid #c4dff2">profile_id 挂回</span></div>
+  </div>
+  <div class="ec" style="left:64px;top:284px;width:226px;height:132px">
+    <div class="t"><i style="background:#5558c9"></i>指令 Command<span class="tb">dc3_command</span></div>
+    <div class="r"><b>动作面</b> · 带参数、要回执的动作</div>
+    <div class="r">入参出参在 param 表逐条声明</div>
+    <div class="r">三类 · 同步异步 · 超时<span class="fk" style="color:#4548b0;background:#eef0fb;border:1px solid #cdd0f1">profile_id 挂回</span></div>
+  </div>
+  <div class="ec" style="left:64px;top:428px;width:226px;height:132px">
+    <div class="t"><i style="background:#0e9384"></i>事件 Event<span class="tb">dc3_event</span></div>
+    <div class="r"><b>上报面</b> · 设备主动上报的发生</div>
+    <div class="r">参数在 param 表 · 快照与确认</div>
+    <div class="r">四类 × 四档<span class="fk" style="color:#0a7d70;background:#e6f5f3;border:1px solid #b9e0db">profile_id 挂回</span></div>
+  </div>
+
+  <!-- 归属根 -->
+  <div class="ec hero" style="left:330px;top:255px;width:190px;height:140px">
+    <div class="zt">归属根</div>
+    <div class="t"><i style="background:#07549a"></i>模板 Profile</div>
+    <div class="r">一类设备的<b>能力模板</b></div>
+    <div class="r">聚合根 · 不存运行数据</div>
+    <div class="r">名称租户内查重</div>
+  </div>
+
+  <!-- 缝合点: 一台模板对应 N 台设备,影子叠层 -->
+  <div class="ghost" style="left:624px;top:271px;width:230px;height:140px"><i style="width:72%"></i><i style="width:52%"></i><i style="width:60%"></i></div>
+  <div class="ghost" style="left:632px;top:263px;width:230px;height:140px"><i style="width:72%"></i><i style="width:52%"></i><i style="width:60%"></i></div>
+  <div class="ec seam" style="left:640px;top:255px;width:230px;height:140px">
+    <div class="zt">缝合点 · 单绑定</div>
+    <div class="t"><i style="background:#f79009"></i>设备 Device<span class="tb">dc3_device</span></div>
+    <div class="r">单一 <b>profile_id</b> → 能力来源</div>
+    <div class="r">单一 <b>driver_id</b> → 连接通道</div>
+    <div class="r">停用后读写 · 指令 · 上报全拒</div>
+  </div>
+
+  <!-- 实例域: 物理设备 + 驱动 -->
+  <div class="ec dark" style="left:950px;top:150px;width:266px;height:96px">
+    <div class="t"><i style="background:#7fd4f2"></i>MOTOR_001 · 电机</div>
+    <div class="d"><b>真实物理设备</b> · 寄存器 / 线圈 / 报文——采集、控制、上报的最终落点</div>
+  </div>
+  <div class="ec" style="left:950px;top:274px;width:266px;height:130px">
+    <div class="t"><i style="background:#8a98a8"></i>驱动 Driver<span class="tb">dc3_driver</span></div>
+    <div class="r"><b>协议适配</b> · Modbus TCP / MQTT / OPC UA …</div>
+    <div class="r">启动时<b>注册属性</b>：声明协议所需配置项</div>
+    <div class="r">维护每台设备的元数据缓存</div>
+  </div>
+
+  <!-- 绑定标签 -->
+  <div class="bpill" style="left:546px;top:298px">绑定 · 模板</div>
+  <div class="bpill amber" style="left:876px;top:298px">绑定 · 驱动</div>
+  <div class="bpill teal" style="left:909px;top:254px">Modbus TCP · 采集 / 控制 / 上报</div>
+
+  <!-- 一条值的旅程 -->
+  <div class="strip" style="top:580px">
+    <div class="zt">一条值的旅程 · 真实设备如何映射到语义模板</div>
+    <div class="flow">
+      <div class="jchip dark"><span class="t">MOTOR_001</span><span class="d">电机 · 真实设备</span></div>
+      <div class="jarr"><i></i></div>
+      <div class="jchip"><span class="t">驱动读保持寄存器</span><span class="d">从站 1 · 功能码 03 · 偏移 0x0012</span></div>
+      <div class="jarr"><i></i></div>
+      <div class="jchip"><span class="t">原始值 2531</span><span class="d">寄存器读数</span></div>
+      <div class="jarr"><i></i></div>
+      <div class="jchip"><span class="t">位号换算</span><span class="d">MOTOR_TEMPERATURE · float · 倍率 0.01</span></div>
+      <div class="jarr"><i></i></div>
+      <div class="jchip"><span class="t">工程值 25.31 ℃</span><span class="d">单位 ℃ · 落库</span></div>
+      <div class="jarr"><i></i></div>
+      <div class="jchip ok"><span class="t">数据消费</span><span class="d">时序库画曲线 · 告警可查</span></div>
+    </div>
+  </div>
+  <div class="note" style="top:664px">定义在模板一处，能力经设备单一外键解析而来——看到设备，就知道它的全部能力从哪里来、由哪套协议送达。</div>
+
+</div>
+</body>
+</html>

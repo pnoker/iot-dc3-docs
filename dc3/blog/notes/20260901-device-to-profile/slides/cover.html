@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>概念解读 语义模板</title>
+<style>
+
+:root{
+  --ink:#152335;--ink2:#42546a;--ink3:#64748b;--deep:#07549a;--blue:#0a6cb2;--bright:#1296db;--indigo:#5558c9;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:545px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:linear-gradient(118deg,#f6fbff 0%,#edf5fd 55%,#e7eef9 100%);}
+.slide::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(760px 430px at 85% 6%, rgba(127,212,242,.30) 0%, rgba(127,212,242,0) 62%),
+             radial-gradient(660px 420px at 5% 102%, rgba(183,165,245,.24) 0%, rgba(183,165,245,0) 58%);}
+.slide::after{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.075) 1.1px,transparent 1.1px);background-size:24px 24px}
+.top{position:absolute;top:32px;left:64px;right:64px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.lockup{display:flex;align-items:center;gap:13px}
+.brandcap{display:flex;align-items:center;gap:12px;padding:8px 20px 8px 9px;border-radius:999px;
+  border:1px solid rgba(148,216,246,.38);
+  background:radial-gradient(circle at 16% -10%, rgba(255,255,255,.96), rgba(255,255,255,.52) 58%), rgba(236,245,252,.45);
+  box-shadow:0 8px 24px rgba(12,89,153,.13), inset 0 1px 0 rgba(255,255,255,.9)}
+.lens{width:40px;height:40px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 32% 22%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.6) 34%, rgba(185,240,255,.28) 62%, rgba(85,191,232,.14) 100%);
+  border:1px solid rgba(255,255,255,.98);box-shadow:0 6px 16px rgba(12,89,153,.16), inset 0 0 0 1px rgba(140,137,236,.12);
+  display:flex;align-items:center;justify-content:center}
+.lens img{width:26px;height:25px;display:block}
+.wm .wt{display:flex;align-items:center;gap:6px}
+.wm .wt .logo{display:block;font:800 20px -apple-system,BlinkMacSystemFont,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.4px;
+  background:linear-gradient(112deg,#07549a 4%,#149ed7 46%,#4f52bf 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.spark{width:10px;height:10px;flex:none;fill:#5656c8;filter:drop-shadow(0 0 3px rgba(0,159,201,.42))}
+.wm .agentic{display:block;font:680 8px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.14em;color:#5656c8;align-self:center}
+.wm .wt2{display:block;font:600 8.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:1.9px;color:#7c8ea3;margin-top:4px}
+.ep{font:600 11px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:1px;color:var(--blue);border-radius:999px;padding:7px 15px;
+  background:rgba(255,255,255,.75);border:1px solid rgba(128,216,244,.6);box-shadow:0 4px 14px rgba(12,89,153,.08)}
+.left{position:absolute;left:64px;top:132px;width:620px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.kbar{width:26px;height:3.5px;border-radius:2px;background:linear-gradient(90deg,#08a9de,#6662d7)}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--blue);text-transform:uppercase}
+h1{font-size:37px;line-height:1.34;font-weight:800;letter-spacing:.3px;color:var(--ink);margin-bottom:13px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 40%,#1786d4 62%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:14.5px;line-height:1.8;color:var(--ink2);margin-bottom:20px}
+.sub b{color:var(--deep);font-weight:700}
+.chips{display:flex;gap:9px;flex-wrap:wrap}
+.chip{font-size:12px;color:var(--ink2);border:1px solid rgba(255,255,255,.98);background:rgba(255,255,255,.68);
+  border-radius:999px;padding:7px 14px;box-shadow:0 3px 10px rgba(12,89,153,.07)}
+.chip b{color:var(--deep);font-weight:700}
+.motif{position:absolute;right:56px;top:88px;width:560px;height:395px;z-index:5}
+.agc{position:absolute;left:296px;top:0;width:264px;height:74px;border-radius:14px;padding:10px 14px;z-index:5;
+  display:flex;flex-direction:column;gap:6px;
+  border:1.5px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(238,240,251,.9));
+  box-shadow:0 14px 34px rgba(85,88,201,.2)}
+.agc .t{font-size:12.5px;font-weight:800;color:#4548b0;display:flex;align-items:center;gap:8px}
+.agc .t i{width:8px;height:8px;border-radius:3px;flex:none;background:#5558c9}
+.agc .t .tag{margin-left:auto;font-size:9px;color:#5656c8;font-weight:700}
+.agc .cs{display:flex;gap:6px;flex-wrap:wrap}
+.agc .cs span{font-size:9.8px;color:#4548b0;background:#eef0fb;border:1px solid #cdd0f1;border-radius:6px;padding:2.5px 8px}
+.uplink{position:absolute;left:320px;top:74px;width:120px;height:36px;z-index:5;display:flex;flex-direction:column;align-items:center;gap:3px}
+.uplink i{width:0;height:0;border-bottom:6px solid #8fb8d8;border-left:5px solid transparent;border-right:5px solid transparent}
+.uplink .lb{font-size:9.8px;font-weight:700;color:var(--deep);background:rgba(255,255,255,.85);border:1px solid rgba(128,216,244,.55);
+  border-radius:999px;padding:2.5px 10px;box-shadow:0 3px 8px rgba(12,89,153,.08)}
+.mc{position:absolute;left:28px;top:110px;width:504px;height:192px;border-radius:16px;padding:14px 18px 16px;z-index:4;
+  display:flex;flex-direction:column;gap:9px;
+  border:1.5px solid rgba(255,255,255,.98);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(233,244,255,.9));
+  box-shadow:0 22px 48px rgba(18,150,219,.28), inset 0 0 0 1px rgba(128,216,244,.5)}
+.mc .zt{position:absolute;top:-10px;left:14px;font-size:9.5px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1296db,#07549a);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 4px 10px rgba(7,84,154,.3)}
+.mc .t{font-size:14px;font-weight:800;color:var(--deep);display:flex;align-items:center;gap:8px}
+.mc .t i{width:9px;height:9px;border-radius:3px;flex:none;background:#0a6cb2}
+.mc .t small{font:600 9.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink3);letter-spacing:1px;margin-left:2px}
+.mc .row{display:flex;align-items:center;gap:8px;font-size:10.2px;color:var(--ink2)}
+.mc .row .lb{flex:none;font-weight:800;color:var(--deep);font-size:9.8px;width:40px}
+.mc .cs{display:flex;gap:6px;flex-wrap:wrap}
+.mc .cs span{font-size:10px;color:#07549a;background:#ecf5fc;border:1px solid #bcd9f0;border-radius:6px;padding:3px 9px}
+.mc .cs span b{font-weight:700}
+.mc .plus{position:absolute;right:14px;bottom:-12px;font-size:9.8px;font-weight:800;color:#fff;
+  background:linear-gradient(90deg,#1296db,#5558c9);border-radius:999px;padding:4px 12px;
+  box-shadow:0 6px 14px rgba(18,150,219,.35)}
+.bc{position:absolute;left:0;top:280px;width:560px;height:115px;border-radius:16px;padding:12px 18px;z-index:3;
+  display:flex;flex-direction:column;justify-content:flex-end;gap:8px;
+  border:1px solid #dde5ec;
+  background:linear-gradient(160deg,rgba(255,255,255,.9),rgba(240,244,248,.88));
+  box-shadow:0 10px 26px rgba(23,58,94,.10)}
+.bc .t{font-size:12px;font-weight:800;color:#5c6b7c;display:flex;align-items:center;gap:8px}
+.bc .t i{width:8px;height:8px;border-radius:3px;flex:none;background:#8a98a8}
+.bc .t .tag{margin-left:auto;font-size:9.5px;color:#8a98a8;font-weight:600}
+.bc .cs{display:flex;gap:6px;flex-wrap:wrap}
+.bc .cs span{font-size:10px;color:#7d8b9b;background:rgba(247,249,251,.9);border:1px solid #e4eaf0;border-radius:6px;padding:3px 9px}
+.bc .cs span b{font-weight:700}
+.meta{position:absolute;left:64px;right:64px;bottom:20px;display:flex;justify-content:space-between;align-items:center;z-index:6}
+.meta .sites{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+.meta .sites b{color:var(--deep);font-weight:700}
+.meta .repo{font:600 11.5px "Segoe UI",Arial,"PingFang SC",sans-serif;letter-spacing:.6px;color:#51637a}
+</style>
+</head>
+<body>
+<div class="slide">
+  <!-- 概念解读 语义模板 · V4 liquid-glass · 品牌规范:iot-dc3/.github/brand + iot-dc3-book 星芒 title 语言 -->
+
+  <div class="top">
+    <div class="brandcap">
+      <div class="lens"><img src="../../../tools/assets/dc3-logo.svg" alt="IoT DC3"></div>
+      <div class="wm">
+        <span class="wt">
+          <span class="logo">IoT DC3</span>
+          <svg class="spark" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .8c.35 3.05 2.15 4.85 5.2 5.2C8.15 6.35 6.35 8.15 6 11.2 5.65 8.15 3.85 6.35.8 6 3.85 5.65 5.65 3.85 6 .8Z"/></svg>
+          <span class="agentic">AGENTIC</span>
+        </span>
+        <span class="wt2">感知、推理、行动、进化</span>
+      </div>
+    </div>
+    <div class="ep">IoT DC3 概念解读</div>
+  </div>
+
+  <div class="left">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · Semantic Profile</span></div>
+    <h1>把设备抽象成<br><span class="hl">一套语义模板</span></h1>
+    <div class="sub">位号、指令、事件与面向智能体的设备建模。<br><b>物模型之上，叠加治理与语义两层——定义即资产，本体即接口。</b></div>
+    <div class="chips"><div class="chip"><b>四个概念</b>，一副骨架</div><div class="chip"><b>六个维度</b>的差距</div><div class="chip"><b>五步抽象</b> · 八态可查</div><div class="chip"><b>本体即接口</b></div></div>
+  </div>
+
+  <!-- 母题: 物模型底座 → 语义模板叠层主卡 → 智能体浮层消费 -->
+  <div class="motif">
+    <div class="agc">
+      <div class="t"><i></i>智能体 Agent<span class="tag">本体即接口 · 直接消费</span></div>
+      <div class="cs"><span>/mcp 路由</span><span>十工具镜像</span><span>八态可验证</span></div>
+    </div>
+    <div class="uplink"><i></i><span class="lb">机器可读本体</span></div>
+    <div class="mc">
+      <div class="zt">治理框架</div>
+      <div class="t"><i></i>语义模板 Semantic Profile<small>· 建立在物模型之上</small></div>
+      <div class="row"><span class="lb">能力层</span>
+        <div class="cs"><span><b>位号</b> 方向 · 换算</span><span><b>指令</b> 八态 · 超时</span><span><b>事件</b> 四类四档</span></div>
+      </div>
+      <div class="row"><span class="lb">治理层</span>
+        <div class="cs"><span>共享三档</span><span>版本 · 乐观锁</span><span>引用保护</span><span>元数据广播</span></div>
+      </div>
+      <div class="row"><span class="lb">语义层</span>
+        <div class="cs"><span>标识稳定</span><span>类型明确</span><span>关系显式</span><span>契约完整</span><span>轨迹可查</span></div>
+      </div>
+      <div class="plus">物模型之上 · 治理与语义两层</div>
+    </div>
+    <div class="bc">
+      <div class="t"><i></i>物模型 Thing Model<span class="tag">行业通行答案 · 底座</span></div>
+      <div class="cs"><span>属性 Property</span><span>服务 Service</span><span>事件 Event</span><span>只回答：能说什么</span></div>
+    </div>
+  </div>
+  <div class="meta">
+    <div class="sites"><b>dc3.site</b> &nbsp;·&nbsp; docs.dc3.site &nbsp;·&nbsp; book.dc3.site &nbsp;·&nbsp; demo.dc3.site</div>
+    <div class="repo">GitHub pnoker/iot-dc3 · Gitee GVP</div>
+  </div>
+
+</div>
+</body>
+</html>

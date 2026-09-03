@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>四个概念,一副骨架</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-tint-2:#dcecfa;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;
+  --indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+  --purple:#8d6df4;--purple-tint:#f2eefd;--purple-line:#dcd2f9;
+  --amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;
+  --green:#12b76a;--green-tint:#eaf7f0;--red:#e5484d;--red-tint:#fdeeee}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:34px;left:64px;right:64px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,#08a9de,#6662d7);border-radius:2px}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.c4{position:absolute;width:276px;height:196px;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.88));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);padding:13px 16px;z-index:4;display:flex;flex-direction:column}
+.c4 .bar{position:absolute;left:0;top:0;right:0;height:3.5px;border-radius:13px 13px 0 0}
+.c4 .ct{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:800;margin-top:3px;margin-bottom:3px}
+.c4 .ct i{width:9px;height:9px;border-radius:3px;flex:none}
+.c4 .ct .tb{margin-left:auto;font:600 9.5px "Segoe UI",Arial,"PingFang SC",sans-serif;color:var(--ink-3);
+  background:#f4f7fa;border:1px solid var(--line);border-radius:5px;padding:1.5px 7px}
+.c4 .desc{font-size:11px;color:var(--ink-2);line-height:1.55;margin-bottom:8px}
+.c4 .r{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--ink-2);line-height:1.5;
+  padding:5px 8px;border-radius:7px;margin-bottom:5px;background:rgba(244,248,252,.8);border:1px solid #eef2f6}
+.c4 .r b{color:var(--ink);font-weight:700}
+.c4 .r .tg{margin-left:auto;flex:none;font:600 9px "Segoe UI",Arial,"PingFang SC",sans-serif;border-radius:5px;padding:1.5px 6px}
+.duo{position:absolute;width:568px;height:164px;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.88));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);padding:12px 16px;z-index:4}
+.duo .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.duo .tt{font-size:13px;font-weight:800;margin:8px 0 7px}
+.duo .tt small{font:600 9.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--muted);letter-spacing:.8px;margin-left:6px}
+.dch{display:flex;align-items:center;gap:10px;font-size:10.5px;color:var(--ink-2);padding:6px 10px;border-radius:8px;
+  background:rgba(244,248,252,.85);border:1px solid #eef2f6;margin-bottom:6px}
+.dch b{color:var(--ink)}
+.dch .tg{margin-left:auto;flex:none;font:600 9px "Segoe UI",Arial,"PingFang SC",sans-serif;border-radius:5px;padding:1.5px 6px}
+.arrow{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;color:var(--ink-3)}
+.arrow i{width:0;height:0;border-left:5px solid #b9c6d4;border-top:3.5px solid transparent;border-bottom:3.5px solid transparent}
+.strip{position:absolute;left:64px;right:64px;height:88px;border-radius:13px;border:1px solid var(--brand-line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
+  box-shadow:0 8px 22px rgba(23,58,94,.08);z-index:4;padding:13px 18px}
+.strip .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.mp{display:flex;align-items:center;gap:8px}
+.mitem{flex:1;display:flex;flex-direction:column;gap:5px;padding:8px 11px;border-radius:9px;background:rgba(255,255,255,.85);border:1px solid #edf1f5}
+.mitem .up{font-size:10px;color:var(--ink-3);display:flex;align-items:center;gap:5px}
+.mitem .up i{width:6px;height:6px;border-radius:2px;background:#c7d3de}
+.mitem .dn{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px}
+.mitem .dn i{width:8px;height:8px;border-radius:3px;flex:none}
+.note{position:absolute;left:64px;right:64px;font-size:10.5px;color:var(--ink-3);text-align:center;z-index:4}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · 05 Semantic Profile</span></div>
+    <h1>四个概念，<span class="hl">一副骨架</span></h1>
+    <div class="h-sub">模板承载定义，位号、指令、事件是三类能力，设备按需引用——一行记录即一份定义。</div>
+  </div>
+
+  <!-- 四概念卡: y146 h196 -->
+  <div class="c4" style="left:64px;top:146px">
+    <div class="bar" style="background:linear-gradient(90deg,#07549a,#1296db)"></div>
+    <div class="ct"><i style="background:#0a6cb2"></i>模板 Profile<span class="tb">dc3_profile</span></div>
+    <div class="desc">一类设备的能力模板：能采什么、能控什么、会报什么。</div>
+    <div class="r"><b>聚合根</b> · 不存能力数据</div>
+    <div class="r">位号 / 指令 / 事件靠 <b>profileId</b> 挂回<span class="tg" style="background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)">外键挂载</span></div>
+  </div>
+  <div class="c4" style="left:356px;top:146px">
+    <div class="bar" style="background:linear-gradient(90deg,#1296db,#4ab4ea)"></div>
+    <div class="ct"><i style="background:#1296db"></i>位号 Point<span class="tb">dc3_point</span></div>
+    <div class="desc">数据面的能力，一个可读或可写的量。</div>
+    <div class="r"><b>类型 · 读写方向</b> 三档<span class="tg" style="background:#eaf3fc;color:#0f6ca6;border:1px solid #c4dff2">数据面</span></div>
+    <div class="r">单位 · <b>线性换算</b>（基值 + 倍率）</div>
+    <div class="r">平台中最小的<b>语义单元</b></div>
+  </div>
+  <div class="c4" style="left:648px;top:146px">
+    <div class="bar" style="background:linear-gradient(90deg,#5558c9,#7c7fe0)"></div>
+    <div class="ct"><i style="background:#5558c9"></i>指令 Command<span class="tb">dc3_command</span></div>
+    <div class="desc">动作面的能力，一次带参数、要回执、有超时的动作请求。</div>
+    <div class="r"><b>三类 · 同步 / 异步</b> 调用<span class="tg" style="background:var(--indigo-tint);color:#4548b0;border:1px solid var(--indigo-line)">动作面</span></div>
+    <div class="r">参数在 <b>command_param</b> 逐条声明</div>
+    <div class="r">重启 · 校准 · 切换模式</div>
+  </div>
+  <div class="c4" style="left:940px;top:146px">
+    <div class="bar" style="background:linear-gradient(90deg,#0e9384,#2ab8a8)"></div>
+    <div class="ct"><i style="background:#0e9384"></i>事件 Event<span class="tb">dc3_event</span></div>
+    <div class="desc">上报面的能力，设备主动上报的一次离散发生。</div>
+    <div class="r"><b>类型四类 · 级别四档</b><span class="tg" style="background:var(--teal-tint);color:#0a7d70;border:1px solid var(--teal-line)">上报面</span></div>
+    <div class="r">参数在 <b>event_param</b> 声明</div>
+    <div class="r">回答"发生了什么"</div>
+  </div>
+
+  <!-- 两组对偶: y360 h146 -->
+  <div class="duo" style="left:64px;top:354px">
+    <div class="zt">对偶一 · 下行与上行</div>
+    <div class="tt">指令下行，事件上行<small>DIRECTION DUALITY</small></div>
+    <div class="dch"><b>指令 Command</b> — 平台说"去做什么"<span class="tg" style="background:var(--indigo-tint);color:#4548b0;border:1px solid var(--indigo-line)">平台 → 设备</span></div>
+    <div class="dch"><b>事件 Event</b> — 设备说"发生了什么"<span class="tg" style="background:var(--teal-tint);color:#0a7d70;border:1px solid var(--teal-line)">设备 → 平台</span></div>
+  </div>
+  <div class="duo" style="left:648px;top:354px">
+    <div class="zt">对偶二 · 量与发生</div>
+    <div class="tt">位号是连续的量，事件是离散的发生<small>QUANTITY / OCCURRENCE</small></div>
+    <div class="dch"><b>温度 = 25.3 ℃</b> 是位号值 <span class="tg" style="background:#eaf3fc;color:#0f6ca6;border:1px solid #c4dff2">进时序库画曲线</span></div>
+    <div class="dch"><b>门被强行打开</b> 是一个事件 <span class="tg" style="background:var(--teal-tint);color:#0a7d70;border:1px solid var(--teal-line)">进事件流水触发告警</span></div>
+  </div>
+
+  <!-- 物模型对应: y532 h88 -->
+  <div class="strip" style="top:544px">
+    <div class="zt">与物模型三要素的对应</div>
+    <div class="mp" style="margin-top:9px">
+      <div class="mitem"><div class="up"><i></i>物模型 属性 Property</div><div class="dn"><i style="background:#1296db"></i>位号 Point<span class="arrow"><i></i></span><b style="color:var(--ink-3);font-weight:600;font-size:10px">dc3_point</b></div></div>
+      <div class="mitem"><div class="up"><i></i>物模型 服务 Service</div><div class="dn"><i style="background:#5558c9"></i>指令 Command<span class="arrow"><i></i></span><b style="color:var(--ink-3);font-weight:600;font-size:10px">+ param</b></div></div>
+      <div class="mitem"><div class="up"><i></i>物模型 事件 Event</div><div class="dn"><i style="background:#0e9384"></i>事件 Event<span class="arrow"><i></i></span><b style="color:var(--ink-3);font-weight:600;font-size:10px">+ param</b></div></div>
+      <div class="mitem"><div class="up"><i></i>物模型（产品 Product）</div><div class="dn"><i style="background:#0a6cb2"></i>模板 Profile<span class="arrow"><i></i></span><b style="color:var(--ink-3);font-weight:600;font-size:10px">dc3_profile</b></div></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

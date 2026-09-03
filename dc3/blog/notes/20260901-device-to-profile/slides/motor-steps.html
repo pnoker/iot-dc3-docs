@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>把一台电机抽象成一套模板</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;
+  --indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+  --amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;
+  --green:#12b76a;--green-tint:#eaf7f0;--green-line:#b9e6d0}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:34px;left:64px;right:64px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,#08a9de,#6662d7);border-radius:2px}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+.devpill{position:absolute;right:64px;top:38px;z-index:6;display:flex;align-items:center;gap:9px;
+  background:rgba(255,255,255,.85);border:1px solid var(--brand-line);border-radius:999px;
+  padding:7px 15px;box-shadow:0 4px 12px rgba(23,58,94,.07)}
+.devpill .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--green-tint)}
+.devpill b{font-size:12px;font-weight:800}
+.devpill span{font:600 9.5px "Segoe UI",Arial,"PingFang SC",sans-serif;color:var(--ink-3)}
+.step{position:absolute;width:216px;height:384px;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.88));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);padding:16px 12px 12px;z-index:4;display:flex;flex-direction:column}
+.step .sn{position:absolute;top:-9px;left:-9px;width:30px;height:30px;border-radius:9px;z-index:5;
+  background:linear-gradient(135deg,#1296db,#07549a);color:#fff;font:800 15px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 5px 14px rgba(7,84,154,.35)}
+.step .tt{font-size:13.5px;font-weight:800;margin-bottom:2px;padding-left:14px}
+.step .tt small{display:block;font:600 8.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--muted);letter-spacing:.8px;margin-top:1px;font-weight:600}
+.step .r{display:flex;align-items:flex-start;gap:6px;font-size:9.6px;color:var(--ink-2);line-height:1.5;
+  padding:5px 7px;border-radius:6px;margin-bottom:4px;background:rgba(244,248,252,.8);border:1px solid #eef2f6}
+.step .r .mk{flex:none;width:5px;height:5px;border-radius:2px;margin-top:5px}
+.step .r b{color:var(--ink);font-weight:700}
+.step .note{margin-top:auto;font-size:9px;color:var(--ink-3);line-height:1.5;padding:6px 8px;border-radius:7px;
+  background:var(--brand-tint);border:1px solid var(--brand-line)}
+.arrowv{position:absolute;z-index:5;display:flex;align-items:center;justify-content:center;width:14px}
+.arrowv i{width:0;height:0;border-left:5.5px solid #b9c6d4;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.strip{position:absolute;left:64px;right:64px;height:56px;border-radius:13px;border:1px solid var(--brand-line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
+  box-shadow:0 8px 22px rgba(23,58,94,.08);z-index:4;display:flex;align-items:center;justify-content:center;gap:12px}
+.strip .t{font-size:13px;font-weight:800;color:var(--brand-deep)}
+.strip .d{font-size:11.5px;color:var(--ink-2)}
+.strip .d b{color:var(--ink);font-weight:700}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · 05 Semantic Profile</span></div>
+    <h1>把一台电机抽象成<span class="hl">一套模板</span></h1>
+    <div class="h-sub">从设备说明书出发，五步走完"设备 → 模板"的完整过程——每步都有确切的产物。</div>
+  </div>
+  <div class="devpill"><div class="dot"></div><b>MOTOR_001 · 电机</b><span>示例设备</span></div>
+
+  <!-- 五步卡: y150 h384, x=64/291/518/745/972 -->
+  <div class="step" style="left:64px;top:150px">
+    <div class="sn">1</div>
+    <div class="tt">盘点能力清单<small>INVENTORY</small></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>说明书出发，归纳成<b>三问</b>：哪些量要采、哪些动作要控、哪些情况要报</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>采</b>：转速 · 电压 · 电流 · 温度 · 振动</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>控</b>：启动 · 停机 · 设定目标转速</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><b>报</b>：绕组过热 · 变频器故障 · 投入运行</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span>产物：一张三栏清单</div>
+    <div class="note">不涉及平台操作，却决定建模质量——漏了能力后补代价高，多了能力则冗余。</div>
+  </div>
+  <div class="arrowv" style="left:282px;top:342px"><i></i></div>
+  <div class="step" style="left:298px;top:150px">
+    <div class="sn">2</div>
+    <div class="tt">定语义<small>SEMANTICS</small></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>逐条 <b>编码 · 定型 · 定向</b>：位号定类型与读写方向，需工程量的补单位与换算</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><b>7 位号</b>：6 只读 + 1 只写（目标转速）</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><b>3 指令</b>：action × 2 · config × 1</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><b>3 事件</b>：alert · fault · lifecycle</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span>温度位号倍率 0.01：寄存器 2531 → 落库 25.31 ℃</div>
+    <div class="note">可写的量建模成只写位号；带回执的动作流程才走指令——判断标准："改某个位号的值"与"触发一段动作流程"。</div>
+  </div>
+  <div class="arrowv" style="left:516px;top:342px"><i></i></div>
+  <div class="step" style="left:532px;top:150px">
+    <div class="sn">3</div>
+    <div class="tt">归模板<small>GROUPING</small></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>模板边界取决于<b>设备同质程度</b>与视角</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>同型同配 → 建一个大模板，一次绑定全量继承</div>
+    <div class="r"><span class="mk" style="background:#f79009"></span>异构或视角多样 → 按角色拆成小模板，逐台选绑其一</div>
+    <div class="r"><span class="mk" style="background:#e5484d"></span>硬约束：<b>一台设备至多绑定一个模板</b>，能力不跨模板叠加</div>
+    <div class="note">本例七位号、三指令、三事件，规模适中，单模板即可——能力来源确定：看到设备，就知道它的全部能力从哪里来。</div>
+  </div>
+  <div class="arrowv" style="left:750px;top:342px"><i></i></div>
+  <div class="step" style="left:766px;top:150px">
+    <div class="sn">4</div>
+    <div class="tt">补连接<small>CONNECTIVITY</small></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>模板只含语义，连接配置<b>按设备补齐</b></div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span>设备级：Modbus TCP <b>IP · 端口</b></div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span>位号级：从站 <b>1</b> · 功能码 <b>03</b>（保持寄存器）</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span>MOTOR_TEMPERATURE：偏移量 <b>0x0012</b></div>
+    <div class="note">换一种协议的同型电机，前三步成果原样复用，只有这一步重做——语义与连接至此各就各位。</div>
+  </div>
+  <div class="arrowv" style="left:984px;top:342px"><i></i></div>
+  <div class="step" style="left:1000px;top:150px">
+    <div class="sn">5</div>
+    <div class="tt">绑定验证<small>VERIFICATION</small></div>
+    <div class="r"><span class="mk" style="background:#12b76a"></span>绑定模板与驱动，执行一轮<b>闭环验证</b></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>读：六个只读位号出值</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span>写：MOTOR_TARGET_SPEED 下发</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span>指令：MOTOR_SET_SPEED 拿回执</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span>事件：MOTOR_COMMISSIONED 落库</div>
+    <div class="note">四条链路全部贯通，这套抽象方算成立。</div>
+  </div>
+
+  <div class="strip" style="top:560px">
+    <div class="t">五步走完</div>
+    <div class="d"><b>100 台同型电机共享这一份定义</b>；第 101 台接入，只剩第 4 步与第 5 步。</div>
+  </div>
+
+</div>
+</body>
+</html>

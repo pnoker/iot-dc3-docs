@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>事件上报告警链路</title>
+<style>
+:root{--brand:#0a6cb2;--brand-mid:#1183c9;--brand-bright:#1296db;--brand-deep:#07549a;
+  --brand-tint:#ecf5fc;--brand-line:#bcd9f0;
+  --ink:#1b2733;--ink-2:#475563;--ink-3:#6b7a89;--muted:#8a98a8;
+  --line:#e2e7ec;--bg-0:#f8fafc;--bg-1:#eef5fb;
+  --teal:#0e9384;--teal-tint:#e6f5f3;--teal-line:#b9e0db;
+  --indigo:#5558c9;--indigo-tint:#eef0fb;--indigo-line:#cdd0f1;
+  --amber:#f79009;--amber-tint:#fdf3e3;--amber-line:#f3d9ac;
+  --green:#12b76a;--green-tint:#eaf7f0;--red:#e5484d;--red-tint:#fdeeee;--red-line:#f3c1c3;
+  --gray:#8a98a8;--gray-tint:#f1f4f7}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{width:1280px;height:720px;position:relative;overflow:hidden;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+  background:radial-gradient(1100px 620px at 90% -10%, #ddeefb 0%, rgba(221,238,251,0) 55%),
+    radial-gradient(900px 520px at -6% 110%, #e8f1fb 0%, rgba(232,241,251,0) 52%),
+    linear-gradient(135deg,var(--bg-0),var(--bg-1));}
+.slide::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(10,108,178,.06) 1.2px,transparent 1.2px);background-size:26px 26px}
+.head{position:absolute;top:32px;left:64px;right:64px;z-index:6}
+.kicker{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.kbar{width:24px;height:3px;background:linear-gradient(90deg,#08a9de,#6662d7);border-radius:2px}
+.kicker span{font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2.6px;color:var(--brand);text-transform:uppercase}
+h1{font-size:26px;font-weight:800;letter-spacing:.3px}
+h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{font-size:11.5px;color:var(--ink-3);margin-top:5px}
+.node{position:absolute;width:172px;height:98px;border-radius:11px;border:1px solid var(--line);
+  background:linear-gradient(160deg,#fff,rgba(244,248,252,.95));box-shadow:0 5px 14px rgba(23,58,94,.06);
+  padding:9px 11px;z-index:4;display:flex;flex-direction:column}
+.node .t{font-size:11.5px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.node .t i{width:8px;height:8px;border-radius:3px;flex:none}
+.node .d{font-size:8.9px;color:var(--ink-3);line-height:1.5}
+.node .d b{color:var(--ink-2);font-weight:700}
+.node.hot{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,#fff,var(--brand-tint))}
+.node.hot .t{color:var(--brand-deep)}
+.node.ok{border:1.5px solid #b9e6d0;background:linear-gradient(160deg,#fff,#f2fbf6)}
+.node.ok .t{color:#0d8a50}
+.aw{position:absolute;z-index:5;display:flex;align-items:center;justify-content:center}
+.aw i{width:0;height:0;border-left:6px solid #a8b8c8;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.panel{position:absolute;border-radius:13px;border:1px solid var(--line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.9));
+  box-shadow:0 8px 22px rgba(23,58,94,.07);z-index:4;padding:14px 16px}
+.panel .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.erow{display:flex;align-items:center;gap:8px;font-size:10.8px;color:var(--ink-2);padding:6px 9px;border-radius:7px;
+  background:rgba(244,248,252,.85);border:1px solid #eef2f6;margin-bottom:7px}
+.erow b{color:var(--ink)}
+.erow .tg{margin-left:auto;flex:none;font:600 9px "Segoe UI",Arial,"PingFang SC",sans-serif;border-radius:5px;padding:1.5px 6px}
+.tchip{display:inline-flex;flex-direction:column;gap:2px;align-items:flex-start;padding:7px 10px;border-radius:9px;
+  border:1px solid var(--line);background:rgba(255,255,255,.93);margin-bottom:7px}
+.tchip .t{font-size:10.8px;font-weight:800;display:flex;align-items:center;gap:6px}
+.tchip .t i{width:7px;height:7px;border-radius:50%;flex:none}
+.tchip .d{font-size:8.8px;color:var(--ink-3)}
+.lv{display:flex;align-items:center;justify-content:center;font:800 10.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  height:30px;border-radius:8px;border:1px solid}
+.strip{position:absolute;left:64px;right:64px;height:62px;border-radius:13px;border:1px solid var(--brand-line);
+  background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
+  box-shadow:0 8px 22px rgba(23,58,94,.08);z-index:4;display:flex;align-items:center;gap:12px;padding:0 20px}
+.strip .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
+  border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
+.strip .d{font-size:11px;color:var(--ink-2);line-height:1.55}
+.strip .d b{color:var(--ink);font-weight:700}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="kicker"><div class="kbar"></div><span>DC3 Concept · 05 Semantic Profile</span></div>
+    <h1>实现原理：事件上报 · <span class="hl">从一次发生到一条通知</span></h1>
+    <div class="h-sub">设备消息 → event 主题 → 三道校验 → 事件流水 → 告警管线 → 通知渠道。</div>
+  </div>
+
+  <!-- 事件链路带: y140 h110 -->
+  <div class="node" style="left:64px;top:140px">
+    <div class="t"><i style="background:#0a6cb2"></i>设备消息</div>
+    <div class="d">MQTT 驱动按配置的<b> JSON 路径</b>抽取事件码与参数 · 虚拟驱动周期模拟</div>
+  </div>
+  <div class="aw" style="left:236px;top:140px;width:24px;height:98px"><i></i></div>
+  <div class="node" style="left:260px;top:140px">
+    <div class="t"><i style="background:#1296db"></i>event 主题</div>
+    <div class="d">消息总线<br>到达数据中心</div>
+  </div>
+  <div class="aw" style="left:432px;top:140px;width:24px;height:98px"><i></i></div>
+  <div class="node" style="left:456px;top:140px">
+    <div class="t"><i style="background:#f79009"></i>三道校验</div>
+    <div class="d">设备<b>存在且启用</b><br>事件定义<b>存在且启用</b><br>事件 profileId 与设备<b>一致</b></div>
+  </div>
+  <div class="aw" style="left:628px;top:140px;width:24px;height:98px"><i></i></div>
+  <div class="node hot" style="left:652px;top:140px">
+    <div class="t"><i style="background:#0e9384"></i>dc3_event_history</div>
+    <div class="d">参数值存 <b>JSONB</b><br>附带<b>配置快照</b><br>确认标志默认未确认</div>
+  </div>
+  <div class="aw" style="left:824px;top:140px;width:24px;height:98px"><i></i></div>
+  <div class="node" style="left:848px;top:140px">
+    <div class="t"><i style="background:#5558c9"></i>告警规则管线</div>
+    <div class="d">事件<b>类型 · 级别</b><br>作为规则条件变量参与评估</div>
+  </div>
+  <div class="aw" style="left:1020px;top:140px;width:24px;height:98px"><i></i></div>
+  <div class="node ok" style="left:1044px;top:140px">
+    <div class="t"><i style="background:#12b76a"></i>告警 + 通知</div>
+    <div class="d">告警记录写入 <b>dc3_entity_alarm</b><br>按规则渠道通知：<b>邮件 · 飞书 · Webhook</b></div>
+  </div>
+
+  <!-- 左: 事件样例卡 y262 h300 -->
+  <div class="panel" style="left:64px;top:262px;width:560px;height:300px">
+    <div class="zt">事件样例 · 落库记录</div>
+    <div style="display:flex;align-items:center;gap:9px;margin:10px 0 4px">
+      <b style="font-size:13.5px">EVENT · MOTOR_OVERHEAT</b>
+      <span style="font:700 10px 'Segoe UI',Arial,'PingFang SC',sans-serif;color:#b3261e;background:var(--red-tint);border:1px solid var(--red-line);border-radius:6px;padding:2px 8px">alert · 告警</span>
+      <span style="font:700 10px 'Segoe UI',Arial,'PingFang SC',sans-serif;color:#b3261e;background:var(--red-tint);border:1px solid var(--red-line);border-radius:6px;padding:2px 8px">critical · 严重</span>
+    </div>
+    <div class="erow">参数 <b>temperature</b>（float）= 85.6 ℃<span class="tg" style="background:var(--teal-tint);color:#0a7d70;border:1px solid var(--teal-line)">JSONB 结构化</span></div>
+    <div class="erow">配置快照 <b>config_snapshot</b> 已附带<span class="tg" style="background:var(--green-tint);color:#0d8a50;border:1px solid #b9e6d0">事后审计可查当时配置</span></div>
+    <div class="erow">确认标志 <b>acknowledge_flag</b> 未确认<span class="tg" style="background:var(--amber-tint);color:#b26a00;border:1px solid var(--amber-line)">待认领</span></div>
+    <div class="erow">确认人 / 确认时间 <b>— / —</b><span class="tg" style="background:var(--gray-tint);color:var(--muted);border:1px solid #e2e7ec">产生 → 认领 → 处理 全程留痕</span></div>
+    <div style="margin-top:9px;display:flex;gap:8px">
+      <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-2);background:rgba(244,248,252,.85);border:1px solid #eef2f6;border-radius:8px;padding:7px 8px">进入告警规则管线<br>类型 · 级别作为条件变量</span>
+      <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-2);background:rgba(244,248,252,.85);border:1px solid #eef2f6;border-radius:8px;padding:7px 8px">命中规则 → 生成告警<br>写入 dc3_entity_alarm</span>
+      <span style="flex:1;text-align:center;font-size:10.5px;font-weight:700;color:#0d8a50;background:var(--green-tint);border:1px solid #b9e6d0;border-radius:8px;padding:7px 8px">通知任务发出<br>邮件 · 飞书 · Webhook</span>
+    </div>
+  </div>
+
+  <!-- 右: 类型×级别 y262 h300 -->
+  <div class="panel" style="left:640px;top:262px;width:576px;height:300px">
+    <div class="zt">两个正交维度</div>
+    <div style="margin:12px 0 6px;font-size:11.5px;font-weight:800">类型四分类<span style="font-weight:600;font-size:9.5px;color:var(--muted);margin-left:6px">决定事件的性质</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <span class="tchip" style="flex:1"><span class="t"><i style="background:#1296db"></i>info 信息</span><span class="d">常规信息记录</span></span>
+      <span class="tchip" style="flex:1"><span class="t"><i style="background:#f79009"></i>alert 告警</span><span class="d">需关注 · 触发通知</span></span>
+      <span class="tchip" style="flex:1"><span class="t"><i style="background:#e5484d"></i>fault 故障</span><span class="d">设备功能异常</span></span>
+      <span class="tchip" style="flex:1"><span class="t"><i style="background:#0e9384"></i>lifecycle 生命周期</span><span class="d">投入运行等变化</span></span>
+    </div>
+    <div style="margin:0 0 6px;font-size:11.5px;font-weight:800">级别四档<span style="font-weight:600;font-size:9.5px;color:var(--muted);margin-left:6px">决定事件的紧急性</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <span class="lv" style="flex:1;color:#0d8a50;background:var(--green-tint);border-color:#b9e6d0">LOW</span>
+      <span class="lv" style="flex:1;color:#b26a00;background:var(--amber-tint);border-color:var(--amber-line)">MEDIUM</span>
+      <span class="lv" style="flex:1;color:#d97706;background:#fef0dc;border-color:#f5c987">HIGH</span>
+      <span class="lv" style="flex:1;color:#b3261e;background:var(--red-tint);border-color:var(--red-line)">CRITICAL</span>
+    </div>
+    <div style="font-size:10.5px;color:var(--ink-2);line-height:1.6;padding:9px 11px;border-radius:9px;background:var(--brand-tint);border:1px solid var(--brand-line)">
+      <b style="color:var(--brand-deep)">类型决定性质，级别决定紧急性，告警规则可以分别依赖两者。</b><br>
+      建模时多写的每个字段，运行时均有其消费者——定义期的类型与级别，在这里变成规则引擎可用的判断条件。
+    </div>
+  </div>
+
+  <!-- 独立链路说明: y576 h62 -->
+  <div class="strip" style="top:576px">
+    <div class="zt">边界</div>
+    <div class="d">设备离线这类状态变化<b>不混入事件流水</b>，走独立的状态检测与状态告警链路，两条链路互不混杂。</div>
+  </div>
+
+</div>
+</body>
+</html>
