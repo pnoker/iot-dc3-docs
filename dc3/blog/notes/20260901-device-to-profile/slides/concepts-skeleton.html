@@ -37,18 +37,18 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
 .c4 .ct .tb{margin-left:auto;font:600 9.5px "Segoe UI",Arial,"PingFang SC",sans-serif;color:var(--ink-3);
   background:#f4f7fa;border:1px solid var(--line);border-radius:5px;padding:1.5px 7px}
 .c4 .desc{font-size:11px;color:var(--ink-2);line-height:1.55;margin-bottom:8px}
-.c4 .r{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--ink-2);line-height:1.5;
+.c4 .r{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-2);line-height:1.5;flex:1 1 auto;
   padding:5px 8px;border-radius:7px;margin-bottom:5px;background:rgba(244,248,252,.8);border:1px solid #eef2f6}
 .c4 .r b{color:var(--ink);font-weight:700}
 .c4 .r .tg{margin-left:auto;flex:none;font:600 9px "Segoe UI",Arial,"PingFang SC",sans-serif;border-radius:5px;padding:1.5px 6px}
 .duo{position:absolute;width:568px;height:164px;border-radius:13px;border:1px solid var(--line);
   background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.88));
-  box-shadow:0 8px 22px rgba(23,58,94,.07);padding:12px 16px;z-index:4}
+  box-shadow:0 8px 22px rgba(23,58,94,.07);padding:12px 16px;z-index:4;display:flex;flex-direction:column}
 .duo .zt{position:absolute;top:-9px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
   border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
 .duo .tt{font-size:13px;font-weight:800;margin:8px 0 7px}
 .duo .tt small{font:600 9.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--muted);letter-spacing:.8px;margin-left:6px}
-.dch{display:flex;align-items:center;gap:10px;font-size:10.5px;color:var(--ink-2);padding:6px 10px;border-radius:8px;
+.dch{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--ink-2);padding:6px 10px;border-radius:8px;flex:1 1 auto;
   background:rgba(244,248,252,.85);border:1px solid #eef2f6;margin-bottom:6px}
 .dch b{color:var(--ink)}
 .dch .tg{margin-left:auto;flex:none;font:600 9px "Segoe UI",Arial,"PingFang SC",sans-serif;border-radius:5px;padding:1.5px 6px}
@@ -81,31 +81,31 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
     <div class="bar" style="background:linear-gradient(90deg,#07549a,#1296db)"></div>
     <div class="ct"><i style="background:#0a6cb2"></i>模板 Profile<span class="tb">dc3_profile</span></div>
     <div class="desc">一类设备的能力模板：能采什么、能控什么、会报什么。</div>
-    <div class="r"><b>聚合根</b> · 不存能力数据</div>
-    <div class="r">位号 / 指令 / 事件靠 <b>profileId</b> 挂回<span class="tg" style="background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)">外键挂载</span></div>
+    <div class="r"><span class="tx"><b>聚合根</b> · 不存能力数据</span></div>
+    <div class="r"><span class="tx">位号 / 指令 / 事件靠 <b>profileId</b> 挂回</span><span class="tg" style="background:var(--brand-tint);color:var(--brand-deep);border:1px solid var(--brand-line)">外键挂载</span></div>
   </div>
   <div class="c4" style="left:356px;top:146px">
     <div class="bar" style="background:linear-gradient(90deg,#1296db,#4ab4ea)"></div>
     <div class="ct"><i style="background:#1296db"></i>位号 Point<span class="tb">dc3_point</span></div>
     <div class="desc">数据面的能力，一个可读或可写的量。</div>
-    <div class="r"><b>类型 · 读写方向</b> 三档<span class="tg" style="background:#eaf3fc;color:#0f6ca6;border:1px solid #c4dff2">数据面</span></div>
-    <div class="r">单位 · <b>线性换算</b>（基值 + 倍率）</div>
-    <div class="r">平台中最小的<b>语义单元</b></div>
+    <div class="r"><span class="tx"><b>类型 · 读写方向</b> 三档</span><span class="tg" style="background:#eaf3fc;color:#0f6ca6;border:1px solid #c4dff2">数据面</span></div>
+    <div class="r"><span class="tx">单位 · <b>线性换算</b>（基值 + 倍率）</span></div>
+    <div class="r"><span class="tx">平台中最小的<b>语义单元</b></span></div>
   </div>
   <div class="c4" style="left:648px;top:146px">
     <div class="bar" style="background:linear-gradient(90deg,#5558c9,#7c7fe0)"></div>
     <div class="ct"><i style="background:#5558c9"></i>指令 Command<span class="tb">dc3_command</span></div>
     <div class="desc">动作面的能力，一次带参数、要回执、有超时的动作请求。</div>
-    <div class="r"><b>三类 · 同步 / 异步</b> 调用<span class="tg" style="background:var(--indigo-tint);color:#4548b0;border:1px solid var(--indigo-line)">动作面</span></div>
-    <div class="r">参数在 <b>command_param</b> 逐条声明</div>
+    <div class="r"><span class="tx"><b>三类 · 同步 / 异步</b> 调用</span><span class="tg" style="background:var(--indigo-tint);color:#4548b0;border:1px solid var(--indigo-line)">动作面</span></div>
+    <div class="r"><span class="tx">参数在 <b>command_param</b> 逐条声明</span></div>
     <div class="r">重启 · 校准 · 切换模式</div>
   </div>
   <div class="c4" style="left:940px;top:146px">
     <div class="bar" style="background:linear-gradient(90deg,#0e9384,#2ab8a8)"></div>
     <div class="ct"><i style="background:#0e9384"></i>事件 Event<span class="tb">dc3_event</span></div>
     <div class="desc">上报面的能力，设备主动上报的一次离散发生。</div>
-    <div class="r"><b>类型四类 · 级别四档</b><span class="tg" style="background:var(--teal-tint);color:#0a7d70;border:1px solid var(--teal-line)">上报面</span></div>
-    <div class="r">参数在 <b>event_param</b> 声明</div>
+    <div class="r"><span class="tx"><b>类型四类 · 级别四档</b></span><span class="tg" style="background:var(--teal-tint);color:#0a7d70;border:1px solid var(--teal-line)">上报面</span></div>
+    <div class="r"><span class="tx">参数在 <b>event_param</b> 声明</span></div>
     <div class="r">回答"发生了什么"</div>
   </div>
 

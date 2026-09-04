@@ -87,35 +87,35 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
     <div class="bar" style="background:linear-gradient(90deg,#07549a,#1296db)"></div>
     <div class="ct"><i style="background:#0a6cb2"></i>模板 Profile<span class="tb">dc3_profile</span></div>
     <div class="dd">能力定义的容器 · 配置项最少</div>
-    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>名称</b> · 租户内不可重复</div>
-    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>编码</b> · 可留空，平台自动生成</div>
-    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>共享范围</b> · 租户 / 驱动 / 用户</div>
-    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>创建来源</b> · 系统 / 驱动 / 用户</div>
-    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>版本</b> · 递增 + 乐观锁，更新需带当前版本</div>
-    <div class="r"><span class="mk" style="background:#0a6cb2"></span><b>profileExt</b> · JSONB 弱结构化扩展</div>
-    <div class="r" style="background:var(--brand-tint);border-color:var(--brand-line)">命名建议：<b>设备型号 + 用途</b>，共享范围创建时确定</div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><span class="tx"><b>名称</b> · 租户内不可重复</span></div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><span class="tx"><b>编码</b> · 可留空，平台自动生成</span></div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><span class="tx"><b>共享范围</b> · 租户 / 驱动 / 用户</span></div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><span class="tx"><b>创建来源</b> · 系统 / 驱动 / 用户</span></div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><span class="tx"><b>版本</b> · 递增 + 乐观锁，更新需带当前版本</span></div>
+    <div class="r"><span class="mk" style="background:#0a6cb2"></span><span class="tx"><b>profileExt</b> · JSONB 弱结构化扩展</span></div>
+    <div class="r" style="background:var(--brand-tint);border-color:var(--brand-line)"><span class="tx">命名建议：<b>设备型号 + 用途</b>，共享范围创建时确定</span></div>
   </div>
   <div class="obj" style="left:298px;top:240px">
     <div class="bar" style="background:linear-gradient(90deg,#1296db,#4ab4ea)"></div>
     <div class="ct"><i style="background:#1296db"></i>位号 Point<span class="tb">dc3_point</span></div>
     <div class="dd">数据面 · 配"量"的语义</div>
-    <div class="r"><span class="mk" style="background:#1296db"></span><b>名称 / 编码</b> · 租户 + 模板内唯一</div>
-    <div class="r"><span class="mk" style="background:#1296db"></span><b>数据类型</b> · 八种，默认 string</div>
-    <div class="r"><span class="mk" style="background:#1296db"></span><b>读写标志</b> · r / w / rw，默认 r</div>
-    <div class="r"><span class="mk" style="background:#1296db"></span><b>单位</b> · 自由文本</div>
-    <div class="r"><span class="mk" style="background:#1296db"></span><b>基值 / 倍率</b> · 线性换算，默认 0 / 1</div>
-    <div class="r"><span class="mk" style="background:#1296db"></span><b>小数位</b> · 默认 6</div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><span class="tx"><b>名称 / 编码</b> · 租户 + 模板内唯一</span></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><span class="tx"><b>数据类型</b> · 八种，默认 string</span></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><span class="tx"><b>读写标志</b> · r / w / rw，默认 r</span></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><span class="tx"><b>单位</b> · 自由文本</span></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><span class="tx"><b>基值 / 倍率</b> · 线性换算，默认 0 / 1</span></div>
+    <div class="r"><span class="mk" style="background:#1296db"></span><span class="tx"><b>小数位</b> · 默认 6</span></div>
     <div class="r" style="background:#eaf3fc;border-color:#c4dff2">MOTOR_TEMPERATURE：float · 只读 · ℃ · 倍率 0.01 · 小数位 2</div>
   </div>
   <div class="obj" style="left:532px;top:240px">
     <div class="bar" style="background:linear-gradient(90deg,#5558c9,#7c7fe0)"></div>
     <div class="ct"><i style="background:#5558c9"></i>指令 Command<span class="tb">dc3_command</span></div>
     <div class="dd">动作面 · 配"动作"的契约</div>
-    <div class="r"><span class="mk" style="background:#5558c9"></span><b>名称 / 编码</b> · 租户 + 模板内唯一</div>
-    <div class="r"><span class="mk" style="background:#5558c9"></span><b>类型</b> · custom / config / action</div>
-    <div class="r"><span class="mk" style="background:#5558c9"></span><b>调用方式</b> · sync / async</div>
-    <div class="r"><span class="mk" style="background:#5558c9"></span><b>超时</b> · 秒，默认 30</div>
-    <div class="r"><span class="mk" style="background:#5558c9"></span><b>参数</b> · 方向 · 类型 · 必填 · 默认值</div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><span class="tx"><b>名称 / 编码</b> · 租户 + 模板内唯一</span></div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><span class="tx"><b>类型</b> · custom / config / action</span></div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><span class="tx"><b>调用方式</b> · sync / async</span></div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><span class="tx"><b>超时</b> · 秒，默认 30</span></div>
+    <div class="r"><span class="mk" style="background:#5558c9"></span><span class="tx"><b>参数</b> · 方向 · 类型 · 必填 · 默认值</span></div>
     <div class="r"><span class="mk" style="background:#5558c9"></span>MOTOR_SET_SPEED：config · sync · 入参 speed 必填</div>
     <div class="r" style="background:var(--indigo-tint);border-color:var(--indigo-line)">本体变更不广播 · 参数增删改会广播</div>
   </div>
@@ -123,10 +123,10 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
     <div class="bar" style="background:linear-gradient(90deg,#0e9384,#2ab8a8)"></div>
     <div class="ct"><i style="background:#0e9384"></i>事件 Event<span class="tb">dc3_event</span></div>
     <div class="dd">上报面 · 配"发生"的分级</div>
-    <div class="r"><span class="mk" style="background:#0e9384"></span><b>名称 / 编码</b> · 租户 + 模板内唯一</div>
-    <div class="r"><span class="mk" style="background:#0e9384"></span><b>类型</b> · info / alert / fault / lifecycle</div>
-    <div class="r"><span class="mk" style="background:#0e9384"></span><b>级别</b> · low / medium / high / critical</div>
-    <div class="r"><span class="mk" style="background:#0e9384"></span><b>参数</b> · 复用八种类型，JSONB 落库</div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><span class="tx"><b>名称 / 编码</b> · 租户 + 模板内唯一</span></div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><span class="tx"><b>类型</b> · info / alert / fault / lifecycle</span></div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><span class="tx"><b>级别</b> · low / medium / high / critical</span></div>
+    <div class="r"><span class="mk" style="background:#0e9384"></span><span class="tx"><b>参数</b> · 复用八种类型，JSONB 落库</span></div>
     <div class="r"><span class="mk" style="background:#0e9384"></span>MOTOR_OVERHEAT：alert · critical · temperature</div>
     <div class="r" style="background:var(--teal-tint);border-color:var(--teal-line)">类型与级别是告警规则条件变量</div>
     <div class="r" style="background:var(--amber-tint);border-color:var(--amber-line)">修改会改变既有规则匹配行为</div>
@@ -135,11 +135,11 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
     <div class="bar" style="background:linear-gradient(90deg,#8a98a8,#aab6c2)"></div>
     <div class="ct"><i style="background:#8a98a8"></i>设备 Device<span class="tb">dc3_device</span></div>
     <div class="dd">缝合定义与连接 · 设备层填值</div>
-    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>名称 / 编码</b> · 租户内标识一台设备</div>
-    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>模板绑定</b> · 单一 profileId</div>
-    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>驱动绑定</b> · 单一 driverId</div>
-    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>deviceExt</b> · 补充信息</div>
-    <div class="r"><span class="mk" style="background:#8a98a8"></span><b>启用标志</b> · 停用后读写、指令、上报全拒</div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><span class="tx"><b>名称 / 编码</b> · 租户内标识一台设备</span></div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><span class="tx"><b>模板绑定</b> · 单一 profileId</span></div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><span class="tx"><b>驱动绑定</b> · 单一 driverId</span></div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><span class="tx"><b>deviceExt</b> · 补充信息</span></div>
+    <div class="r"><span class="mk" style="background:#8a98a8"></span><span class="tx"><b>启用标志</b> · 停用后读写、指令、上报全拒</span></div>
     <div class="r" style="background:var(--gray-tint);border-color:#e2e7ec">先绑模板再填配置</div>
     <div class="r" style="background:var(--amber-tint);border-color:var(--amber-line)">改绑模板 = 整体更换能力集</div>
   </div>

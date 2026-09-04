@@ -333,5 +333,36 @@
     "publishedAt": "2025-02-10T00:00:00.000Z",
     "updatedAt": "2026-09-02T05:29:03.582Z",
     "note": " | 2026-09-02 对齐语义模板命名:标题/正文/封面图更新,内图复用"
+  },
+  "C:/Users/pnoker/Code/github/iot-dc3-docs/dc3/blog/notes/20260901-device-to-profile/index.md": {
+    "articleId": "164342634",
+    "title": "IoT DC3 概念解读：把设备抽象成一套语义模板——位号、指令、事件与面向智能体的设备建模",
+    "tags": [
+      "物联网",
+      "iot",
+      "dc3",
+      "java",
+      "人工智能"
+    ],
+    "urls": {
+      "IMGSLOT1": "https://i-blog.csdnimg.cn/direct/eed50a5f2da34683ad802adfc85affce.png",
+      "IMGSLOT2": "https://i-blog.csdnimg.cn/direct/d1c082274b0b42b1841a468a974b892b.png",
+      "IMGSLOT3": "https://i-blog.csdnimg.cn/direct/936f71b626c2401c9e4f6d9832efd788.png",
+      "IMGSLOT4": "https://i-blog.csdnimg.cn/direct/e094c7f761cb49cbb4611cfd6b5e01c2.png",
+      "IMGSLOT5": "https://i-blog.csdnimg.cn/direct/ba16cfe33d7d44c88cc82338d89a26a0.png",
+      "IMGSLOT6": "https://i-blog.csdnimg.cn/direct/0f981206fb944cfb8b7fc83298fe87a4.png",
+      "IMGSLOT7": "https://i-blog.csdnimg.cn/direct/b0b7a0432e36490b9f7b5b9874b113cd.png",
+      "IMGSLOT8": "https://i-blog.csdnimg.cn/direct/3346dded4cf54342a485664e9060b473.png",
+      "IMGSLOT9": "https://i-blog.csdnimg.cn/direct/37b10e22bce047abaf2f4bb57c768de5.png"
+    },
+    "chips": [
+      "物联网",
+      "iot",
+      "dc3",
+      "java",
+      "人工智能"
+    ],
+    "publishedAt": "2026-09-03T18:14:08.038Z",
+    "note": "2026-09-04 新增首发（概念解读 21：设备到模板全链路），9 图首次上传图床"
   }
 }

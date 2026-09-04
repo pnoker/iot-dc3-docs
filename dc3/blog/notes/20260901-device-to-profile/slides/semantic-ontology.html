@@ -49,16 +49,16 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
 /* 中区面板 */
 .panel{position:absolute;border-radius:14px;border:1px solid var(--line);
   background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(255,255,255,.9));
-  box-shadow:0 8px 22px rgba(23,58,94,.07);z-index:4;padding:14px 15px}
+  box-shadow:0 8px 22px rgba(23,58,94,.07);z-index:4;padding:14px 15px;display:flex;flex-direction:column}
 .panel .zt{position:absolute;top:-10px;left:12px;font-size:10px;font-weight:700;color:#fff;background:var(--brand-deep);
   border-radius:999px;padding:3px 11px;letter-spacing:.5px;box-shadow:0 3px 8px rgba(23,58,94,.18)}
 .panel .pt{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:8px;margin:6px 0 2px}
 .panel .pt i{width:9px;height:9px;border-radius:3px;flex:none}
 .panel .pt small{font:600 9px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--muted);letter-spacing:.6px}
 .panel .pd{font-size:9.3px;color:var(--ink-3);margin-bottom:8px;line-height:1.45}
-.srow{display:flex;align-items:flex-start;gap:8px;font-size:9.8px;color:var(--ink-2);line-height:1.5;
+.srow{display:flex;align-items:center;gap:8px;font-size:9.8px;color:var(--ink-2);line-height:1.5;flex:1 1 auto;
   padding:6px 8px;border-radius:7px;background:rgba(244,248,252,.85);border:1px solid #eef2f6;margin-bottom:6px}
-.srow .mk{flex:none;width:6px;height:6px;border-radius:2px;margin-top:5px}
+.srow .mk{flex:none;width:6px;height:6px;border-radius:2px}
 .srow b{color:var(--ink);font-weight:700}
 .core{border:1.5px solid var(--brand-line);background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(236,245,252,.94));
   box-shadow:0 18px 44px rgba(18,150,219,.22), inset 0 0 0 1px rgba(128,216,244,.45)}
@@ -76,7 +76,7 @@ h1 .hl{background:linear-gradient(112deg,#07549a 4%,#119bd6 45%,#5558c9 96%);-we
   color:#4548b0;background:var(--indigo-tint);border:1px solid var(--indigo-line);border-radius:6px;padding:2.5px 6px}
 .tools span.mcp{color:#0a7d70;background:var(--teal-tint);border-color:var(--teal-line)}
 .tools+.tools{margin-top:4px}
-.side-tag{position:absolute;bottom:12px;left:15px;right:15px;text-align:center;font-size:9.3px;font-weight:700;color:var(--brand-deep);
+.side-tag{margin-top:8px;text-align:center;font-size:9.3px;font-weight:700;color:var(--brand-deep);
   background:var(--brand-tint);border:1px solid var(--brand-line);border-radius:7px;padding:5px 8px}
 .strip{position:absolute;left:64px;right:64px;height:62px;border-radius:13px;border:1px solid var(--brand-line);
   background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(236,245,252,.92));
