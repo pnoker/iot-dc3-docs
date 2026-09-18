@@ -33,6 +33,7 @@ import HeroParticles from './components/HeroParticles.vue'
 import HeroWaves from './components/HeroWaves.vue'
 import VersionSwitcher from './components/VersionSwitcher.vue'
 import VersionBanner from './components/VersionBanner.vue'
+import FooterSignal from './components/FooterSignal.vue'
 
 // The language preference is written back to localStorage after internal navigation (including the top language switcher), so the head inline script can keep it on refresh.
 function persistLang(path: string) {
@@ -52,13 +53,17 @@ const theme: Theme = {
             'layout-top': () => h(VersionBanner),
             'home-hero-before': () => [h(HeroMesh), h(HeroWaves), h(HeroParticles)],
             'home-hero-image': () => h(HeroLogo),
-            'nav-bar-content-after': () => h(VersionSwitcher)
+            'nav-bar-content-after': () => h(VersionSwitcher),
+            // The footer oscilloscope wave — self-attaches into .VPFooter, which
+            // the default theme only renders on pages without a sidebar (i.e. the
+            // home layout); the canvas stops itself when its host is hidden.
+            'layout-bottom': () => h(FooterSignal)
         })
     },
 
     setup() {
         onMounted(() => {
-            mediumZoom('.vp-doc img:not(.no-zoom):not(.dc3-diagram img):not(.dc3-mermaid img)', {
+            mediumZoom('.vp-doc img:not(.no-zoom):not(.dc3-diagram img)', {
                 background: 'rgba(0, 0, 0, 0.78)',
                 margin: 24
             })

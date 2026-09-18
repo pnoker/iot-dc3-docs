@@ -658,80 +658,6 @@ body {
     font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Fira Mono', 'Roboto Mono', Menlo, Monaco, 'Courier New', monospace;
 }
 
-/* Mermaid technical illustrations: a container consistent with the site's cards/tables — centered, horizontally scrollable, theme-aware */
-.dc3-mermaid,
-.vp-doc .mermaid {
-    display: flex;
-    justify-content: center;
-    margin: 24px 0;
-    padding: 20px 18px;
-    border: 1px solid var(--vp-c-divider);
-    border-radius: 8px;
-    background: var(--vp-c-bg-elv);
-    box-shadow: 0 10px 28px rgba(16, 42, 72, 0.07);
-    overflow-x: auto;
-}
-
-.dc3-mermaid svg,
-.vp-doc .mermaid svg {
-    max-width: 100%;
-    height: auto;
-}
-
-/* rounded nodes + soft strokes, close to the site's card look (the rounded rectangles in the Architecture component) */
-.dc3-mermaid .node rect,
-.dc3-mermaid .node polygon,
-.dc3-mermaid .node circle,
-.dc3-mermaid .node path,
-.vp-doc .mermaid .node rect {
-    rx: 9px;
-    ry: 9px;
-    stroke-width: 1.5px;
-}
-
-/* subgraphs/groups: rounded corners + very light fill, echoing the Architecture region box */
-.dc3-mermaid .cluster rect,
-.vp-doc .mermaid .cluster rect {
-    rx: 12px;
-    ry: 12px;
-}
-
-/* crisper edges, clearer arrows */
-.dc3-mermaid .edgePath .path,
-.dc3-mermaid .flowchart-link,
-.dc3-mermaid .relation {
-    stroke-width: 1.6px;
-}
-
-/* edge labels blend with the card fill, removing the default glaring white block */
-.dc3-mermaid .edgeLabel,
-.dc3-mermaid .edgeLabel rect,
-.dc3-mermaid .edgeLabel foreignObject div {
-    background-color: var(--vp-c-bg-elv) !important;
-    fill: var(--vp-c-bg-elv) !important;
-}
-
-/* slightly bolder node and sequence-actor text for readability */
-.dc3-mermaid .nodeLabel,
-.dc3-mermaid .actor tspan,
-.dc3-mermaid .messageText {
-    font-weight: 560;
-}
-
-/* softer lifelines/activation blocks in sequence diagrams */
-.dc3-mermaid .actor-line {
-    stroke: var(--vp-c-divider);
-}
-
-/* Force mermaid SVG text to use a cross-platform reliable font stack (matching config themeVariables.fontFamily).
-   canvas measureText picks the first available font and SVG text falls back by priority — the same font keeps measurement/rendering consistent. */
-.dc3-mermaid text,
-.dc3-mermaid tspan,
-.mermaid text,
-.mermaid tspan {
-    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif !important;
-}
-
 /* generic diagram components (DataPlane / CommandPlane, etc.): reuse the Architecture semantic palette + card frame, theme-aware */
 .dc3-diagram {
     --dc3-divider: #94a3b8;
@@ -928,9 +854,117 @@ body {
     border-top-color: var(--vp-c-divider);
 }
 
+/* Footer (visible on home-layout pages only — doc pages hide it via the theme's
+   .VPFooter.has-sidebar rule): a quiet two-column band beneath an oscilloscope
+   wave, continuing the hero's "data flow" motif. The ::before SVG is the
+   no-JS/SSR fallback; the FooterSignal canvas takes over once mounted. */
 .VPFooter {
-    border-top: 1px solid var(--vp-c-divider);
-    background: var(--vp-c-bg-alt);
+    position: relative;
+    isolation: isolate;
+    padding: 112px 24px 34px !important;
+    overflow: hidden;
+    border-top: none !important;
+    background:
+        radial-gradient(ellipse at 18% 18%, rgba(41, 197, 223, 0.08), transparent 28%),
+        radial-gradient(ellipse at 82% 22%, rgba(91, 116, 235, 0.07), transparent 30%),
+        linear-gradient(180deg, var(--vp-c-bg), color-mix(in srgb, var(--vp-c-bg-alt) 62%, var(--vp-c-bg))) !important;
+}
+
+.VPFooter::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: 14px;
+    right: 0;
+    left: 0;
+    height: 92px;
+    background: center / 100% 92px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 92' preserveAspectRatio='none'%3E%3Cpath d='M-20 59 C180 38 285 76 470 54 S790 28 980 46 S1310 75 1620 35' fill='none' stroke='%231296db' stroke-opacity='.24'/%3E%3Cpath d='M-20 69 C210 48 350 83 565 61 S900 43 1080 57 S1370 78 1620 52' fill='none' stroke='%235b74eb' stroke-opacity='.13'/%3E%3Ccircle cx='318' cy='60' r='4' fill='%2329c5df' fill-opacity='.55'/%3E%3Ccircle cx='861' cy='39' r='5' fill='%231296db' fill-opacity='.5'/%3E%3Ccircle cx='1398' cy='61' r='4' fill='%235b74eb' fill-opacity='.48'/%3E%3C/svg%3E");
+}
+
+.VPFooter.has-footer-signal::before {
+    display: none;
+}
+
+.VPFooter .container {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 32px;
+    align-items: end;
+    width: min(100%, 1180px);
+    margin: 0 auto;
+    padding-top: 24px;
+    border-top: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 14%, var(--vp-c-divider));
+}
+
+.VPFooter .copyright,
+.VPFooter .message {
+    margin: 0 !important;
+    color: var(--vp-c-text-2);
+    font-weight: 540;
+}
+
+.VPFooter .message {
+    position: relative;
+    max-width: 780px;
+    padding-left: 17px;
+    text-align: left;
+    line-height: 1.65;
+}
+
+.VPFooter .message::before {
+    content: '';
+    position: absolute;
+    top: 0.62em;
+    left: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #29c5df;
+    box-shadow: 0 0 0 5px rgba(41, 197, 223, 0.1), 0 0 16px rgba(41, 197, 223, 0.55);
+}
+
+.VPFooter .copyright {
+    color: var(--vp-c-text-3);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.dark .VPFooter {
+    background:
+        radial-gradient(ellipse at 18% 18%, rgba(41, 197, 223, 0.09), transparent 28%),
+        radial-gradient(ellipse at 82% 22%, rgba(91, 116, 235, 0.1), transparent 30%),
+        linear-gradient(180deg, var(--vp-c-bg), color-mix(in srgb, var(--vp-c-bg-alt) 66%, var(--vp-c-bg))) !important;
+}
+
+.dark .VPFooter::before {
+    opacity: 0.76;
+}
+
+@media (max-width: 720px) {
+    .VPFooter {
+        padding: 94px 24px 30px !important;
+    }
+
+    .VPFooter::before {
+        top: 4px;
+        height: 78px;
+        background-size: auto 78px;
+    }
+
+    .VPFooter .container {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        align-items: start;
+        padding-top: 22px;
+    }
+
+    .VPFooter .copyright {
+        padding-left: 17px;
+        text-align: left;
+        white-space: normal;
+    }
 }
 
 @media (max-width: 960px) {
