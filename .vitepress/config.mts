@@ -19,6 +19,7 @@ import {defineConfig} from 'vitepress'
 import {Lang, t} from './i18n'
 import {transformHead} from './seo.mts'
 import {resolveVersion} from './version.mts'
+import {assertLocaleParity, assertSidebarRegistersAllPages, SRC_EXCLUDE} from './sidebar-check.mts'
 
 const versionInfo = resolveVersion()
 
@@ -26,8 +27,10 @@ const versionInfo = resolveVersion()
 // All user-facing strings are resolved through t(lang, key).
 // Adding a language: create locales/<lang>.json, add to Lang type and VitePress locales block.
 // Entry: [code] — code doubles as the i18n key. Code = language-relative path; single segment → directory index.
+// Every published page under zh/ and en/ must appear in some group below — the
+// build-time guard in sidebar-check.mts fails dev/build on an unregistered page.
 type Entry = readonly [string]
-type Group = { key?: string; items: ReadonlyArray<Entry> }   // key omitted → pinned title-less group
+type Group = { key: string; items: ReadonlyArray<Entry> }
 type Pillar = {
     navKey: string
     landing: string
@@ -45,10 +48,9 @@ const PILLARS: ReadonlyArray<Pillar> = [
         paths: ['architecture', 'modules', 'introduction'],
         activeMatch: '^/(zh|en)/(architecture|modules|introduction)/',
         groups: [
-            {key: '', items: [['architecture']]},
             {
                 key: 'group.project-overview',
-                items: [['introduction'], ['introduction/concepts'], ['introduction/paths'], ['introduction/concepts/tenant']]
+                items: [['architecture'], ['introduction'], ['introduction/concepts'], ['introduction/paths'], ['introduction/concepts/tenant']]
             },
             {
                 key: 'group.objects-data',
@@ -79,16 +81,16 @@ const PILLARS: ReadonlyArray<Pillar> = [
             },
             {
                 key: 'group.scada-power',
-                items: [['drivers/bacnet-ip'], ['drivers/iec104'], ['drivers/dlms'], ['drivers/sl651'], ['drivers/snmp']]
+                items: [['drivers/bacnet-ip'], ['drivers/knx'], ['drivers/iec104'], ['drivers/dnp3'], ['drivers/iec61850'], ['drivers/dlms'], ['drivers/dlt645'], ['drivers/mbus'], ['drivers/sl651'], ['drivers/snmp']]
             },
             {
                 key: 'group.iot-wireless',
-                items: [['drivers/mqtt'], ['drivers/coap'], ['drivers/lwm2m'], ['drivers/http'], ['drivers/ble'], ['drivers/zigbee'], ['drivers/can']]
+                items: [['drivers/mqtt'], ['drivers/coap'], ['drivers/lwm2m'], ['drivers/http'], ['drivers/ble'], ['drivers/zigbee'], ['drivers/can'], ['drivers/lorawan'], ['drivers/kafka']]
             },
             {key: 'group.serial-network', items: [['drivers/serial'], ['drivers/tcp-udp']]},
             {
                 key: 'group.database',
-                items: [['drivers/mysql'], ['drivers/postgresql'], ['drivers/oracle'], ['drivers/sqlserver']]
+                items: [['drivers/mysql'], ['drivers/postgresql'], ['drivers/oracle'], ['drivers/sqlserver'], ['drivers/redis']]
             },
             {key: 'group.virtual-test', items: [['drivers/virtual'], ['drivers/listening-virtual']]},
             {key: 'group.appendix-drivers', items: [['drivers/matrix']]}
@@ -100,15 +102,14 @@ const PILLARS: ReadonlyArray<Pillar> = [
         paths: ['ai'],
         activeMatch: '^/(zh|en)/ai/',
         groups: [
-            {key: '', items: [['ai']]},
-            {key: 'group.ai-integration', items: [['ai/agentic'], ['ai/mcp'], ['ai/spring-ai-deep-dive']]}
+            {key: 'group.ai-integration', items: [['ai'], ['ai/agentic'], ['ai/mcp'], ['ai/spring-ai-deep-dive']]}
         ]
     },
     {   // ④ 基础
         navKey: 'pillar.foundations', landing: 'foundations',
         paths: ['foundations'], activeMatch: '^/(zh|en)/foundations/',
         groups: [
-            {key: '', items: [['foundations']]},
+            {key: 'group.overview', items: [['foundations']]},
             {key: 'group.perception', items: [['foundations/sensing'], ['foundations/identification']]},
             {key: 'group.network', items: [['foundations/fieldbus'], ['foundations/iot-protocols']]},
             {key: 'group.platform', items: [['foundations/edge-cloud'], ['foundations/data-pipeline']]},
@@ -125,14 +126,14 @@ const PILLARS: ReadonlyArray<Pillar> = [
             {key: 'group.quickstart', items: [['quickstart'], ['quickstart/environment'], ['quickstart/first-device']]},
             {
                 key: 'group.deploy-ops',
-                items: [['guide/usage'], ['guide/deployment'], ['guide/observability'], ['guide/logging'], ['guide/troubleshooting']]
+                items: [['guide'], ['guide/usage'], ['guide/deployment'], ['guide/observability'], ['guide/logging'], ['guide/troubleshooting']]
             },
             {
                 key: 'group.development',
                 items: [['development'], ['development/driver-authoring'], ['development/api-documentation'], ['development/technology-stack'], ['development/testing'], ['development/changelog']]
             },
             {key: 'group.frontend', items: [['frontend'], ['frontend/test-debugging']]},
-            {key: 'group.automation', items: [['automation/cli']]},
+            {key: 'group.automation', items: [['automation'], ['automation/cli']]},
             {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/alarms']]}
         ]
     }
@@ -156,23 +157,40 @@ const linkOf = (lang: Lang, code: string) => {
 const itemsOf = (lang: Lang, entries: ReadonlyArray<Entry>): SidebarItem[] =>
     entries.map(([code]) => ({text: t(lang, code), link: linkOf(lang, code)}))
 
+// All groups are folded by default; VitePress's useSidebarControl auto-expands
+// (and keeps expanded) the group containing the active link — it never
+// auto-collapses, so `collapsed: true` is what makes "folded skeleton +
+// auto-open current group" work. The community section stays a single
+// always-open group (4 items, never overflows).
 function buildSidebar(lang: Lang) {
     const p = lang === 'en' ? '/en' : '/zh'
     const sidebar: Record<string, SidebarGroup[]> = {}
     for (const pillar of PILLARS) {
-        const groups: SidebarGroup[] = pillar.groups.map(g => {
-            const title = g.key ? t(lang, g.key) : ''
-            const items = itemsOf(lang, g.items)
-            return title ? {text: title, collapsed: false, items} : {text: '', items}
-        })
+        const groups: SidebarGroup[] = pillar.groups.map(g => ({
+            text: t(lang, g.key),
+            collapsed: true,
+            items: itemsOf(lang, g.items)
+        }))
         for (const path of pillar.paths) {
             const k = path.includes('/') ? `${p}/${path}` : `${p}/${path}/`
             sidebar[k] = groups
         }
     }
     sidebar[`${p}/community/`] = [{text: t(lang, 'community'), items: itemsOf(lang, COMMUNITY)}]
-    return sidebar
+    // VitePress matches multi-sidebar keys by prefix after a stable sort on raw
+    // segment count; keys with equal counts fall back to Object.keys insertion
+    // order. Re-emit deeper keys first so e.g. /zh/operation/device-onboarding
+    // (drivers sidebar) always wins over /zh/operation/ (develop sidebar),
+    // independent of the PILLARS iteration order above.
+    const depth = (key: string) => key.split('/').filter(Boolean).length
+    return Object.fromEntries(Object.entries(sidebar).sort(([a], [b]) => depth(b) - depth(a))) as typeof sidebar
 }
+
+// Build once, guard once — config.mts runs in Node on every dev boot and
+// build, so an unregistered page or a zh/en locale key drift fails startup.
+const sidebars = {zh: buildSidebar('zh'), en: buildSidebar('en')}
+assertSidebarRegistersAllPages(sidebars)
+assertLocaleParity()
 
 function buildNav(lang: Lang) {
     const p = lang === 'en' ? '/en' : '/zh'
@@ -215,7 +233,7 @@ function localeThemeConfig(lang: Lang) {
     const u = uiLabels(lang)
     return {
         nav: buildNav(lang),
-        sidebar: buildSidebar(lang),
+        sidebar: sidebars[lang],
         editLink: {text: u.editLinkText},
         footer: {message: u.footerMessage, copyright: 'Copyright © 2017-2026 pnoker'},
         outline: {level: [2, 3], label: u.outlineLabel},
@@ -271,7 +289,9 @@ export default defineConfig({
     // README.md is the repo readme (not a docs page) — exclude it so dead-link checks ignore it
     // dc3/doc/** holds @include source snapshots (CHANGE.md/USAGE.md), not browsable pages
     // dc3/blog/** holds the dc3-wechat content repo (article sources for WeChat/Zhihu/CSDN), not browsable pages
-    srcExclude: ['superpowers/**', 'README.md', 'dc3/doc/**', 'dc3/blog/**'],
+    // zh/frontend/frontend-testing-guardrails.md is a maintainer-internal AI dev workflow doc
+    // the list lives in sidebar-check.mts (SRC_EXCLUDE) so the build and the orphan check share one source
+    srcExclude: [...SRC_EXCLUDE],
 
     head: [
         ['link', {rel: 'icon', href: '/images/logo.svg', type: 'image/svg+xml'}],
