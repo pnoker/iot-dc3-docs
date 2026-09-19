@@ -155,7 +155,7 @@ curl -X POST http://localhost:8000/api/v3/auth/token/salt \
 # 2) 用盐哈希密码后换 token（12 小时有效）
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<用盐哈希后的密码>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<明文密码>"}'
 
 # 3) 带三件套访问受保护接口
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \

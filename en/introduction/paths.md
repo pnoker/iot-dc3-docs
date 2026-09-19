@@ -32,9 +32,20 @@ You onboard devices or run operations — connecting devices, reading their data
 
 1. [Core Concepts](./concepts) — start by telling apart drivers, profiles, devices, and points
 2. [Your First Device: End to End](../quickstart/first-device) — walk the full pipeline with the virtual driver
-3. [Device Onboarding](../operation/device-onboarding) — connect devices speaking a real protocol
+3. [Device Onboarding](../operation/device-onboarding) — connect devices speaking a real protocol (pick the driver via the [Drivers overview](../drivers/) and the [capability matrix](../drivers/matrix))
 4. [Data and Commands](../operation/data-commands) — collection, history queries, and read/write commands
 5. [Alarms and Notifications](../operation/alarms) — set up rules and notification channels
+6. Day-to-day in the UI: start with [Console · Device Management](../operation/console-devices) (more console pages are on the way)
+
+## I need to take it to production
+
+You are ops / DevOps — the goal is running the stack safely in production:
+
+1. [Deployment Modes and Image Registries](../guide/usage) — choosing among the four compose stacks and where images come from
+2. [Production Deployment](../guide/deployment) — topologies from single host to k8s, scaling
+3. [Security Policy](../community/security) — the three hard constraints: keys, TLS, exposed ports
+4. [Observability](../guide/observability) and [Logging](../guide/logging) — how to watch it once it's live
+5. When something breaks: [Troubleshooting](../guide/troubleshooting)
 
 ## I'm a backend developer doing custom development
 

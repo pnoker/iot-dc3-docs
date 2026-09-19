@@ -13,6 +13,7 @@
     "preview": "vitepress preview",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
+    "scan:facts": "node scripts/scan-facts.mjs",
     "docs:preview": "vitepress preview"
   },
   "devDependencies": {

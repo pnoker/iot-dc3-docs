@@ -25,7 +25,7 @@ The first decision is **which driver to use, based on the protocol the device sp
 configuration items those devices and points need. Pick the wrong protocol and the profile and points downstream won't
 line up.
 
-The platform ships 28 built-in drivers covering industrial fieldbus, IoT wireless, database bridging, and basic
+The platform ships 36 built-in drivers covering industrial fieldbus, IoT wireless, database bridging, and basic
 communication. The diagram maps common choices to a single driver module by protocol:
 
 <DeviceOnboardingSelectDiagram lang="en" />

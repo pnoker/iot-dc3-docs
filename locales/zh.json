@@ -81,6 +81,7 @@
   "drivers/matrix": "驱动能力矩阵",
   "operation": "概览",
   "operation/data-commands": "数据与命令",
+  "operation/console-devices": "控制台 · 设备管理",
   "operation/alarms": "告警与通知",
   "guide": "部署运维",
   "guide/usage": "部署模式与镜像源",

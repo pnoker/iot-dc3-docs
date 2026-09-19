@@ -36,7 +36,9 @@ export const SRC_EXCLUDE: readonly string[] = [
     'dc3/blog/**',
     // maintainer-internal AI development workflow doc (English, lives in the
     // zh tree, zero inbound links) — intentionally not part of the public site
-    'zh/frontend/frontend-testing-guardrails.md'
+    'zh/frontend/frontend-testing-guardrails.md',
+    // maintainer guide — not a site page
+    'MAINTAINING.md'
 ]
 
 // Supports the two shapes used in SRC_EXCLUDE: '<prefix>/**' and exact paths.

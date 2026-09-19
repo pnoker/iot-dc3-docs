@@ -30,9 +30,20 @@ import PathsDecisionDiagram from '../../.vitepress/theme/components/PathsDecisio
 
 1. [核心概念](./concepts) — 先分清驱动/模板/设备/位号
 2. [第一个设备：端到端](../quickstart/first-device) — 用虚拟驱动跑通整条链路
-3. [设备接入](../operation/device-onboarding) — 接入真实协议设备
+3. [设备接入](../operation/device-onboarding) — 接入真实协议设备（选型先看[驱动总览](../drivers/)与[能力矩阵](../drivers/matrix)）
 4. [数据与命令](../operation/data-commands) — 采集、历史查询、读写命令
 5. [告警与通知](../operation/alarms) — 配置规则与通知渠道
+6. 日常在界面上操作：[控制台 · 设备管理](../operation/console-devices) 起步（更多控制台页面陆续补齐）
+
+## 我要把它部署到生产
+
+你是运维 / DevOps，目标是把栈安全地跑在生产环境：
+
+1. [部署模式与镜像源](../guide/usage) — 四套 compose 栈怎么选、镜像从哪拉
+2. [生产部署指南](../guide/deployment) — 单机到 k8s 的拓扑与扩缩容
+3. [安全策略](../community/security) — 密钥、TLS、端口暴露三条硬约束
+4. [可观测性](../guide/observability) 与 [日志规范](../guide/logging) — 上线后怎么盯
+5. 出问题看 [故障排查](../guide/troubleshooting)
 
 ## 我是后端开发者，要二次开发
 

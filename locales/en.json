@@ -81,6 +81,7 @@
   "drivers/matrix": "Driver Capability Matrix",
   "operation": "Overview",
   "operation/data-commands": "Data & Commands",
+  "operation/console-devices": "Console: Devices",
   "operation/alarms": "Alarms & Notifications",
   "guide": "Deployment & Operations",
   "guide/usage": "Deployment & Images",

@@ -96,7 +96,7 @@ DC3 对外只有网关 `dc3-gateway` 一个入口。登录是**两步握手**，
 
 1. `POST /api/v3/auth/token/salt`：传 `tenant`、`name`，先确认租户存在，返回一个随机盐。盐是**无状态**
    的——服务端不存储、不做过期校验，仅随下一次登录请求一并核对；"5 分钟"只是接口文案里的建议使用时限，由客户端自律，当前服务端未强制过期。
-2. `POST /api/v3/auth/token/generate`：传 `tenant`、`name`、`salt` 和用盐哈希后的 `password`，校验通过返回 access token，**有效期 12 小时**。
+2. `POST /api/v3/auth/token/generate`：传 `tenant`、`name`、`salt` 和明文 `password`（传输依赖 TLS，校验在服务端完成），校验通过返回 access token，**有效期 12 小时**。
 
 盐的作用是避免口令明文或固定哈希在链路上被重放。签发的 JWT **绑定 `principal_id` + `tenant_id`**（而非用户名），注销时把身份写入
 Caffeine 注销名单（denylist），旧令牌即便签名合法也会因签发时间早于注销点而失效。
