@@ -20,7 +20,7 @@
 // registration fails immediately at startup instead of shipping an orphan page
 // that only search engines can reach.
 
-import {readFileSync, readdirSync} from 'node:fs'
+import {existsSync, readFileSync, readdirSync} from 'node:fs'
 import {join, relative, sep} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
@@ -109,5 +109,30 @@ export function assertLocaleParity(): void {
     const enOnly = en.filter(k => !zh.includes(k))
     if (zhOnly.length || enOnly.length) {
         throw new Error(`[sidebar-check] locale key drift between locales/zh.json and locales/en.json:\n  zh-only: ${zhOnly.join(', ') || '—'}\n  en-only: ${enOnly.join(', ') || '—'}`)
+    }
+}
+
+// zh/en content parity: every mirrored markdown pair (minus SRC_EXCLUDE) must
+// carry the same number of headings (# .. ####). A section present in one
+// language but missing from the other is content drift — the pair has stopped
+// being a translation of itself, and readers of one language silently miss
+// whole sections.
+export function assertHeadingParity(): void {
+    const headingCount = (file: string) =>
+        readFileSync(file, 'utf8').split('\n').filter(line => /^#{1,4} /.test(line)).length
+    const problems: string[] = []
+    for (const file of walkMarkdown(join(root, 'zh'))) {
+        const relPath = relative(root, file).split(sep).join('/')
+        if (isExcluded(relPath)) continue
+        const enFile = join(root, relPath.replace(/^zh\//, 'en/'))
+        if (!existsSync(enFile)) {
+            problems.push(`  ${relPath} — no en counterpart`)
+            continue
+        }
+        const [zhCount, enCount] = [headingCount(file), headingCount(enFile)]
+        if (zhCount !== enCount) problems.push(`  ${relPath} — headings zh=${zhCount} en=${enCount}`)
+    }
+    if (problems.length) {
+        throw new Error(`[sidebar-check] zh/en heading drift (sections missing from one language):\n${problems.join('\n')}`)
     }
 }

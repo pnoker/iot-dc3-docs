@@ -19,7 +19,7 @@ import {defineConfig} from 'vitepress'
 import {Lang, t} from './i18n'
 import {transformHead} from './seo.mts'
 import {resolveVersion} from './version.mts'
-import {assertLocaleParity, assertSidebarRegistersAllPages, SRC_EXCLUDE} from './sidebar-check.mts'
+import {assertHeadingParity, assertLocaleParity, assertSidebarRegistersAllPages, SRC_EXCLUDE} from './sidebar-check.mts'
 
 const versionInfo = resolveVersion()
 
@@ -153,6 +153,10 @@ const PILLARS: ReadonlyArray<Pillar> = [
         paths: ['development', 'frontend', 'automation', 'quickstart', 'operation', 'guide'],
         activeMatch: '^/(zh|en)/(development|frontend|automation|quickstart|operation|guide)/',
         groups: [
+            // The pillar landing must be the FIRST entry of the FIRST group —
+            // every other pillar works this way, so clicking the header menu
+            // always lands on the top of its sidebar.
+            {key: 'group.overview', items: [['development']]},
             {key: 'group.quickstart', items: [['quickstart'], ['quickstart/environment'], ['quickstart/first-device']]},
             {
                 key: 'group.deploy-ops',
@@ -160,7 +164,7 @@ const PILLARS: ReadonlyArray<Pillar> = [
             },
             {
                 key: 'group.development',
-                items: [['development'], ['development/driver-authoring'], ['development/api-documentation'], ['development/technology-stack'], ['development/testing'], ['development/changelog']]
+                items: [['development/driver-authoring'], ['development/api-documentation'], ['development/technology-stack'], ['development/testing'], ['development/changelog']]
             },
             {key: 'group.frontend', items: [['frontend'], ['frontend/test-debugging']]},
             {key: 'group.automation', items: [['automation'], ['automation/cli']]},
@@ -247,6 +251,7 @@ function buildSidebar(lang: Lang) {
 const sidebars = {zh: buildSidebar('zh'), en: buildSidebar('en')}
 assertSidebarRegistersAllPages(sidebars)
 assertLocaleParity()
+assertHeadingParity()
 
 function buildNav(lang: Lang) {
     const p = lang === 'en' ? '/en' : '/zh'
