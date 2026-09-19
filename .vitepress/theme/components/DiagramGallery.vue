@@ -34,7 +34,7 @@ const resolve = (name: string) => {
 }
 
 // ── data ─────────────────────────────────────────────────────────────
-type Entry = { component: string, url: string, pageTitle: string, anchor?: string }
+type Entry = { component: string, url: string, pageTitle: string, section?: string, anchor?: string }
 const entries = ref<Entry[]>([])
 const loading = ref(true)
 const query = ref('')
@@ -204,7 +204,7 @@ const copy = computed(() => props.lang === 'en' ? {
             <component :is="resolve(e.component)" :lang="props.lang"/>
           </div>
           <footer class="dg-card-foot">
-            <span :title="e.component" class="dg-page">{{ e.component }}</span>
+            <span :title="e.component" class="dg-page">{{ e.section || e.pageTitle }}</span>
             <span
               :aria-label="copy.jump"
               class="dg-jump"
@@ -464,14 +464,15 @@ const copy = computed(() => props.lang === 'en' ? {
   justify-content: center;
 }
 
-/* CONTAIN, never cover: a cropped diagram cannot answer "is this the one
-   I'm looking for" — completeness beats filling the box. */
+/* SVG-native CONTAIN: the element fills the thumb box and the viewBox's
+   preserveAspectRatio (xMidYMid meet, the default) letterboxes AND centers
+   the drawing inside it. Explicit width/height 100% makes this
+   deterministic — width:auto collapses viewBox-only SVGs to a tiny default
+   size, which rendered as blank/icon-sized thumbnails. */
 .dg-thumb :deep(svg) {
   display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .dg-card-foot {

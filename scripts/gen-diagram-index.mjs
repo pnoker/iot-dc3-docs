@@ -36,6 +36,9 @@ function parsePage(file, lang) {
     return {url, title, md}
 }
 
+// strip markdown noise from a heading, keeping the human-readable text
+const headingText = (raw) => raw.replace(/[*`[\]()#]/g, '').trim()
+
 function slugify(text) {
     // matches markdown-it anchor generation closely enough for our headings
     return text.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s+/g, '-')
@@ -46,9 +49,11 @@ function scan(lang) {
     for (const file of walk(lang)) {
         const {url, title, md} = parsePage(file, lang)
         let lastHeading = ''
+        let lastHeadingText = ''
         for (const line of md.split('\n')) {
             const h = line.match(/^(#{1,4})\s+(.+)$/)
             if (h) {
+                lastHeadingText = headingText(h[2])
                 lastHeading = slugify(h[2].replace(/[*`]/g, ''))
                 continue
             }
@@ -58,6 +63,9 @@ function scan(lang) {
                     component,
                     url,
                     pageTitle: title,
+                    // raw (un-slugified) heading text — the human-readable
+                    // section name shown on the gallery card footer
+                    section: lastHeadingText || undefined,
                     anchor: lastHeading || undefined,
                 })
             }
