@@ -15,16 +15,15 @@ vulnerability, and the minimum security baseline to hit before you take the plat
 
 We ship security patches only for the current mainline release. Version numbers follow a `YYYY.M.x` year-month scheme —
 for example, `2026.5.x` is the May 2026 line — and the patch number `x` keeps rolling forward within a mainline. The
-current line is `2026.5.x` (latest `2026.5.22`, image tag `2026.6`).
+current line is `2026.5.x` (latest `2026.5.22`, image line tag `2026.5`).
 
 The table lists the release lines that still get security updates. Older versions are no longer back-ported; upgrade to
 a supported mainline before reporting.
 
-| Version line           | Supported              |
-|------------------------|------------------------|
-| `2026.5.x`             | ✅ Supported            |
-| `2026.4.x`             | ✅ Supported            |
-| `2025.x.x` and earlier | ❌ No longer maintained |
+| Version line            | Supported              |
+|-------------------------|------------------------|
+| `2026.5.x`              | ✅ Supported            |
+| `2025.9.x` and earlier  | ❌ No longer maintained |
 
 ::: tip Upgrade first
 Before reporting a vulnerability, confirm it still reproduces on a supported version. Many issues are already fixed on
