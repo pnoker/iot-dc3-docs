@@ -77,4 +77,4 @@ node scripts/scan-facts.mjs --upstream D:/path/iot-dc3   # 指定上游仓库（
 3. 身份与租户运营（auth 中心 17 个 controller）
 4. 数据中心 6 个业务域（Analytics/Dashboard 确认/事件历史/通知消息等）
 5. Manager 侧 Group/Label/Topic（MQTT 主题管理）
-6. 8 个紧凑型驱动页（58-68 行）升级到展开型模板（135-192 行）
+6. ~~8 个紧凑型驱动页升级~~ 已完成（2026-09-20，全部补齐 故障排查 + 落地 两节，属性表对齐 yml）

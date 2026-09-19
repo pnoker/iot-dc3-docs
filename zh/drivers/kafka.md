@@ -48,8 +48,26 @@ Kafka 是分布式发布订阅流，值异步到达，按消息键（无键按�
 
 ::: info 实现状态：可用
 
-连接通过 spring.kafka.*（KAFKA_BOOTSTRAP_SERVERS）配置。
+连接通过 spring.kafka.*（DC3_MQ_KAFKA_BOOTSTRAP）配置。
 :::
+
+## 故障排查
+
+- **一直收不到位号值** → 原因：读调度默认是关的（`schedule.read.enable=false`），缓存里的消息永远不会被拉取上报；消息消费本身在后台持续进行，不受这个开关影响。排查：先开启读调度（cron 默认 `0/30 * * * * ?`），再确认缓存里确实有值。
+- **读抛 `No Kafka message consumed yet, key=<键>`** → 原因：缓存里找不到这个键的最新消息——消息还没到，或缓存键没对上。排查：带键消息按消息键缓存、无键消息按主题名缓存；位号的 `key` 必须与消息键完全一致，`key` 留空时用设备驱动属性 `topic` 当缓存键。
+- **位号填了 `topic` 却读不到** → 原因：位号的 `topic` 属性不参与读缓存查找，也不影响订阅，它只决定写目标。排查：读只认「位号 `key`，缺省设备 `topic`」——要么把位号 `key` 对准消息键，要么留空 `key` 并把设备 `topic` 配成消息主题名。
+- **消息发到了别的主题，驱动收不到** → 原因：`@KafkaListener` 只订阅部署配置 `dc3.driver.kafka.topic` 这一个主题（默认 `dc3-driver-kafka`），位号/设备属性换主题不会新增订阅。排查：把消息发到监听主题，或改部署配置后重启驱动。
+- **重启后读不到停机期间的消息** → 原因：消费者 `auto-offset-reset: latest`，从最新位移开始消费，停机期间的消息不补读。排查：属预期行为，需要历史回补请用能重放位移的工具，别指望驱动缓存。
+- **写抛 `Kafka write failed`** → 原因：broker 不可达或发送异常，broker 地址来自 `DC3_MQ_KAFKA_BOOTSTRAP`（默认 `kafka:9092`）。排查：确认 broker 连通、目标主题存在且允许生产。
+- **设备一直「在线」，但收不到数据** → 原因：驱动没有实现自定义健康检查，走的是接口默认的恒在线判定，在线状态不反映 broker 连接。排查：收不到数据先查 broker 连通与消费日志（debug 级有 `Kafka message consumed`），别信在线状态。
+
+## 在 IoT DC3 中如何落地
+
+Kafka 侧没有可连接的「设备」，一台[设备](../introduction/concepts/device)只是逻辑数据源。驱动进程整体是一个消费者组（`dc3-driver-kafka-group`），常驻订阅部署配置 `dc3.driver.kafka.topic` 指定的单一主题，broker 地址经 `DC3_MQ_KAFKA_BOOTSTRAP` 注入（默认 `kafka:9092`）。消息异步到达后进内存缓存：带键消息按消息键缓存、无键消息按主题名缓存，每个键只留最新一条。
+
+读和写走两条完全不同的链路。`read()` 消费位号属性 `key`（留空时回退设备驱动属性 `topic`）作缓存键，返回该键的最新缓存值，缓存为空直接抛异常——读是查内存缓存，不发任何网络请求。`write()` 消费位号属性 `topic`（回退设备 `topic`、再回退默认主题 `dc3-driver-kafka`）与 `key`：把命令值按字符串序列化后发到目标主题，`key` 非空带键发送、留空发无键消息。
+
+与平台其它机制的衔接：缓存值要进平台，得靠 SDK 读调度轮询 `read()`（默认关闭，开启 `schedule.read.enable` 后按 cron 跑）。消费与读调度解耦：broker 断了消费停、缓存不再更新，读到的会是旧缓存值，缓存为空才报错。元数据事件没有连接可释放；`validate()` / `validatePoint()` 恒通过，属性填错不会在保存时被拦下，只会在读或写时抛异常。
 
 ## 最小接入示例
 
