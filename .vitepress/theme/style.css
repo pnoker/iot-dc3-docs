@@ -769,15 +769,18 @@ body.dc3-modal-open {
 .VPNavBarExtra .VPMenu {
     border: 1px solid rgba(148, 216, 246, 0.3);
     border-radius: var(--dc3-glass-radius);
-    background:
-        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.82), transparent 38%),
-        linear-gradient(135deg, color-mix(in srgb, var(--vp-c-bg-elv) 82%, transparent), rgba(115, 205, 241, 0.12) 58%, rgba(75, 88, 210, 0.08));
+    /* Solid base first (background-color sits under every gradient layer):
+       the previous 82%-transparent glass let page content bleed through the
+       flyout and made the menu items unreadable on small screens. Keep the
+       glass highlights as thin overlays instead of carrying the opacity. */
+    background-color: var(--vp-c-bg-elv);
+    background-image:
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.55), transparent 38%),
+        linear-gradient(135deg, rgba(115, 205, 241, 0.1), rgba(75, 88, 210, 0.06));
     box-shadow:
         0 18px 46px rgba(12, 89, 153, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.82),
         inset 0 -10px 24px rgba(55, 131, 203, 0.05);
-    backdrop-filter: blur(24px) saturate(1.45);
-    -webkit-backdrop-filter: blur(24px) saturate(1.45);
 }
 
 .VPNavBarTranslations .VPMenu .link,
@@ -793,9 +796,10 @@ body.dc3-modal-open {
 .dark .VPNavBarTranslations .VPMenu,
 .dark .VPNavBarExtra .VPMenu {
     border-color: rgba(139, 210, 250, 0.18);
-    background:
-        radial-gradient(circle at 18% 0%, rgba(210, 247, 255, 0.13), transparent 38%),
-        linear-gradient(135deg, rgba(29, 61, 84, 0.82), rgba(15, 31, 46, 0.9) 58%, rgba(48, 48, 111, 0.72));
+    background-color: var(--vp-c-bg-elv);
+    background-image:
+        radial-gradient(circle at 18% 0%, rgba(210, 247, 255, 0.1), transparent 38%),
+        linear-gradient(135deg, rgba(29, 61, 84, 0.35), rgba(15, 31, 46, 0.45) 58%, rgba(48, 48, 111, 0.25));
     box-shadow:
         0 20px 48px rgba(0, 0, 0, 0.34),
         inset 0 1px 0 rgba(231, 251, 255, 0.11),
