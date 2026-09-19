@@ -122,7 +122,6 @@ onBeforeUnmount(() => {
 
 // ── copy ─────────────────────────────────────────────────────────────
 const copy = computed(() => props.lang === 'en' ? {
-    kicker: 'Index',
     title: 'Diagram Index',
     lead: 'Every architecture, flow, state-machine, and relationship diagram on the site, grouped by page. Click a card to enlarge; jump to its place in the text from the lightbox.',
     placeholder: 'Search diagrams, page titles, or paths…',
@@ -135,7 +134,6 @@ const copy = computed(() => props.lang === 'en' ? {
     jump: 'Open in context',
     of: (i: number, n: number) => `${i + 1} / ${n}`,
 } : {
-    kicker: '图录',
     title: '图表总览',
     lead: '全站架构图、流程图、状态机与关系图按页面归组。点击卡片放大查看，从放大层直达它在正文中的位置。',
     placeholder: '搜索图表名、页面标题或路径…',
@@ -152,9 +150,8 @@ const copy = computed(() => props.lang === 'en' ? {
 
 <template>
   <div :class="{ 'dg-dark': isDark }" class="dg">
-    <!-- page header (site voice: kicker pill + title + lead) -->
+    <!-- page header -->
     <header class="dg-head">
-      <p class="dg-kicker">{{ copy.kicker }}</p>
       <h2 class="dg-title">{{ copy.title }}</h2>
       <p class="dg-lead">{{ copy.lead }}</p>
     </header>
@@ -284,19 +281,6 @@ const copy = computed(() => props.lang === 'en' ? {
 /* ── page header ─────────────────────────────────────────────────── */
 .dg-head { margin: 18px 0 22px; }
 
-.dg-kicker {
-  display: inline-block;
-  margin: 0 0 12px;
-  padding: 3px 12px;
-  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 32%, var(--dg-line));
-  border-radius: 999px;
-  background: var(--dg-tint);
-  color: var(--vp-c-brand-1);
-  font-size: 12px;
-  font-weight: 640;
-  letter-spacing: 0.12em;
-}
-
 .dg-title {
   margin: 0 0 8px;
   color: var(--dg-ink);
@@ -316,9 +300,6 @@ const copy = computed(() => props.lang === 'en' ? {
 
 /* ── toolbar: full-width search ──────────────────────────────────── */
 .dg-toolbar {
-  position: sticky;
-  top: calc(var(--vp-nav-height) + 10px);
-  z-index: 10;
   display: flex;
   gap: 10px;
   align-items: center;
