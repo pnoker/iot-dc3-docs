@@ -14,7 +14,7 @@ right checks before merging.
 
 ## Ways to Contribute
 
-Contributing is more than writing code. All four kinds below are welcome, and all of them matter:
+Contributing is more than writing code. All four kinds below are welcome:
 
 - **Report reproducible bugs** — attach logs, version, configuration, and reproduction steps so maintainers don't have
   to guess.

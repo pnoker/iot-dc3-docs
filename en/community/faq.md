@@ -45,9 +45,8 @@ AGPL-3.0 terms).
 
 ### How does the project sustain itself?
 
-IoT DC3 is currently a personal open-source project maintained by the author, operating as a community-driven effort.
-Possible future commercialization paths include: technical support services, enterprise custom development, SaaS
-hosting, etc. The core platform will always remain open-source.
+IoT DC3 is a personal open-source project, run as a community effort with no paid edition or commercial license. The
+core platform stays open-source.
 
 ### Do I need to pay anyone to use IoT DC3?
 
@@ -60,29 +59,26 @@ servers, databases, etc.).
 
 ### Why Java instead of Go / Node.js / Python?
 
-IoT DC3 chose the Java + Spring ecosystem for these core reasons:
+Java + Spring is the maintainer's engineering call. The reasons, in order of weight:
 
-1. **Industrial IoT landscape**: A large body of existing industrial systems (SCADA, MES, ERP) are Java-based. Java has
-   natural advantages in industrial integration.
-2. **Spring ecosystem maturity**: Spring Boot / Cloud / Security / Data provide out-of-the-box capabilities for
-   distributed systems, security, and data access.
-3. **JVM stability**: Long-running device-access services demand reliable GC and memory management. The JVM has decades
-   of production-proven stability.
-4. **AI integration**: Spring AI enables the platform to interface with multiple LLM providers (OpenAI, Claude, local
-   models, etc.) through a unified paradigm.
-5. **Team expertise**: The maintainer has deep experience in the Java / Spring ecosystem.
+- A large body of existing industrial systems (SCADA, MES, ERP) already run on Java; sharing the language makes those
+  integrations the cheap path
+- Spring Boot / Cloud / Security / Data turn distributed systems, security, and data access into defaults instead of
+  build-it-yourself work
+- Device-access services run for months without restarts; JVM memory management and GC are production-proven at that
+  job
+- Spring AI provides a unified LLM access layer — the Agentic Center is built directly on it (see
+  [Why Spring AI](../ai/spring-ai-deep-dive))
 
 ### Why PostgreSQL instead of MySQL?
 
-1. **TimescaleDB extension**: For IoT time-series data, the TimescaleDB extension on PostgreSQL provides native
-   hypertable auto-partitioning, compression, and data retention policies.
-2. **Apache AGE**: A graph database extension for device relationship and topology path queries.
-3. **pgvector**: A vector extension providing infrastructure for AI semantic search.
-4. **Richer data types**: JSONB, arrays, range types, etc.
-5. **Stricter SQL standards**: More reliable in complex query and transaction scenarios.
+The platform's data architecture is built on three PostgreSQL extensions, and that is what locks the choice in:
 
-IoT DC3 depends deeply on PostgreSQL. These three extensions (TimescaleDB + AGE + pgvector) are core to the platform's
-data architecture.
+- **TimescaleDB** — native hypertable partitioning, compression, and retention policies for IoT time-series data
+- **Apache AGE** — graph queries for device relationships and topology paths
+- **pgvector** — vector search, the groundwork for AI semantic queries
+
+JSONB, arrays, and range types are used in several places as well.
 
 ### What device protocols are supported? How do I choose?
 
@@ -102,6 +98,8 @@ the [Driver Capability Matrix](../drivers/matrix) to confirm the required read /
 ## Deployment & Operations
 
 ### Minimum hardware requirements?
+
+These are reference starting points for getting the stack up; size for your actual device count and data volume:
 
 **Development environment** (dependency stack only — PostgreSQL + RabbitMQ):
 
@@ -168,21 +166,18 @@ reporting capabilities.
 
 ### What can AI do?
 
-IoT DC3's Agentic Center (based on Spring AI) gives LLMs the following capabilities:
+The Agentic Center (built on Spring AI) connects an LLM to the platform, so a conversation can:
 
-- **Device querying**: Natural language queries for device status, point values, and historical data.
-- **Command issuance**: Let the AI write parameters to devices through conversation.
-- **Alarm analysis**: AI analyzes alarm history and provides root-cause inference.
-- **Data insights**: Trend analysis and anomaly detection on time-series data.
+- Query device status and point values
+- Read and write points, and issue commands to devices (high-risk operations require confirmation)
 
-AI capabilities are exposed through the MCP (Model Context Protocol) and can be called directly by tools like Claude
-Desktop, VS Code, and Cursor. See the [AI Overview](../ai/).
+The platform also auto-aggregates its 330+ HTTP APIs into an MCP (Model Context Protocol) tool catalog that tools like
+Claude Desktop, VS Code, and Cursor can call directly after OAuth 2.1 authorization. See the [AI Overview](../ai/).
 
 ### Which LLM providers are supported?
 
-Through Spring AI, all major model providers are theoretically supported: OpenAI, Anthropic Claude, Google Gemini,
-Alibaba Tongyi Qianwen, Baidu ERNIE Bot, local Ollama models, and more. See the [Agentic Center](../ai/agentic) for
-configuration details.
+The Agentic Center exposes an OpenAI-compatible chat endpoint — any model service that speaks the OpenAI API works:
+GPT, Claude, DeepSeek, Tongyi Qianwen, and others. See the [Agentic Center](../ai/agentic) for configuration.
 
 ---
 

@@ -42,8 +42,7 @@ SaaS、内部系统），你必须将修改后的完整源代码开源。如果�
 
 ### 项目方如何盈利？
 
-目前 IoT DC3 是维护者的个人开源项目，以社区驱动方式运作。未来可能的商业化方向包括：技术支持服务、企业定制开发、SaaS
-托管服务等。核心平台本身将始终保持开源。
+IoT DC3 是维护者的个人开源项目，按社区方式运作，没有付费版本或商业授权。核心平台保持开源。
 
 ### 使用 IoT DC3 需要付费给谁吗？
 
@@ -55,23 +54,22 @@ SaaS、内部系统），你必须将修改后的完整源代码开源。如果�
 
 ### 为什么用 Java 而不是 Go/Node.js/Python？
 
-IoT DC3 选择 Java + Spring 生态的核心原因：
+选 Java + Spring 是维护者的工程判断，理由按分量排列：
 
-1. **工业物联网场景**：工业领域大量现存系统是 Java 生态（SCADA、MES、ERP），Java 在工业集成中有天然优势
-2. **Spring 生态成熟度**：Spring Boot/Cloud/Security/Data 提供开箱即用的分布式、安全、数据访问能力
-3. **JVM 稳定性**：长时间运行的设备接入服务对 GC、内存管理要求高，JVM 经过数十年的生产验证
-4. **AI 集成**：Spring AI 让平台能以统一范式接入多家大模型（OpenAI、Claude、本地模型等）
-5. **团队技能**：维护者在 Java/Spring 生态有深厚积累
+- 工业现场的大量存量系统（SCADA、MES、ERP）本身跑在 Java 生态上，与它们集成时语言一致最省力
+- Spring Boot / Cloud / Security / Data 把分布式、安全、数据访问这些平台必需的能力做成了默认项
+- 设备接入服务常年不重启，JVM 的内存管理与垃圾回收经过长期生产验证
+- Spring AI 提供统一的大模型接入层，Agentic 中心直接建在它上面（见[为什么选 Spring AI](../ai/spring-ai-deep-dive)）
 
 ### 为什么用 PostgreSQL 而不是 MySQL？
 
-1. **TimescaleDB 扩展**：IoT 时序数据场景，PostgreSQL 的 TimescaleDB 扩展提供原生的超表自动分区、压缩、数据保留策略
-2. **Apache AGE**：图数据库扩展，用于设备关系、拓扑路径查询
-3. **pgvector**：向量扩展，为 AI 语义检索提供基础设施
-4. **更丰富的数据类型**：JSONB、数组、范围类型等
-5. **更严格的 SQL 标准**：在复杂查询和事务场景下更可靠
+平台的数据架构建在 PostgreSQL 的三个扩展上，迁移成本决定了选型：
 
-IoT DC3 对 PostgreSQL 的依赖很深，这三个扩展（TimescaleDB + AGE + pgvector）是平台数据架构的核心。
+- **TimescaleDB**——IoT 时序数据的超表自动分区、压缩与保留策略
+- **Apache AGE**——图查询，用于设备关系与拓扑路径
+- **pgvector**——向量检索，为 AI 语义查询留好地基
+
+此外 JSONB、数组、范围类型等数据类型也在多处使用。
 
 ### 支持哪些设备协议？应该怎么选择？
 
@@ -90,6 +88,8 @@ IoT DC3 对 PostgreSQL 的依赖很深，这三个扩展（TimescaleDB + AGE + p
 ## 部署与运维
 
 ### 最低硬件要求？
+
+下面是让平台跑起来的参考起步配置，实际按接入设备规模与数据量调整：
 
 **开发环境**（仅依赖栈 PostgreSQL + RabbitMQ）：
 
@@ -152,20 +152,18 @@ MQTT Topic → MQTT 驱动订阅 → 进入平台数据管道。不过这种方�
 
 ### AI 能做什么？
 
-IoT DC3 的 Agentic 中心（基于 Spring AI）让大模型具备以下能力：
+Agentic 中心（基于 Spring AI）把大模型接到平台上，对话即可完成：
 
-- **设备查询**：自然语言查询设备状态、位号值、历史数据
-- **命令下发**：通过对话让 AI 向设备写入参数
-- **告警分析**：AI 分析告警历史，给出根因推断
-- **数据洞察**：对时序数据做趋势分析和异常检测
+- 查询设备状态与位号值
+- 读写位号、向设备下发命令（高风险操作需二次确认）
 
-AI 能力通过 MCP（Model Context Protocol）协议暴露，可被 Claude Desktop、VS Code、Cursor 等 AI
-工具直接调用。详见 [AI 概览](../ai/)。
+平台同时把 330+ 个 HTTP 接口自动聚合成 MCP（Model Context Protocol）工具目录，Claude Desktop、VS Code、Cursor
+等 AI 工具经 OAuth 2.1 鉴权后可直接调用。详见 [AI 概览](../ai/)。
 
 ### 支持哪些大模型？
 
-通过 Spring AI，理论上支持所有主流模型提供商：OpenAI、Anthropic Claude、Google Gemini、阿里通义千问、百度文心一言、本地 Ollama
-模型等。具体配置见 [Agentic 中心](../ai/agentic)。
+Agentic 中心对外暴露 OpenAI 兼容的聊天接口，凡是提供 OpenAI 兼容 API 的模型服务都能接——GPT、Claude、DeepSeek、通义千问等均可。配置见
+[Agentic 中心](../ai/agentic)。
 
 ---
 

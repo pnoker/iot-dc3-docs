@@ -33,8 +33,8 @@ the newer mainline, and upgrading is often the fastest fix.
 
 ## Vulnerability Disclosure Process
 
-We take security reports seriously. Once a vulnerability is confirmed, we fix it as fast as we can and publish the fix
-in the release notes.
+A confirmed vulnerability is fixed as fast as possible, and the fix is disclosed in the release notes of the version
+that ships it.
 
 ::: danger Do not disclose publicly
 **Do not** post potential vulnerabilities in GitHub / Gitee issues or discussion forums. A public PoC immediately
@@ -43,9 +43,9 @@ exposes unpatched instances to attack. Use the private channels below instead.
 
 If you find a potential security vulnerability, report it through either private channel:
 
-1. **Email**: Send a message to the project maintainers with `Security Vulnerability` in the subject so it gets triaged
-   first.
-2. **Direct message**: Reach the maintainers directly via a Gitee or GitHub private message.
+1. **Email**: Write to [pnokers@gmail.com](mailto:pnokers@gmail.com) with `Security Vulnerability` in the subject so it
+   gets triaged first.
+2. **Direct message**: Reach the maintainer (@pnoker) directly via a GitHub or Gitee private message.
 
 To help us reproduce and pin down the issue, include in your report: the affected version line, reproduction steps or a
 minimal repro, the impact (data leak / privilege escalation / command injection, etc.), and any fix ideas you have. Once

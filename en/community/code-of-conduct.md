@@ -77,8 +77,9 @@ tolerated.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through either of these channels:
 
-1. **Open a private issue** (where the platform supports it) and @-mention a project maintainer.
-2. **Email a maintainer directly** — including `Code of Conduct` in the subject line helps with prompt triage.
+1. **Email a maintainer** — write to [pnokers@gmail.com](mailto:pnokers@gmail.com) with `Code of Conduct` in the
+   subject line for prompt triage.
+2. **Direct message** — contact the maintainer (@pnoker) through GitHub or Gitee private messages.
 
 All reports will be reviewed and investigated **promptly and fairly**. The outcome will be shared with the reporter
 (if the reporter provided contact information); privacy-sensitive details will not be disclosed publicly.
