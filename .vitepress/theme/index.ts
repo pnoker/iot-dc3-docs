@@ -16,7 +16,7 @@
  */
 
 import type {Theme} from 'vitepress'
-import {h, onMounted} from 'vue'
+import {h, onBeforeUnmount, onMounted} from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import mediumZoom from 'medium-zoom'
 import 'medium-zoom/dist/style.css'
@@ -31,7 +31,6 @@ import HeroLogo from './components/HeroLogo.vue'
 import HeroMesh from './components/HeroMesh.vue'
 import HeroParticles from './components/HeroParticles.vue'
 import HeroWaves from './components/HeroWaves.vue'
-import VersionSwitcher from './components/VersionSwitcher.vue'
 import VersionBanner from './components/VersionBanner.vue'
 import FooterSignal from './components/FooterSignal.vue'
 
@@ -44,6 +43,64 @@ function persistLang(path: string) {
     }
 }
 
+// WeChat Official Account icon click: pop the QR modal in-place instead of
+// navigating (the hover QR card stays as a quick preview). Document-level
+// delegation so the icon works in the desktop navbar, the tablet extra menu
+// and the mobile drawer alike; copy follows the site language.
+function openWechatModal(trigger: HTMLAnchorElement) {
+    const en = document.documentElement.lang.startsWith('en')
+    const label = trigger.getAttribute('aria-label') || (en ? 'WeChat Official Account' : '微信公众号')
+    const closeLabel = en ? 'Close' : '关闭'
+    const hint = en ? 'Scan on WeChat to follow' : '微信扫码关注'
+    const modal = document.createElement('div')
+    modal.className = 'dc3-wechat-modal'
+    modal.setAttribute('role', 'dialog')
+    modal.setAttribute('aria-modal', 'true')
+    modal.setAttribute('aria-label', label)
+    modal.innerHTML = `
+        <div class="dc3-wechat-modal__scrim"></div>
+        <div class="dc3-wechat-modal__card">
+          <button class="dc3-wechat-modal__close" type="button" aria-label="${closeLabel}">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <p class="dc3-wechat-modal__title">${label}</p>
+          <div class="dc3-wechat-modal__qr"><img src="/images/wechat-qrcode.jpg" alt="${label}"></div>
+          <p class="dc3-wechat-modal__hint">${hint}</p>
+        </div>`
+    let closed = false
+    const close = () => {
+        if (closed) return
+        closed = true
+        document.removeEventListener('keydown', onKey, true)
+        document.body.classList.remove('dc3-modal-open')
+        modal.classList.add('is-closing')
+        window.setTimeout(() => modal.remove(), 170)
+        trigger.focus()
+    }
+    const onKey = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') close()
+        if (event.key === 'Tab') {
+            // The close button is the only focusable element: keep focus inside
+            event.preventDefault()
+            modal.querySelector<HTMLButtonElement>('.dc3-wechat-modal__close')?.focus()
+        }
+    }
+    modal.querySelector('.dc3-wechat-modal__close')?.addEventListener('click', close)
+    modal.querySelector('.dc3-wechat-modal__scrim')?.addEventListener('click', close)
+    document.addEventListener('keydown', onKey, true)
+    document.body.appendChild(modal)
+    document.body.classList.add('dc3-modal-open')
+    modal.querySelector<HTMLButtonElement>('.dc3-wechat-modal__close')?.focus()
+}
+
+function handleWechatIconClick(event: MouseEvent) {
+    if (event.defaultPrevented || !(event.target instanceof Element)) return
+    const link = event.target.closest<HTMLAnchorElement>('.VPSocialLink[href*="wechat-qrcode"]')
+    if (!link) return
+    event.preventDefault()
+    openWechatModal(link)
+}
+
 const theme: Theme = {
     extends: DefaultTheme,
 
@@ -53,7 +110,6 @@ const theme: Theme = {
             'layout-top': () => h(VersionBanner),
             'home-hero-before': () => [h(HeroMesh), h(HeroWaves), h(HeroParticles)],
             'home-hero-image': () => h(HeroLogo),
-            'nav-bar-content-after': () => h(VersionSwitcher),
             // The footer oscilloscope wave — self-attaches into .VPFooter, which
             // the default theme only renders on pages without a sidebar (i.e. the
             // home layout); the canvas stops itself when its host is hidden.
@@ -67,6 +123,12 @@ const theme: Theme = {
                 background: 'rgba(0, 0, 0, 0.78)',
                 margin: 24
             })
+            document.addEventListener('click', handleWechatIconClick)
+        })
+        onBeforeUnmount(() => {
+            document.removeEventListener('click', handleWechatIconClick)
+            document.querySelector('.dc3-wechat-modal')?.remove()
+            document.body.classList.remove('dc3-modal-open')
         })
     },
 

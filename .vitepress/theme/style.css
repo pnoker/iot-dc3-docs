@@ -135,19 +135,13 @@ body {
     }
 }
 
-/* Order the right-side toolbar so the version switcher sits between the
-   language switcher and the appearance (theme) toggle. The version switcher
-   is injected last via the nav-bar-content-after slot (see theme/index.ts);
-   without this it renders after the social links, at the far right. Desktop
-   only — below this breakpoint the translations/appearance controls collapse
-   into the hamburger extra-menu and this reordering does not apply. */
+/* Order the right-side toolbar: language switcher before the appearance
+   (theme) toggle, social links last. Desktop only — below this breakpoint the
+   translations/appearance controls collapse into the hamburger extra-menu and
+   this reordering does not apply. */
 @media (min-width: 960px) {
     .VPNavBar .content .content-body .VPNavBarTranslations {
         order: 6;
-    }
-
-    .VPNavBar .content .content-body .dc3-version-switcher {
-        order: 7;
     }
 
     .VPNavBar .content .content-body .VPNavBarAppearance {
@@ -167,7 +161,8 @@ body {
 
 .VPNavBarTitle .title {
     width: auto;
-    height: 40px;
+    /* the two-line brand (title + slogan) needs a taller capsule */
+    height: 44px;
     padding: 5px 13px 5px 6px;
     border: 1px solid rgba(148, 216, 246, 0.34);
     border-radius: var(--dc3-glass-radius);
@@ -202,12 +197,145 @@ body {
     filter: drop-shadow(0 4px 7px rgba(13, 82, 157, 0.2));
 }
 
+/* v-html siteTitle renders a wrapping span; restore it to a plain container —
+   the gradient lives on .dc3-brand-title strong below */
 .VPNavBarTitle .title > span {
-    background: linear-gradient(112deg, #07549a, #149ed7 46%, #4f52bf);
+    display: block;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
+}
+
+/* ── Nav brand (same capsule pattern as iot-dc3-online / iot-dc3-book):
+   title + spark + AGENTIC badge on line one, slogan on line two ── */
+.dc3-brand-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.dc3-brand-title {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 4px;
+    overflow: hidden;
+    color: var(--vp-c-brand-1);
+    font-size: 13px;
+    font-weight: 680;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.dc3-brand-title strong {
+    flex: none;
+    background: linear-gradient(105deg, #5656c8, #009fc9);
+    background-clip: text;
+    color: transparent;
+    font-weight: 720;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.dc3-brand-spark {
+    display: block;
+    width: 10px;
+    height: 10px;
+    overflow: visible;
+    flex: none;
+    align-self: center;
+    fill: #5656c8;
+    filter: drop-shadow(0 0 3px rgba(0, 159, 201, 0.42));
+}
+
+.dc3-brand-agentic {
+    flex: none;
+    align-self: center;
+    color: #5656c8;
+    font-size: 9px;
+    font-weight: 680;
+    letter-spacing: 0.04em;
+    line-height: 1;
+}
+
+.dc3-brand-signal {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--vp-c-text-3);
+    font-size: 10px;
+    font-weight: 520;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dc3-brand-a11y {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+    white-space: nowrap;
+}
+
+.dark .dc3-brand-title strong {
+    background: linear-gradient(105deg, #aaaaff, #61def4);
     background-clip: text;
     -webkit-background-clip: text;
-    color: transparent;
     -webkit-text-fill-color: transparent;
+}
+
+.dark .dc3-brand-spark {
+    fill: #aaaaff;
+    filter: drop-shadow(0 0 3px rgba(97, 222, 244, 0.52));
+}
+
+.dark .dc3-brand-agentic {
+    color: #aaaaff;
+}
+
+/* mobile: the brand shrinks inside its capsule and yields to the right controls */
+@media (max-width: 767.98px) {
+    .VPNavBarTitle {
+        min-width: 0;
+        flex-shrink: 1;
+        overflow: hidden;
+    }
+
+    .VPNavBarTitle .title {
+        height: 40px;
+        max-width: calc(100vw - 148px);
+        padding: 4px 10px 4px 5px;
+    }
+
+    .VPNavBarTitle .logo {
+        width: 28px;
+        height: 28px;
+        margin-right: 7px;
+    }
+
+    .dc3-brand-copy {
+        gap: 3px;
+    }
+
+    .dc3-brand-title {
+        font-size: 12px;
+    }
+
+    .dc3-brand-agentic {
+        font-size: 8px;
+    }
+
+    .dc3-brand-signal {
+        font-size: 9px;
+    }
 }
 
 .dark .VPNavBarTitle .title {
@@ -314,6 +442,293 @@ body {
 .dark .VPNavBarExtra .VPSocialLink[href*="x.com"],
 .dark .VPNavScreenSocialLinks .VPSocialLink[href*="x.com"] {
     --social-rgb: 179, 196, 220;
+}
+
+/* demo entry: brand blue; WeChat: official green */
+.VPNavBarSocialLinks .VPSocialLink[href*="demo.dc3.site"],
+.VPNavBarExtra .VPSocialLink[href*="demo.dc3.site"],
+.VPNavScreenSocialLinks .VPSocialLink[href*="demo.dc3.site"] {
+    --social-rgb: 18, 150, 219;
+}
+
+.VPNavBarSocialLinks .VPSocialLink[href*="wechat-qrcode"],
+.VPNavBarExtra .VPSocialLink[href*="wechat-qrcode"],
+.VPNavScreenSocialLinks .VPSocialLink[href*="wechat-qrcode"] {
+    --social-rgb: 7, 193, 96;
+}
+
+.dark .VPNavBarSocialLinks .VPSocialLink[href*="demo.dc3.site"],
+.dark .VPNavBarExtra .VPSocialLink[href*="demo.dc3.site"],
+.dark .VPNavScreenSocialLinks .VPSocialLink[href*="demo.dc3.site"] {
+    --social-rgb: 95, 195, 239;
+}
+
+.dark .VPNavBarSocialLinks .VPSocialLink[href*="wechat-qrcode"],
+.dark .VPNavBarExtra .VPSocialLink[href*="wechat-qrcode"],
+.dark .VPNavScreenSocialLinks .VPSocialLink[href*="wechat-qrcode"] {
+    --social-rgb: 118, 208, 158;
+}
+
+/* ── social icon hover tooltips (ported from iot-dc3-book) ──
+   Every navbar icon pops a text bubble on hover/focus (text from aria-label,
+   following the site language); the WeChat icon has no landing page, so its
+   bubble becomes a QR card instead — scannable on its white background in
+   both themes. Navbar row only: the extra menu and mobile drawer have no
+   hover, clicks are covered by the modal. */
+@media (hover: hover) and (min-width: 768px) {
+    .VPNavBarSocialLinks .VPSocialLink {
+        position: relative;
+    }
+
+    .VPNavBarSocialLinks .VPSocialLink::after {
+        content: attr(aria-label);
+        position: absolute;
+        top: calc(100% + 9px);
+        left: 50%;
+        translate: -50% 4px;
+        padding: 4px 10px;
+        border: 1px solid var(--vp-c-divider);
+        border-radius: 8px;
+        background: var(--vp-c-bg-elv);
+        color: var(--vp-c-text-1);
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 18px;
+        white-space: nowrap;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 180ms ease, translate 180ms ease, visibility 180ms;
+        z-index: 80;
+    }
+
+    /* WeChat: the bubble becomes a single QR card — padding-top drops the text
+       below the QR image; the icon sits near the viewport's right edge so the
+       card anchors right-aligned (-6px stays on-screen with or without a
+       scrollbar). The card is always white with fixed dark text so the code
+       scans in both themes. */
+    .VPNavBarSocialLinks .VPSocialLink[href*="wechat-qrcode"]::after {
+        top: calc(100% + 10px);
+        left: auto;
+        right: -6px;
+        translate: 0 4px;
+        box-sizing: border-box;
+        width: 148px;
+        padding: 140px 8px 9px;
+        border-radius: 12px;
+        border-color: rgba(var(--social-rgb), 0.4);
+        background: #fff url('/images/wechat-qrcode.jpg') center 8px / 132px 132px no-repeat;
+        color: #374151;
+        font-weight: 500;
+        line-height: 17px;
+        text-align: center;
+        white-space: normal;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .VPNavBarSocialLinks .VPSocialLink:hover::after,
+    .VPNavBarSocialLinks .VPSocialLink:focus-visible::after {
+        opacity: 1;
+        visibility: visible;
+        translate: -50% 0;
+    }
+
+    .VPNavBarSocialLinks .VPSocialLink[href*="wechat-qrcode"]:hover::after,
+    .VPNavBarSocialLinks .VPSocialLink[href*="wechat-qrcode"]:focus-visible::after {
+        translate: 0 0;
+    }
+}
+
+/* ── WeChat QR modal: same glass family as the nav menus / title capsule ──
+   Injected into body by theme/index.ts on icon click; closes via scrim, the
+   close button or Escape. The container deliberately has no opacity
+   animation: an ancestor below opacity 1 defeats the children's
+   backdrop-filter (the blur would arrive late and pop in); the scrim fades
+   itself with a blur 0→10 keyframe in sync with the card pop. */
+body.dc3-modal-open {
+    overflow: hidden;
+}
+
+.dc3-wechat-modal {
+    position: fixed;
+    inset: 0;
+    /* above medium-zoom (100/101) and the navbar */
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.dc3-wechat-modal__scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 35, 62, 0.4);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    animation: dc3-wechat-scrim 200ms ease both;
+}
+
+.dark .dc3-wechat-modal__scrim {
+    background: rgba(4, 12, 24, 0.55);
+    animation-name: dc3-wechat-scrim-dark;
+}
+
+.dc3-wechat-modal.is-closing .dc3-wechat-modal__scrim {
+    animation: dc3-wechat-scrim 160ms ease reverse both;
+}
+
+.dark .dc3-wechat-modal.is-closing .dc3-wechat-modal__scrim {
+    animation-name: dc3-wechat-scrim-dark;
+}
+
+.dc3-wechat-modal__card {
+    position: relative;
+    width: min(340px, 100%);
+    padding: 24px 24px 22px;
+    border: 1px solid rgba(148, 216, 246, 0.3);
+    border-radius: var(--dc3-glass-radius);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.82), transparent 38%),
+        linear-gradient(135deg, color-mix(in srgb, var(--vp-c-bg-elv) 82%, transparent), rgba(115, 205, 241, 0.12) 58%, rgba(75, 88, 210, 0.08));
+    box-shadow:
+        0 18px 46px rgba(12, 89, 153, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82),
+        inset 0 -10px 24px rgba(55, 131, 203, 0.05);
+    backdrop-filter: blur(24px) saturate(1.45);
+    -webkit-backdrop-filter: blur(24px) saturate(1.45);
+    text-align: center;
+    animation: dc3-wechat-pop 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dc3-wechat-modal.is-closing .dc3-wechat-modal__card {
+    animation: dc3-wechat-pop 160ms ease reverse both;
+}
+
+.dark .dc3-wechat-modal__card {
+    border-color: rgba(139, 210, 250, 0.18);
+    background:
+        radial-gradient(circle at 18% 0%, rgba(210, 247, 255, 0.13), transparent 38%),
+        linear-gradient(135deg, rgba(29, 61, 84, 0.82), rgba(15, 31, 46, 0.9) 58%, rgba(48, 48, 111, 0.72));
+    box-shadow:
+        0 20px 48px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(231, 251, 255, 0.11),
+        inset 0 -10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.dc3-wechat-modal__title {
+    margin: 0 0 14px;
+    color: var(--vp-c-text-1);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 22px;
+}
+
+/* the QR panel stays white so the code scans in both themes */
+.dc3-wechat-modal__qr {
+    padding: 12px;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px rgba(18, 150, 219, 0.14);
+}
+
+.dc3-wechat-modal__qr img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.dc3-wechat-modal__hint {
+    margin: 14px 0 0;
+    color: var(--vp-c-text-2);
+    font-size: 12.5px;
+    line-height: 18px;
+}
+
+.dc3-wechat-modal__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(148, 216, 246, 0.35);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--vp-c-bg-elv) 70%, transparent);
+    color: var(--vp-c-text-2);
+    cursor: pointer;
+    transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.dc3-wechat-modal__close svg {
+    width: 14px;
+    height: 14px;
+}
+
+.dc3-wechat-modal__close:hover {
+    border-color: rgba(18, 150, 219, 0.45);
+    background: rgba(18, 150, 219, 0.09);
+    color: #1296db;
+}
+
+.dark .dc3-wechat-modal__close:hover {
+    border-color: rgba(95, 195, 239, 0.4);
+    background: rgba(95, 195, 239, 0.1);
+    color: #5fc3ef;
+}
+
+@keyframes dc3-wechat-scrim {
+    from {
+        background: rgba(15, 35, 62, 0);
+        backdrop-filter: blur(0) saturate(1);
+        -webkit-backdrop-filter: blur(0) saturate(1);
+    }
+
+    to {
+        background: rgba(15, 35, 62, 0.4);
+        backdrop-filter: blur(10px) saturate(1.2);
+        -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    }
+}
+
+@keyframes dc3-wechat-scrim-dark {
+    from {
+        background: rgba(4, 12, 24, 0);
+        backdrop-filter: blur(0) saturate(1);
+        -webkit-backdrop-filter: blur(0) saturate(1);
+    }
+
+    to {
+        background: rgba(4, 12, 24, 0.55);
+        backdrop-filter: blur(10px) saturate(1.2);
+        -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    }
+}
+
+@keyframes dc3-wechat-pop {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dc3-wechat-modal__scrim,
+    .dc3-wechat-modal__card,
+    .dc3-wechat-modal.is-closing .dc3-wechat-modal__scrim,
+    .dc3-wechat-modal.is-closing .dc3-wechat-modal__card {
+        animation: none;
+    }
 }
 
 .dark .VPNavBarSocialLinks .VPSocialLink:hover,
