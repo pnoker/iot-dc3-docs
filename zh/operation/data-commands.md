@@ -9,7 +9,7 @@ import DataCommandsStateDiagram from '../../.vitepress/theme/components/DataComm
 
 # 数据与命令
 
-设备接入后，验证只剩两件事：值能不能查到、命令能不能下到。这页把"看数据"和"下命令"连成一条用户故事——先用真实 `curl`
+设备接入后，验证只剩两件事：值能不能查到、命令能不能下到。这页把"看数据"和"下命令"连成一条操作主线——先用真实 `curl`
 读到位号(Point)的最新值与历史，再下一条写命令并轮询它的执行结果，最后讲清设备离线、只读位号、写失败这些边界下系统的真实行为。
 
 > 你在这里：已[接入第一个设备](../quickstart/first-device)、值开始进库。读完这页你能独立地查值、下命令、判断命令到底成没成。
@@ -23,8 +23,7 @@ Data Center / `dc3-center-data`)，落进 TimescaleDB 的 `dc3_point_value` 超�
 读最新值、`/api/v3/data/point_value/list` 读历史区间。这是**已发生事实的查询**，无副作用、可随意重试。
 
 **命令流是你 → 设备**：你 `POST` 一条读/写命令到数据中心，它先落 `dc3_point_command_history`（状态 `PENDING`），再经
-`dc3.e.point_command` 交换机路由到目标驱动；驱动对设备执行后，结果经 `dc3.e.point_command_result` 回传。命令接口*
-*立即返回一个 `commandId`**，真正的成败要靠这个 ID 去轮询。这是**异步、有副作用**的写路径。
+`dc3.e.point_command` 交换机路由到目标驱动；驱动对设备执行后，结果经 `dc3.e.point_command_result` 回传。命令接口**立即返回一个 `commandId`**，真正的成败要靠这个 ID 去轮询。这是**异步、有副作用**的写路径。
 
 <DataCommandsFlowDiagram lang="zh" />
 
@@ -47,7 +46,7 @@ Data Center / `dc3-center-data`)，落进 TimescaleDB 的 `dc3_point_value` 超�
 # 示例 deviceId / pointId，替换为你自己的
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
   -d '{"deviceId": 1001, "page": {"current": 1, "size": 20}}'
 ```
 
@@ -55,7 +54,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 # 用 rangeKey (today/24h/7d/30d) 或 createTimeFrom / rangeHours 圈定时间窗
 curl -X POST http://localhost:8000/api/v3/data/point_value/list \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001,
        "rangeKey": "24h",
        "page": {"current": 1, "size": 100}}'
@@ -95,7 +94,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/list \
 ```bash [写命令 write]
 curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001, "value": "100"}'
 # 响应体 data 即为 commandId（示例）: "a1b2c3d4-...."
 ```
@@ -103,14 +102,14 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
 ```bash [读命令 read]
 curl -X POST http://localhost:8000/api/v3/data/point_command/read \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001}'
 ```
 
 ```bash [轮询结果]
 # commandId 用上一步拿到的命令 ID
 curl 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=a1b2c3d4-....' \
-  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: <token>'
+  -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
 ```
 
 :::
@@ -137,7 +136,7 @@ curl 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?
 
 ## 命令状态机：PENDING 之后会去哪
 
-命令一生在 `dc3_point_command_history.status` 里逐格推进。`PENDING` 是刚落库待发布；RabbitMQ 发布确认(publisher-confirm)
+命令的整个生命周期在 `dc3_point_command_history.status` 里逐步推进。`PENDING` 是刚落库待发布；RabbitMQ 发布确认(publisher-confirm)
 回来后转 `SENT`（已进队列、等驱动）；之后由驱动的执行回执决定终态。理解这张图，你就能从一个状态反推卡在哪一跳。
 
 <DataCommandsStateDiagram lang="zh" />
@@ -156,8 +155,7 @@ curl 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?
 下命令前，系统会按租户一致 → 设备/位号启用 → 写命令校验 `rwFlag` →
 驱动在线的顺序校验，任一不过都不会真正派发。三种最常见的"命令没成"原因要分清：
 
-设备/驱动**离线**时，命令仍能提交并拿到 `commandId`，但因无人消费，最终多半停在 `SENT` 直至 `EXPIRED`，或在超时后变
-`TIMEOUT`。设备在线与否由 `dc3_entity_state` 的租约(lease)＋ RabbitMQ 心跳判定，不是你手填的。
+设备/驱动**离线**时，命令仍能提交并拿到 `commandId`，但因无人消费，最终停在 `SENT` 直至 `EXPIRED`（`TIMEOUT` 目前没有生产者，不会出现）。设备在线与否由 `dc3_entity_state` 的租约(lease)＋ RabbitMQ 心跳判定，不是你手填的。
 
 位号的读写能力由其 `rwFlag` 决定，取值 `READ_ONLY`、`WRITE_ONLY`、`READ_WRITE`。对只读位号下写命令，会在校验阶段被直接拒绝。
 

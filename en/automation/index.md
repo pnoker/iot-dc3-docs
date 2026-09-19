@@ -16,7 +16,7 @@ person or script execute."
 
 `dc3` is a standalone TypeScript CLI (Node ≥ 20) that talks to a running backend over the HTTP gateway, with no Java
 build coupling. It wraps the three-step login, automatic token renewal, and credential storage, so what you actually run
-are subcommands named by result cardinality: `dc3 device list`, `dc3 point history`, `dc3 driver add`.
+are subcommands that follow the platform verb convention - `list`/`history`/`count` reflect the result cardinality (see the [API documentation](../development/api-documentation)): `dc3 device list`, `dc3 point history`, `dc3 driver add`.
 
 It fits three audiences:
 

@@ -28,8 +28,7 @@ coordinate**. They are the "primary key" and the "address" that map real-world o
 
 Why a whole category for this? Because a machine facing thousands of physical objects cannot distinguish, track, or bind
 history to them without identity. A carton scanned at dozens of nodes from factory to shelf; a forklift roaming a
-warehouse the system must keep locating — identification gives an object a **stable name**, positioning gives it a *
-*live coordinate**, and only together do they make the physical world truly **addressable**.
+warehouse the system must keep locating — identification gives an object a **stable name**, positioning gives it a **live coordinate**, and only together do they make the physical world truly **addressable**.
 
 These technologies share a profile: low information density (often just a number), fast reads, and a per-unit cost low
 enough to deploy at scale. That is why almost every engineering trade-off here turns on one triangle — **range,
@@ -96,8 +95,7 @@ RFID is 865–868 MHz in Europe, 902–928 MHz in North America, 920–925 MHz i
 confirm device band and transmit power are compliant, or they will interfere with others or be banned.
 
 **The identity scheme must be globally unique**. A chip alone is not enough — a number only means something if it never
-repeats within a large enough scope. Industry built coding standards for exactly this, the most representative being *
-*EPC (Electronic Product Code)** — a global object-coding scheme for RFID tags that packs "manufacturer + product +
+repeats within a large enough scope. Industry built coding standards for exactly this, the most representative being **EPC (Electronic Product Code)** — a global object-coding scheme for RFID tags that packs "manufacturer + product +
 serial" into one identifier, giving every individual item (not just every product type) a one-of-a-kind identity. EPC's
 idea is the essence of IoT identification: **a thing can be tracked across the network only after it has a globally
 unique ID**.
@@ -143,8 +141,7 @@ acquisition, that data enters through protocol drivers as ordinary data and stil
 `tenantId`.
 :::
 
-In one line: identification and positioning make the physical world **addressable**; DC3 makes every onboarded object *
-*addressable and attributable** — the former is IoT's entry point, the latter is where the platform begins to govern
+In one line: identification and positioning make the physical world **addressable**; DC3 makes every onboarded object **addressable and attributable** — the former is IoT's entry point, the latter is where the platform begins to govern
 those objects.
 
 ## References

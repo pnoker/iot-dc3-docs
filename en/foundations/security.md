@@ -47,8 +47,7 @@ The device is the physically reachable link, so defense must establish trust fro
 has the bootloader verify firmware signatures stage by stage and refuse to run anything that fails — blocking "flash in
 malicious firmware" at the root; the root of that trust chain is a root key fused into the chip, immutable. **Key
 storage** decides whether the private key can be read off: leaving it in ordinary Flash is running naked, while the
-right move is a Secure Element (SE) or Trusted Execution Environment (TEE) that keeps keys "usable but not readable." *
-*Firmware update (OTA)** must verify the signature before writing and support rollback to a known-good version, or one
+right move is a Secure Element (SE) or Trusted Execution Environment (TEE) that keeps keys "usable but not readable." **Firmware update (OTA)** must verify the signature before writing and support rollback to a known-good version, or one
 hijacked update can mass-compromise a whole fleet.
 
 The trade-off is cost: chips with SE/TEE and Secure Boot cost more, and the OTA channel needs extra signing and staged

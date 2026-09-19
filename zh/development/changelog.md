@@ -47,8 +47,7 @@ make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.5.17
 
 ::: info 改了它要单独提交
 变更日志是从历史生成的产物。当 `CHANGE.md` 本身被重新生成需要提交时，使用约定的提交信息
-`docs(release): update generated changelog`——这是仓库为"仅变更日志"保留的固定 subject。生成器会识别并跳过这类提交（
-`docs(release):` 与 `chore(release):` 两种前缀均匹配），避免变更日志里出现"更新变更日志"的噪声条目。
+`docs(release): update generated changelog`——这是仓库为"仅变更日志"保留的固定 subject。生成器会识别并跳过这条固定提交（`docs(release):` 或 `chore(release):` 且 subject 为 `update generated changelog` 的完整提交信息才会匹配），避免变更日志里出现"更新变更日志"的噪声条目。确需让这类提交出现在发布说明里时，设 `INCLUDE_CHANGELOG_COMMITS=true` 再运行。
 :::
 
 ## 怎么读：按版本，再按类别

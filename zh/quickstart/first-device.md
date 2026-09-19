@@ -16,8 +16,7 @@ token，到建模板、建位号、建设备、配属性，再到读实时位号
 
 ## 这条路径长什么样
 
-整条黄金路径是一串前后依赖的 HTTP 调用，全部经过网关 `dc3-gateway`（`:8000`）这唯一入口。前两步换到 token，中间四步在管理中心（Manager
-Center）建好元数据，最后几步在数据中心（Data Center）读值与下发命令。先有这张全景图，后面每一步你都知道自己走到哪了。
+整条黄金路径是一串前后依赖的 HTTP 调用，全部经过网关 `dc3-gateway`（`:8000`）这唯一入口。前两步换到 token，中间四步在管理中心（Manager Center）建好元数据，第 7 步回管理中心绑定属性，最后两步在数据中心（Data Center）读值与下发命令。先有这张全景图，后面每一步你都知道自己走到哪了。
 
 <FirstDeviceDiagram lang="zh" />
 
@@ -59,10 +58,10 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -d '{"tenant":"default","name":"dc3"}'
 # 示例返回：{"ok":true,"code":"...","message":"...","data":"a1b2c3d4e5"}
 
-# 2) 用盐把密码哈希后换 token（哈希算法见鉴权文档，此处 PASSWORD_HASH 为示例）
+# 2) 连同盐提交明文密码换 token（盐不参与密码哈希，校验在服务端完成）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4e5","password":"<PASSWORD_HASH>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4e5","password":"<明文密码>"}'
 # 示例返回：{"ok":true,"code":"...","message":"...","data":"<ACCESS_TOKEN>"}
 ```
 
@@ -329,7 +328,7 @@ dc3 command history cmd_20260622_a1b2c3d4
 
 :::
 
-**你应当看到**：写命令立即返回 `commandId`；轮询回执直到 `status` 进入终态。到此，你已经完整走通了"读值 + 写命令"的双向链路。
+**你应当看到**：写命令立即返回 `commandId`；轮询回执直到 `status` 进入终态（`success` / `failed` / `timeout` / `expired`；`pending` / `sent` 为进行中）。到此，你已经完整走通了"读值 + 写命令"的双向链路。
 
 ::: danger 写命令的语义：异步、需轮询、失败不回显值
 

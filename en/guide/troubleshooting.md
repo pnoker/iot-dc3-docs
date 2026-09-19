@@ -22,7 +22,7 @@ authentication.
 
 Most "won't start / won't connect" cases fall into five buckets: dependencies not ready, environment variables not
 loaded, port in use, services started out of order, and authentication chain issues. Working through the diagram below
-top to bottom beats guessing one by one. The platform exposes a single HTTP entry point through the gateway (`8000`);
+top to bottom beats guessing one by one. All platform API traffic goes through the gateway (`8000`; the `app` stack does not publish it to the host — the web front end's 8080/8443 proxies into it, the `dev` stack publishes it directly);
 the center services talk to each other over gRPC facades; drivers and the data center are decoupled through RabbitMQ. So
 when the dependencies underneath them (PostgreSQL / RabbitMQ) fail to come up, everything above cascades into failure.
 
@@ -154,11 +154,11 @@ because it can't reach a downstream dependency.
 
 **Root cause**: The center services collaborate over gRPC facades, and a driver registers with the management center on
 startup and depends on RabbitMQ. Start a downstream service before its upstream is ready, and the connection fails. The
-correct startup order is **Gateway → Auth → Manager → Data → Agentic → Driver**.
+correct startup order is **Auth → Manager → Data → Agentic → Gateway → Driver** (drivers depend on Manager and RabbitMQ and may start in parallel with the gateway).
 
 **Diagnosis and resolution**:
 
-1. Start in the order Gateway → Auth → Manager → Data → Agentic → Driver, and wait for each to become ready before
+1. Start in the order Auth → Manager → Data → Agentic → Gateway → Driver, and wait for each to become ready before
    starting the next.
 2. When running from local source, confirm you've run `source dc3/env/dev.env.sh`.
 3. Check the management center and driver logs to confirm the gRPC target addresses (`CENTER_MANAGER_HOST` etc., default

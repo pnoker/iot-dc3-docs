@@ -91,8 +91,7 @@ log.debug("Agentic chat request received, mode={}, model={}, messageCount={}, co
 
 ::: warning Do not concatenate strings, do not drop the stack trace
 Avoid `+` concatenation and `String.format` — they break the message template and are evaluated whether or not the level
-is enabled. After catching an exception, unless you mean to hide the stack trace, pass the exception object as the *
-*last argument** (not `e.getMessage()`); SLF4J renders the full stack trace automatically:
+is enabled. After catching an exception, unless you mean to hide the stack trace, pass the exception object as the **last argument** (not `e.getMessage()`); SLF4J renders the full stack trace automatically:
 
 ```java
 // ✅ Stable template + full stack trace
@@ -225,6 +224,6 @@ the former serving as secondary in-container retention.
 
 - [Observability](./observability) — how logs, metrics, and traces work together, and how to bring up the ELK/Grafana
   stack
-- [Troubleshooting](./troubleshooting) — once you have a `traceId`/`tenantId`, how to localize a failure
+- [Troubleshooting](./troubleshooting) — how to localize startup and connectivity problems by log keywords
 - [The env directory](../quickstart/environment) — the source and boundary of variables like `DC3_LOG_*`,
   `DC3_SECURITY_KEY`, and `AUTH_HMAC_SECRET`

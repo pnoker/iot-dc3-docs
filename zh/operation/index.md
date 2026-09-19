@@ -40,9 +40,9 @@ Agentic Center 做自然语言运营。每一步都依赖前一步的产物—�
 ::: tip 三个成功信号
 
 - **设备在线**：接入后设备的状态变为在线（心跳租约未过期），而不是一直停留在未知/离线。
-- **位号有值**：`POST /api/v3/data/point_value/latest` 能查到该设备位号的最新值，`calValue`/`numValue` 与 `createTime` 非空。
+- **位号有值**：`POST /api/v3/data/point_value/latest` 能查到该设备位号的最新值，`calValue` 与 `createTime` 非空（`numValue` 仅数值型位号非空）。
 - **命令有回执**：下发读/写命令后，凭返回的命令 ID 查 `GET /api/v3/data/point_command_history/get_by_command_id`，`status`
-  为终态（SUCCESS/FAILED 等）、`responseValue` 有结果，而不是一直挂起。
+  到达终态（SUCCESS/FAILED 等）；成功时 `responseValue` 有结果，失败时为 `null`，而不是一直挂起。
   :::
 
 ::: warning 写命令失败不回显
@@ -52,21 +52,21 @@ Agentic Center 做自然语言运营。每一步都依赖前一步的产物—�
 
 ## 运行入口
 
-平台对外只有 Gateway 一个 HTTP 入口（默认 `8000`，由 `DC3_GATEWAY_PORT` 控制），它聚合 Auth / Manager / Data / Agentic
+平台所有 API 经 Gateway 聚合（容器内 `8000`；dev 栈经 `DC3_GATEWAY_PORT` 发布到宿主机，app 栈不直接暴露网关——对外只有 Web 前端 `8080/8443`，由其 nginx 反代进网关）。它聚合 Auth / Manager / Data / Agentic
 四个中心的路径，统一做鉴权头提取与租户上下文注入。开发时也可以绕过网关直连某个中心调试，但生产链路一律走网关。
 
 下面这张表是参考索引，具体怎么用见各自的文档页：
 
 | 入口             | 地址 / 说明                                                     | 用途                                                                                   |
 |----------------|-------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| Gateway API    | `http://localhost:8000/api/v3/...`                          | 唯一对外 HTTP 入口；下文示例的 curl 都打到这里                                                        |
+| Gateway API    | `http://localhost:8000/api/v3/...`                          | 统一 API 聚合入口；下文示例的 curl 都打到这里（dev 栈）                                                      |
 | Swagger UI     | `http://localhost:8000/swagger-ui.html`                     | 开发环境查看网关聚合后的 API（生产环境一般关闭）                                                           |
 | 各中心直连调试        | Auth `8300` / Manager `8400` / Data `8500` / Agentic `8600` | 单独调试某个中心时直连其 HTTP 端口，绕过网关                                                            |
 | MCP / OAuth 入口 | `POST /mcp`、`GET /.well-known/oauth-protected-resource`     | 供 AI Agent 经 OAuth 2.1 访问 MCP 工具（均在网关根路径，不经 `/api/v3`），见 [Agentic 中心](../ai/agentic) |
-| Web UI         | 前端源码在本仓库 `dc3-web/` 目录                                      | 图形化操作界面，后端接口同样通过 Gateway 访问                                                          |
+| Web UI         | 前端源码在主仓库（iot-dc3）的 `dc3-web/` 目录                          | 图形化操作界面，后端接口同样通过 Gateway 访问                                                          |
 
 ::: info Web UI 与 API 共用同一入口
-图形界面位于本仓库 `dc3-web/` 目录，通过 Gateway 调用同一套 API。本手册以 API / curl 为准描述操作，UI 上的对应入口与之一一对应。
+图形界面位于主仓库（iot-dc3）的 `dc3-web/` 目录，通过 Gateway 调用同一套 API。本手册以 API / curl 为准描述操作，UI 上的对应入口与之一一对应。
 :::
 
 ## 从登录到一条命令：最小可跑示例
@@ -85,16 +85,16 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
 # 用加盐后的口令换 access token（12 小时有效）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<加盐口令>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<明文密码>"}'
 ```
 
 ```bash [2. 下一条读命令]
 # 带上三个鉴权头，对某设备的某位号发起一次读命令
 curl -s -X POST http://localhost:8000/api/v3/data/point_command/read \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <tenantId>' \
+  -H 'X-Auth-Tenant: <租户名，如 default>' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <上一步返回的 token>' \
+  -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<上一步返回的 token>"}' \
   -d '{"deviceId":"<deviceId>","pointId":"<pointId>"}'
 # 返回值为该命令的 ID（String），用它去 point_command_history 查回执
 ```

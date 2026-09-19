@@ -11,7 +11,7 @@ import DevIndexDiagram from '../../.vitepress/theme/components/DevIndexDiagram.v
 This page is for developers about to write backend code for IoT DC3. By the end you'll know where the authoritative
 conventions live, which naming and layering rules are non-negotiable, and the path from an edit to a commit.
 
-> You are here: ready to extend the platform. Next step depends on your goal — writing a new protocol driver,
+> You are here: ready to extend the platform. Next step depends on your goal — to write a new protocol driver,
 > see [Driver Authoring](./driver-authoring); wiring up an API, see [API Documentation](./api-documentation); running
 > tests, see [Testing](./testing).
 
@@ -91,7 +91,7 @@ by driverId" API to device management:
 2. Manager      call the Mapper via select* in *ManagerImpl (select* allowed only here)
 3. Service      add getCountByDriverId(...) to the Service interface, implement it in ServiceImpl, touch BO only
 4. cross-service?  if you need data from another center, go through the *Facade interface, never connect to gRPC directly
-5. Controller   GET /get_count_by_driver_id —— use the get verb to query a single value
+5. Controller   GET /get_count_by_driver_id — use the get verb to query a single value
 ```
 
 ```bash [validation]

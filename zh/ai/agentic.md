@@ -122,8 +122,7 @@ HTTP CRUD 约定相互独立。
 | `EventTool`      | 事件  | `lookupEventById()` / `searchEvents()`                                                        | 查设备上报事件              |
 
 ::: info 风险元数据标在 REST 端点上，不在工具方法上
-`x-dc3-ai` 风险元数据（`riskLevel` / `destructive` / `idempotent` / `openWorld`）是在 Controller 的 `@Operation` 扩展里*
-*手工标注**的（如 `ChatController` 的聊天端点），供 OpenAPI / MCP 目录消费。智能中心的 10 个工具方法本身只带
+`x-dc3-ai` 风险元数据（`riskLevel` / `destructive` / `idempotent` / `openWorld`）是在 Controller 的 `@Operation` 扩展里**手工标注**的（如 `ChatController` 的聊天端点），供 OpenAPI / MCP 目录消费。智能中心的 10 个工具方法本身只带
 `@AgenticToolMetadata(domain, title)`（仅 `domain()` 与 `title()` 两个字段），并不携带风险等级——别把端点上的风险元数据当成每个工具方法的属性。
 :::
 
@@ -166,8 +165,7 @@ Spring AI 的记忆表结构；如需自动建表，预期做法是首次临时�
 :::
 
 ::: danger 命令写失败不回显伪造值
-经工具下发的写命令最终走数据中心命令平面。命令带 10 秒 TTL（`PointCommandDTO.expireAt` 默认 `now+10s`），且*
-*写命令失败时 `responseValue` 为 `null`、不回显任何值**——不要把"没报错"当成"写成功"
+经工具下发的写命令最终走数据中心命令平面。命令带 10 秒 TTL（`PointCommandDTO.expireAt` 默认 `now+10s`），且**写命令失败时 `responseValue` 为 `null`、不回显任何值**——不要把"没报错"当成"写成功"
 。详见[命令平面](../architecture/command-plane)。
 :::
 

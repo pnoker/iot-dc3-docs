@@ -8,8 +8,7 @@ import DevIndexDiagram from '../../.vitepress/theme/components/DevIndexDiagram.v
 
 # 开发概览与规范
 
-这页写给准备给 IoT DC3
-写后端代码的开发者：读完你会知道工程的权威规范在哪、命名与分层必须遵守哪些硬约定，以及提交一条改动该走的"第一条路径"。
+这页写给准备在 IoT DC3 上写后端代码的开发者：读完你会知道工程的权威规范在哪、命名与分层必须遵守哪些硬约定，以及提交一条改动该走的"第一条路径"。
 
 > 你在这里：想动手扩展平台。下一步按目标分流——写新协议驱动看[驱动开发](./driver-authoring)
 > ，调通接口看 [API 文档](./api-documentation)，跑测试看[测试](./testing)。
@@ -141,7 +140,7 @@ docs(env): explain JetBrains IDEA environment variables
 
 ### IDEA 远程调试
 
-VM options 添加 `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005`，然后 Run → Attach to Process。
+VM options 添加 `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=<端口>`（端口按目标服务从下表选取），然后 Run → Attach to Process。
 
 建议调试端口：Gateway 5005、Auth 5006、Manager 5007、Data 5008、Agentic 5009。
 
@@ -155,7 +154,7 @@ VM options 添加 `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address
 | 改 AI 对话/工具调用  | `dc3-center/dc3-center-agentic`         |
 | 改网关路由/过滤器     | `dc3-gateway`                           |
 | 新加协议驱动        | `dc3-driver/`，从 `dc3-driver-virtual` 复制 |
-| 改 gRPC proto  | `dc3-api/`，改完重新 `mvn compile`           |
+| 改 gRPC proto  | `dc3-api/`，改完重新 `mvn -s .mvn/settings.xml compile`           |
 | 改前端页面         | `dc3-web/`（独立 pnpm 项目）                  |
 
 ## 延伸阅读

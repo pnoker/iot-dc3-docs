@@ -27,7 +27,7 @@ DC3 的选择是：**所有运行告警，无论来源，统一落在 `dc3_entit
 ## 五类来源如何汇入一张表
 
 五类告警来源最终都写入 `dc3_entity_alarm`，区别只在标志位。`alarm_source_flag` 的取值来自 `AlarmSourceTypeEnum`，注意
-`EVENT_REPORT=5`、`SYSTEM=4`（5 号为持久化兼容保留，枚举里排在 4 之后）：
+`EVENT_REPORT=5`、`SYSTEM=4`——`4=SYSTEM` 是系统内部保留值，不在五类实际来源之列（下图未画）；`EVENT_REPORT` 编号取 5 而非顺位的 4，是为兼容历史持久化数据：
 
 <AlarmSourceFlowDiagram lang="zh" />
 
@@ -58,7 +58,7 @@ DC3 的选择是：**所有运行告警，无论来源，统一落在 `dc3_entit
 
 写入 `dc3_entity_alarm` 只是"记一笔"。要让告警"反复触发不轰炸、恢复能感知、能送达到人"，靠的是 `dc3_rule`（规则定义）→
 `dc3_rule_state`（运行状态机）→ `dc3_notify`（通知配置）→ `dc3_notify_channel`（渠道）→ `dc3_notify_history`（送达审计）这条链路。下图是这些表与
-`dc3_event_history` 的关系（这些是逻辑关联，库内通过 id 列关联，未建外键约束）：
+`dc3_event_history` 的关系：
 
 <AlarmErDiagram lang="zh" />
 
@@ -122,6 +122,15 @@ curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/page \
       }'
 ```
 
+```bash [curl 确认告警]
+# 确认（ack）一条告警：source 与 id 都来自上面查询结果的行
+# 返回 true 表示该行确被更新；对应的取消确认为 POST /api/v3/data/dashboard/alert/unconfirm
+curl -X POST 'http://localhost:8000/api/v3/data/dashboard/alert/confirm?source=device&id=1024' \
+  -H 'X-Auth-Tenant: <示例: 你的租户>' \
+  -H 'X-Auth-Login: <示例: 你的登录名>' \
+  -H 'X-Auth-Token: <示例: 登录返回的 token>'
+```
+
 ```json [响应形态（示例）]
 {
   "code": "R200",
@@ -159,7 +168,7 @@ curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/page \
 
 ::: danger 告警严格按租户隔离
 `dc3_entity_alarm`、`dc3_rule`、`dc3_rule_state`、`dc3_notify*` 全部带 `tenant_id`，所有索引以 `tenant_id`
-打头。新增查询/缓存键时必须保留租户范围，不得跨租户读取或省略 `tenant_id`。
+打头——所有告警的查询与缓存都以租户打头，跨租户的告警既不可见也不可查。
 :::
 
 ::: info 表关联为逻辑关联，无外键约束

@@ -67,8 +67,9 @@ troubleshooting, trust `status` — don't read "no echo" as "not yet executed".
 
 ## Runtime entry points
 
-The platform exposes a single HTTP endpoint to the outside world: the Gateway (default port `8000`, set by
+All platform API traffic goes through the Gateway (in-container `8000`; the `dev` stack publishes it to the host via
 `DC3_GATEWAY_PORT`). It fronts the four centers — Auth, Manager, Data, and Agentic — and handles auth-header extraction
+`DC3_GATEWAY_PORT`; the `app` stack does not expose it directly — externally only the web front end `8080/8443` proxies into it). It fronts the four centers — Auth, Manager, Data, and Agentic — and handles auth-header extraction
 and tenant-context injection in one place. During development you can bypass the gateway and hit a center directly to
 debug. In production, traffic always goes through the gateway.
 
@@ -76,21 +77,21 @@ The table below is a reference index. For how to use each entry point, see its o
 
 | Entry point                         | Address / Description                                         | Purpose                                                                                                                              |
 |-------------------------------------|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| Gateway API                         | `http://localhost:8000/api/v3/...`                            | The only external HTTP entry point; the curl examples below all hit this                                                             |
+| Gateway API                         | `http://localhost:8000/api/v3/...`                            | The unified API entry point; the curl examples below all hit this (dev stack)                                                             |
 | Swagger UI                          | `http://localhost:8000/swagger-ui.html`                       | Browse the gateway-aggregated API in development (usually disabled in production)                                                    |
 | Direct-connect debugging per center | Auth `8300` / Manager `8400` / Data `8500` / Agentic `8600`   | When debugging a single center, connect straight to its HTTP port, bypassing the gateway                                             |
 | MCP / OAuth entry                   | `POST /mcp`, `GET /.well-known/oauth-protected-resource`      | For AI Agents to reach MCP tools over OAuth 2.1 (both at the gateway root, not under `/api/v3`); see [Agentic Center](../ai/agentic) |
-| Web UI                              | The frontend source lives under `dc3-web/` in this repository | The graphical interface; its backend calls go through the Gateway too                                                                |
+| Web UI                              | The frontend source lives under `dc3-web/` in the main repo (iot-dc3) | The graphical interface; its backend calls go through the Gateway too                                                                |
 
 ::: info The Web UI uses the same API entry point
-The graphical interface lives under `dc3-web/` in this repository and calls the same set of APIs through the Gateway.
+The graphical interface lives under `dc3-web/` in the main repository (iot-dc3) and calls the same set of APIs through the Gateway.
 This manual describes operations in terms of API calls and curl. The matching UI entry points map one-to-one.
 :::
 
 ## From login to a single command: the minimal runnable example
 
 The two snippets below walk the golden path through its minimal closed loop: get a token, then issue a read command.
-Login is two steps — fetch the salt, then exchange the salted password for a token (valid for 12 hours). After that,
+Login is two steps — fetch the salt, then submit the plaintext password for a token (valid for 12 hours; the salt does not hash the password, verification is server-side). After that,
 every protected call must carry the three auth headers. The example values (tenant, username, IDs) are placeholders.
 Replace them with your own.
 
@@ -102,19 +103,19 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
 
-# Exchange the salted password for an access token (valid for 12 hours)
+# Exchange the plaintext password (with the salt) for an access token (valid for 12 hours)
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<salt returned in the previous step>","password":"<salted password>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<salt returned in the previous step>","password":"<plaintext password>"}'
 ```
 
 ```bash [2. Issue a read command]
 # Carry the three auth headers and issue a read command for a device's point
 curl -s -X POST http://localhost:8000/api/v3/data/point_command/read \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <tenantId>' \
+  -H 'X-Auth-Tenant: <tenant name, e.g. default>' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token returned in the previous step>' \
+  -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token returned in the previous step>"}' \
   -d '{"deviceId":"<deviceId>","pointId":"<pointId>"}'
 # The return value is the command's ID (String); use it to query the receipt in point_command_history
 ```

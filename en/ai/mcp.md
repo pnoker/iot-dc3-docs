@@ -220,8 +220,7 @@ The confirmation ticket is stored in `dc3_mcp_tool_confirmation` (`confirm_id`, 
 
 ::: info `tools/list_changed` event push not implemented
 When the tool catalog changes, the MCP `tools/list_changed` notification is **not pushed** (the design is planned; the
-RabbitMQ push isn't built). Catalog refresh runs through the manual endpoint described above. Clients should *
-*re-pull `tools/list` on their own schedule** and not assume the server pushes changes.
+RabbitMQ push isn't built). Catalog refresh runs through the manual endpoint described above. Clients should **re-pull `tools/list` on their own schedule** and not assume the server pushes changes.
 :::
 
 Tool invocation is HTTP end to end (internal WebClient) — there is **no** gRPC tool-invocation channel, by design. The

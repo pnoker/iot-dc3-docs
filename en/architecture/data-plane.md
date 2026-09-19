@@ -189,8 +189,7 @@ The data plane's no-loss guarantee rests on three overlapping mechanisms, all wi
   `PointValueCorrelation` lets you map a confirmation back to the specific device and point.
 
 Once a value is persisted, `PointValueServiceImpl.save()` calls
-`alarmRuleTriggerService.processPointValue(pointValueBO)` right away, evaluating alarm rules against that value *
-*synchronously** — not on a separate delayed link. For the rules, the state machine, and notification channels,
+`alarmRuleTriggerService.processPointValue(pointValueBO)` right away, evaluating alarm rules against that value **synchronously** — not on a separate delayed link. For the rules, the state machine, and notification channels,
 see [Alarms and Notifications](../operation/alarms).
 
 ## Reading the Latest Value: Cache First, Time-Series Store on Miss

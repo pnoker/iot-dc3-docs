@@ -46,7 +46,7 @@ host 端口与 internal 端口的对应关系，是理解这张图的核心：
 |---------------|-------------------|----------------------|
 | PostgreSQL    | `localhost:35432` | `dc3-postgres:5432`  |
 | RabbitMQ AMQP | `localhost:35672` | `dc3-rabbitmq:5672`  |
-| EMQX MQTT     | `localhost:31883` | `dc3-emqx:1883`（约定值） |
+| EMQX MQTT     | `localhost:31883` | `dc3-emqx:1883`（EMQX 默认内部端口） |
 
 ## 怎么用
 
@@ -63,7 +63,8 @@ make up-db && make up-optional && make up-dev
 
 ```bash [podman compose]
 cp .env.example .env
-podman compose -f dc3/docker-compose-dev.yml config --quiet
+podman compose -f dc3/docker-compose-dev.yml up -d   # 拉起 dev 栈
+podman compose -f dc3/docker-compose-dev.yml config --quiet   # 仅校验配置、不拉起
 ```
 
 :::
@@ -193,7 +194,7 @@ MQTT broker host 端口 `31883`。EMQX 还发布 WebSocket、Dashboard 等多个
 
 ### Agentic / AI（Runtime）
 
-仅当 `dc3_model_provider` 没有配置可用提供方时，才回退到这组 `AGENTIC_FALLBACK_OPENAI_*`。会话记忆默认关闭。
+仅当 `dc3_model_provider` 没有配置可用提供方时，才回退到这组 `AGENTIC_FALLBACK_OPENAI_*`。走 `.env.example` 注入路径时会话记忆默认关闭（不注入时代码默认开启，见下方说明）。
 
 | 变量                                    | 默认值                            | 用途                                                               |
 |---------------------------------------|--------------------------------|------------------------------------------------------------------|
@@ -228,8 +229,7 @@ MQTT broker host 端口 `31883`。EMQX 还发布 WebSocket、Dashboard 等多个
 
 ### 批处理（Runtime）
 
-MQTT 与位号值各有一组"数量阈值 + 间隔"参数，由 Quartz 定时按 `interval`（秒）把累积缓冲一次性刷出，
-`speed = count / interval`。
+MQTT 与位号值各有一组"数量阈值 + 间隔"参数，由 Quartz 定时按 `interval`（秒）把累积缓冲一次性刷出——平均吞吐 ≈ 每批条数 ÷ 间隔秒数。
 
 | 变量                     | 默认值   | 用途               |
 |------------------------|-------|------------------|

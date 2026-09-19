@@ -34,7 +34,7 @@ only a short reader-facing summary.
 |----------------------|----------------------------------------------|----------------------------------------------------------------------------|
 | Web frontend         | Vue 3 · TypeScript 6 · Vite 8 · Element Plus | Management console under `dc3-web/`                                        |
 | Visualization        | AntV G2/G6                                   | Dashboard charts and relationship visualizations                           |
-| Docs site            | VitePress · Mermaid                          | The current `docs/` site, architecture diagrams, and flow diagrams         |
+| Docs site            | VitePress                                    | The current `docs/` site, architecture diagrams, and flow diagrams (custom Vue diagram components) |
 | CLI automation       | TypeScript · pnpm · Vitest                   | Sibling `dc3-cli/` project, a Gateway-oriented command-line client         |
 | Container deployment | Podman · Docker Compose                      | Local dependencies, dev stack, app stack, and optional observability stack |
 

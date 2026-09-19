@@ -18,8 +18,7 @@ attributes to fill in, how to troubleshoot a failed connection, and its real imp
 LwM2M (Lightweight M2M) is an OMA-defined protocol for IoT **device management plus data collection**. It does not start
 from scratch—it is **built on top of CoAP**, running over UDP (default `5683`, `5684` for DTLS/CoAPS encryption) and
 supplying the "device management" layer that CoAP lacks. In
-the [four-layer IoT reference architecture](../foundations/iot-protocols), it sits—like CoAP and MQTT—among the *
-*network layer's application messaging protocols**: defining "what a message looks like, how it is delivered, and how
+the [four-layer IoT reference architecture](../foundations/iot-protocols), it sits—like CoAP and MQTT—among the **network layer's application messaging protocols**: defining "what a message looks like, how it is delivered, and how
 reliable it is," independent of whether Wi-Fi or NB-IoT carries it underneath.
 
 The core of LwM2M is abstracting device capabilities into an **object tree**:
@@ -29,8 +28,7 @@ The core of LwM2M is abstracting device capabilities into an **object tree**:
 - **Resource** (e.g. `5700` = Sensor Value)—a specific readable/writable item within an instance.
 
 Accessing a specific value means giving the path `/<objectId>/<objectInstanceId>/<resourceId>`. Firmware upgrade, remote
-configuration, and subscription reporting are all standardized into this object model, which is why LwM2M is common on *
-*carrier-grade endpoints that need remote operation**: NB-IoT modules, smart meters, remote environmental
+configuration, and subscription reporting are all standardized into this object model, which is why LwM2M is common on **carrier-grade endpoints that need remote operation**: NB-IoT modules, smart meters, remote environmental
 sensors—anywhere both remote management and low power consumption are needed.
 
 Unlike drivers such as Modbus or CoAP that **actively connect to devices**, this driver works the other way around—it

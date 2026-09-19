@@ -93,8 +93,7 @@ tenant rather than erroring out.
 
 ## Example
 
-A development environment usually has just one default tenant whose `tenantCode = default`—which is also the *
-*system-administrator tenant**: only users in the `default` tenant can create/delete/update other tenants (
+A development environment usually has just one default tenant whose `tenantCode = default`—which is also the **system-administrator tenant**: only users in the `default` tenant can create/delete/update other tenants (
 `TenantController` explicitly checks `"default".equals(tenantCode)`).
 
 Imagine a SaaS deployment adds a customer tenant `tenantCode = acme`. After `alice`, an operator of `acme`, logs in (

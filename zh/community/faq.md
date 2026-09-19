@@ -137,7 +137,7 @@ podman exec dc3-postgres pg_dump -U dc3 \
 
 1. 阅读 [驱动开发指南](../development/driver-authoring)
 2. 在 `dc3-driver/` 下复制最接近的驱动模块作为模板
-3. 实现 Driver SDK 要求的 `read()`、`write()` 和（可选的）`subscribe()` 方法
+3. 实现 Driver SDK 要求的 `read()` 与 `write()` 方法（可选的自定义调度、健康检查等钩子见驱动开发指南）
 4. 在 `dc3/docker-compose.yml` 中添加驱动服务配置
 5. 写文档（参考已有驱动文档页的格式）
 

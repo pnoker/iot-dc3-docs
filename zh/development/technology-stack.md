@@ -33,7 +33,7 @@ title: 技术栈
 |---------|----------------------------------------------|------------------------------------------|
 | Web 前端  | Vue 3 · TypeScript 6 · Vite 8 · Element Plus | `dc3-web/` 下的管理控制台                       |
 | 可视化     | AntV G2/G6                                   | 仪表盘图表与关系可视化                              |
-| 文档站     | VitePress · Mermaid                          | 当前 `docs/` 文档站、架构图和流程图                   |
+| 文档站     | VitePress                                    | 当前 `docs/` 文档站、架构图和流程图（自定义 Vue 图组件）     |
 | CLI 自动化 | TypeScript · pnpm · Vitest                   | sibling `dc3-cli/` 项目，面向 Gateway 的命令行客户端 |
 | 容器部署    | Podman · Docker Compose                      | 本地依赖、开发栈、应用栈和可选观测栈                       |
 

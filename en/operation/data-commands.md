@@ -60,7 +60,7 @@ supplying only `deviceId` returns the latest values of all points on that device
 # Example deviceId / pointId — replace with your own
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}' \
   -d '{"deviceId": 1001, "page": {"current": 1, "size": 20}}'
 ```
 
@@ -68,7 +68,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 # Use rangeKey (today/24h/7d/30d) or createTimeFrom / rangeHours to bound the time window
 curl -X POST http://localhost:8000/api/v3/data/point_value/list \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001,
        "rangeKey": "24h",
        "page": {"current": 1, "size": 100}}'
@@ -112,7 +112,7 @@ an optional `commandId` for idempotent deduplication.
 ```bash [write command]
 curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001, "value": "100"}'
 # The data field of the response body is the commandId (example): "a1b2c3d4-...."
 ```
@@ -120,14 +120,14 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
 ```bash [read command]
 curl -X POST http://localhost:8000/api/v3/data/point_command/read \
   -H 'Content-Type: application/json' \
-  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001}'
 ```
 
 ```bash [poll for result]
 # commandId is the command ID obtained in the previous step
 curl 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=a1b2c3d4-....' \
-  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: <token>'
+  -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}'
 ```
 
 :::

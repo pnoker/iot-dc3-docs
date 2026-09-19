@@ -84,7 +84,7 @@ To run the chain:
 
 1. Make sure the core stack (dev or app) is running and already writing into the `logs` volume.
 2. Run `make up-optional` to start ELK. Logstash reads from the `logs` volume automatically.
-3. Open `http://localhost:5601` in a browser to reach Kibana, and search by fields like service name, `tenantId`, or
+3. Open `http://localhost:5601` in a browser to reach Kibana, and search by service name or event name; `tenantId` currently appears only as a message parameter (full-text match only — field-level search waits for MDC wiring, see the [logging page](./logging))
    event name.
 
 ::: warning Elasticsearch is memory-hungry — tune the heap first

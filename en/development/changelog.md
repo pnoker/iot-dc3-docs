@@ -51,9 +51,7 @@ which this page's include directive then inlines.
 
 ::: info Commit it separately when you change it
 The changelog is a generated artifact. When `CHANGE.md` is regenerated and ready to commit, use
-`docs(release): update generated changelog` — the fixed subject the repo reserves for changelog-only changes. The
-generator recognizes and skips commits with the `docs(release):` and `chore(release):` prefixes, so "update changelog"
-entries don't clutter the changelog itself.
+`docs(release): update generated changelog` — the fixed subject the repo reserves for changelog-only changes. The generator recognizes and skips this exact fixed commit (only a `docs(release):` or `chore(release):` commit whose subject is exactly `update generated changelog` matches), so "update changelog" entries don't clutter the changelog itself. To make such commits appear in the release notes, set `INCLUDE_CHANGELOG_COMMITS=true` and rerun.
 :::
 
 ## How to read it: by version, then by category

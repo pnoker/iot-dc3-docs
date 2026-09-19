@@ -23,8 +23,7 @@ import DriverAuthoringFlow3Diagram from '../../.vitepress/theme/components/Drive
 
 ## 驱动是什么：一个聚合了 7 个 SPI 的 Spring Boot 服务
 
-一个驱动本质上是一个独立的 Spring Boot 服务（`dc3-driver-<protocol>`）。它不直接和管理中心、数据中心打交道，而是继承
-`dc3-common-driver` 这个 SDK——SDK 负责注册、调度、RabbitMQ 收发、gRPC 调用和租户上下文，**你只需要实现协议逻辑**。
+一个驱动本质上是一个独立的 Spring Boot 服务（`dc3-driver-<protocol>`）。它不直接和管理中心、数据中心打交道，而是构建在 `dc3-common-driver` 这个 SDK 之上——SDK 负责注册、调度、RabbitMQ 收发、gRPC 调用和租户上下文，**你只需要实现协议逻辑**。
 
 协议逻辑通过一个入口接口暴露：`DriverCustomService`。它本身不声明方法，而是聚合了 7 个职责单一的 SPI 子接口，一个驱动实现这一个接口，就等于把这
 7 件事都接管了：
@@ -184,7 +183,7 @@ logging:
     name: dc3/logs/driver/knx/${spring.application.name}.log
 ```
 
-属性字段的含义（前面散文已建立心智模型，下表作速查）：
+各属性字段速查（含义上文已说明）：
 
 | 字段                    | 说明                                                                                                           |
 |-----------------------|--------------------------------------------------------------------------------------------------------------|
@@ -302,8 +301,7 @@ public class KnxDriverCustomServiceImpl implements DriverCustomService {
 其中 `status` 取值见 `EntityStatusEnum`：`ONLINE(0)` / `OFFLINE(1)` / `MAINTAIN(2)` / `FAULT(3)`。
 
 ::: warning 设备状态上报 TTL 必须大于读周期
-设备状态以"租约"形式上报：到期未续约就判离线。TTL 必须**大于**状态上报/读取周期，否则设备会在两次心跳之间被判离线、反复掉线（flap）。例如读
-cron 为 `0/30 * * * * ?`（每 30 秒），TTL 应 ≥ 25 秒；模板默认设备健康 `timeout: 45` 秒，留足了余量。
+设备状态以"租约"形式上报：到期未续约就判离线。TTL 必须**大于**状态上报/读取周期，否则设备会在两次心跳之间被判离线、反复掉线（flap）。例如读 cron 为 `0/30 * * * * ?`（每 30 秒），TTL 必须大于 30 秒，建议 45 秒以上；模板默认设备健康 `timeout: 45` 秒，留足了余量。
 :::
 
 ## 命名与路由：哪个标识不能改
@@ -358,7 +356,7 @@ java -jar dc3-driver/dc3-driver-knx/target/dc3-driver-knx.jar
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
   -d '{"deviceId": 1, "pointId": 1, "page": {"current": 1, "size": 10}}'
 ```
@@ -369,7 +367,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
   -d '{"deviceId": 1, "pointId": 1, "value": "42"}'
 ```
@@ -381,7 +379,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
 curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=<commandId>' \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>'
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
 ```
 
 完整的命令生命周期与回执语义见 [命令平面](../architecture/command-plane)。

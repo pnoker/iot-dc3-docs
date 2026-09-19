@@ -8,13 +8,15 @@ import AutomationIndexDiagram from '../../.vitepress/theme/components/Automation
 
 # 自动化
 
+> 你在这里：想在终端或脚本里驱动平台，而不是点页面。要对话式 / MCP 驱动，转 [AI 栏目](../ai/)。
+
 确定性的、可重复的程序化操作，用 `dc3` CLI 完成——不涉及大模型，结果可预测、可脚本化。AI 栏目（Agentic 中心、MCP）解决"
 让模型决策"，自动化栏目解决"让人或脚本执行"。
 
 ## dc3 CLI
 
 `dc3` CLI 是一个独立的 TypeScript 命令行客户端（Node ≥ 20），通过 HTTP 网关与运行中的后端通信，自身不耦合 Java
-构建。它封装了三段式登录、Token 自动续期与凭据存储，让你直接面对按结果基数命名的子命令：`dc3 device list`、
+构建。它封装了三段式登录、Token 自动续期与凭据存储，让你直接使用沿用平台动词约定的子命令——`list`/`history`/`count` 反映返回基数（见 [API 文档](../development/api-documentation)）：`dc3 device list`、
 `dc3 point history`、`dc3 driver add`。
 
 适合三类场景：

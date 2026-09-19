@@ -22,8 +22,7 @@ filter that same table, and how notifications go out over email, SMS, or webhook
 
 Things fail from many directions: a rule trips a threshold, a device or driver heartbeat times out, a device reports a
 fault, a driver reports an anomaly, or a reported event triggers a rule. If every source had its own table and its own
-delivery path, operations teams would juggle multiple pages to piece things together. IoT DC3 takes a different route: *
-*every runtime alarm, no matter its source, lands in `dc3_entity_alarm`**. Two flags tell them apart —
+delivery path, operations teams would juggle multiple pages to piece things together. IoT DC3 takes a different route: **every runtime alarm, no matter its source, lands in `dc3_entity_alarm`**. Two flags tell them apart —
 `alarm_source_flag` (where it came from) and `alarm_target_type_flag` (which entity it targets) — and composite indexes
 make views like Driver / Device / Point Alarm fast to filter.
 

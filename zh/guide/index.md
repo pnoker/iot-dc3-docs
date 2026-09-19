@@ -41,7 +41,7 @@ import GuideIndexDiagram from '../../.vitepress/theme/components/GuideIndexDiagr
 - **[生产部署指南](./deployment)** — 从单机 Compose 到 Docker Swarm / Kubernetes / Helm 的完整部署路径：五种形态的选型、
   镜像可得性、谁可以扩容谁不能，以及上线前的生产加固清单。
 - **[可观测性](./observability)** — 应用与依赖如何接入 Grafana / Prometheus / ELK（可选 `optional` 栈）。用
-  `make up-optional` 拉起 EMQX/ELK/Prometheus/Grafana 这套可选栈，端口见环境变量目录里的"Observability Stack"一节（Grafana
+  `make up-optional` 拉起 EMQX/ELK/Prometheus/Grafana 这套可选栈，端口见[环境变量详解](../quickstart/environment)的"可观测性"一节（Grafana
   `3000`、Kibana `5601`）。
 - **[日志规范](./logging)** — `dc3-common-log` 统一输出控制台彩色日志（人工调试）与滚动 JSON 文件日志（机器解析，含
   timestamp/logger/thread/level/MDC/message/stack）；消息用英文稳定事件名 + SLF4J 参数化占位符，便于跨模块搜索关联。
@@ -83,13 +83,12 @@ source dc3/env/dev.env.sh
 ::: tip 启动顺序
 分布式起栈时按 Auth → Manager → Data → Agentic → Gateway → Driver 顺序启动：Auth 无依赖最先起，四个中心健康后 Gateway 才启动（
 `gateway` 的 `depends_on` 为 auth/manager/data/agentic 均 `service_healthy`），驱动依赖 Manager Center 与 RabbitMQ
-就绪后才能注册。详见 [故障排查 · 驱动无法注册](./troubleshooting)。
+就绪后才能注册。详见 [故障排查 · 启动顺序错](./troubleshooting)。
 :::
 
 ## 验证服务通了：调一次黄金路径
 
-部署完成后，确认网关与鉴权链路是否打通，最快的方式是走一遍登录：先取盐，再用加盐口令换 token。所有对外请求都经唯一 HTTP
-入口网关（默认 `8000`）。
+部署完成后，确认网关与鉴权链路是否打通，最快的方式是走一遍登录：先取盐，再提交明文密码换 token（盐不参与密码哈希，校验在服务端完成）。API 都经网关（默认 `8000`）——注意 app 栈不发布 8000，宿主机验证请用 dev 栈，或走 web 前端 8080/8443 的反代。
 
 ```bash
 # 1) 取盐（公开端点，建议 5 分钟内使用；以下租户/用户名为示例值）
@@ -97,14 +96,14 @@ curl -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
 
-# 2) 用盐对口令做哈希后换取 token（12 小时有效）
+# 2) 连同盐提交明文口令换取 token（12 小时有效；盐不参与密码哈希，校验在服务端完成）
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<加盐哈希>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<明文密码>"}'
 ```
 
 拿到 token 后，受保护端点需要带上三个鉴权头：`X-Auth-Tenant`、`X-Auth-Login`、`X-Auth-Token`。若此处返回 401/403，多半是 token
-缺失或过期，处理见 [故障排查 · Gateway 返回 401 或 403](./troubleshooting)。
+缺失或过期，处理见 [故障排查 · 鉴权失败：401 / 403](./troubleshooting)。
 
 ## 延伸阅读
 

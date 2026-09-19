@@ -89,7 +89,7 @@ affinity). On multi-node swarms, put the stateful volumes on shared storage (NFS
 
 ## Mode 4 - Kubernetes (kustomize)
 
-`dc3/deploy/k8s/` ships production-grade manifests: CPU-based HPA and PodDisruptionBudgets for the stateless tier,
+`dc3/deploy/k8s/` ships production-grade manifests: CPU-based HPA for gateway/web plus PodDisruptionBudgets on every stateless service,
 rolling updates with `maxUnavailable: 0`, StatefulSets + PVCs for postgres/rabbitmq, and an Ingress routing `/api/`
 to the gateway and `/` to `web`. Prerequisites: the cluster needs a default StorageClass (so the postgres/rabbitmq
 PVCs can bind) and an installed ingress controller (the `/api/` and `/` routes go through the Ingress):
@@ -179,9 +179,7 @@ deploy time.
 - **Why is a scaled center not balancing every gRPC request?** See "The gRPC balancing boundary between centers"
   above: `static://` fixed targets, one channel per client. Replicas provide failover and rollout safety; HTTP is
   balanced at every tier (nginx -> Spring Cloud Gateway -> centers).
-- **Can I run a driver at 2 replicas?** Be careful. Replicas are not shared-queue workers - each registers as its
-  own node with its own queue, effectively another driver instance that usually reconnects to the same devices.
-  Scale only if the driver genuinely shards by device/channel; `listening-virtual` owns inbound device sockets and
+- **Can I run a driver at 2 replicas?** It depends on the platform. Under Compose/Swarm: no — replicas share the `driver_data` volume and would open the same SQLite outbox file, so keep 1 replica. Under Kubernetes each Pod has its own `emptyDir`, so scaling works — but replicas are not shared-queue workers: each registers as its own node with its own queue, effectively another driver instance that usually reconnects to the same devices. `listening-virtual` owns inbound device sockets and
   must stay at 1 replica.
 - **Can postgres/rabbitmq have replicas?** Not with these configs - they are stateful singletons. For HA run managed
   services and point the ConfigMap / environment at them.

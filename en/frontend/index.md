@@ -4,8 +4,7 @@ title: Frontend Development
 
 # Frontend Development
 
-The IoT DC3 frontend is built on **Vue 3 + TypeScript + Vite + Element Plus**. Source code lives in the `dc3-web/`
-directory.
+The IoT DC3 frontend is built on **Vue 3 + TypeScript + Vite + Element Plus**. Source code lives in `dc3-web/` in the main repository (iot-dc3), a standalone pnpm project.
 
 ## Environment Setup
 

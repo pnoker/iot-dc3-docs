@@ -17,8 +17,7 @@ have no standard protocol stack, and know where byte order, frame offset, and co
 
 TCP and UDP are the two transport-layer protocols of the [TCP/IP suite](../foundations/iot-protocols): TCP is
 connection-oriented and provides a reliable, ordered byte stream; UDP is connectionless and delivers datagrams
-best-effort. In the four-layer IoT architecture (perception → network → platform → application), they sit in the *
-*network layer**—the common carrier beneath higher-level application protocols (MQTT, CoAP, Modbus TCP, and so on).
+best-effort. In the four-layer IoT architecture (perception → network → platform → application), they sit in the **network layer**—the common carrier beneath higher-level application protocols (MQTT, CoAP, Modbus TCP, and so on).
 
 Many field devices run no standard protocol stack: serial-to-Ethernet modules, home-grown microcontrollers,
 proprietary-protocol gateways—they often just "you send some bytes on a port, they reply with some bytes." Such devices

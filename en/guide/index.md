@@ -52,7 +52,7 @@ breaks (troubleshooting).
   checklist.
 - **[Observability](./observability)** — how the app and its dependencies plug into Grafana, Prometheus, and ELK (the
   optional `optional` stack). Run `make up-optional` to bring up EMQX/ELK/Prometheus/Grafana; ports are listed under
-  the "Observability Stack" section of the environment-variable reference (Grafana `3000`, Kibana `5601`).
+  the "Observability" section of the environment-variable reference (Grafana `3000`, Kibana `5601`).
 - **[Logging Conventions](./logging)** — `dc3-common-log` emits colored console logs for human debugging and rolling
   JSON file logs for machine parsing (timestamp/logger/thread/level/MDC/message/stack). Messages use stable English
   event names with SLF4J parameterized placeholders, so they're easy to search and correlate across modules.
@@ -96,14 +96,12 @@ source dc3/env/dev.env.sh
 For a distributed bring-up, start in the order Auth → Manager → Data → Agentic → Gateway → Driver: Auth has no
 dependencies and starts first; the Gateway starts only after the four centers are healthy (`gateway`'s `depends_on`
 requires auth/manager/data/agentic to all be `service_healthy`); and drivers can register only after Manager Center and
-RabbitMQ are ready. See [Troubleshooting · Drivers fail to register](./troubleshooting) for details.
+RabbitMQ are ready. See [Troubleshooting · wrong startup order](./troubleshooting) for details.
 :::
 
 ## Verify the wiring: walk the golden path once
 
-After deployment, the fastest way to confirm the gateway and the authentication chain are connected is to log in: fetch
-the salt, then exchange the salted credential for a token. Every external request goes through one HTTP entry point, the
-gateway (default `8000`).
+After deployment, the fastest way to confirm the gateway and the authentication chain are connected is to log in: fetch the salt, then submit the plaintext password for a token (the salt is not used to hash the password — verification happens server-side). API traffic all goes through the gateway (default `8000`) — note the `app` stack does not publish 8000 to the host; verify from the host on the `dev` stack, or through the web front end's 8080/8443 reverse proxy.
 
 ```bash
 # 1) Fetch the salt (public endpoint; use within 5 minutes; the tenant/username below are example values)
@@ -111,15 +109,15 @@ curl -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
 
-# 2) Hash the credential with the salt, then exchange it for a token (valid for 12 hours)
+# 2) Submit the plaintext password together with the salt for a token (valid 12 hours; the salt does not hash the password)
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<salt returned by the previous step>","password":"<salted hash>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<salt returned by the previous step>","password":"<plaintext password>"}'
 ```
 
 Once you have the token, protected endpoints require three headers: `X-Auth-Tenant`, `X-Auth-Login`, and `X-Auth-Token`.
 A 401/403 here almost always means a missing or expired token —
-see [Troubleshooting · Gateway returns 401 or 403](./troubleshooting).
+see [Troubleshooting · auth failures: 401 / 403](./troubleshooting).
 
 ## Further reading
 

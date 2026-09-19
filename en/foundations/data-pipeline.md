@@ -53,8 +53,7 @@ the messages into time-series storage, and on top of that storage a **query** la
 A few key technologies and trade-offs sit along this pipeline:
 
 **Time-series databases: the hypertable and partitioning idea.** The common approach across solutions (TimescaleDB,
-InfluxDB, TDengine) is to **automatically slice one big logical table into many small pieces**. Take TimescaleDB's *
-*hypertable**: to the user it's just a normal table, read and written with standard SQL; underneath it auto-slices data
+InfluxDB, TDengine) is to **automatically slice one big logical table into many small pieces**. Take TimescaleDB's **hypertable**: to the user it's just a normal table, read and written with standard SQL; underneath it auto-slices data
 by a time dimension (plus a device/tag dimension) into individual **chunks**. The payoff is obvious — a query with a
 time range only scans the relevant chunks (chunk pruning) instead of the whole table; writes always land on the "newest"
 chunk, so the index stays local rather than inserting all over a billion-row table; and expired data can be dropped

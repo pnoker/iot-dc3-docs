@@ -118,8 +118,11 @@ export function assertLocaleParity(): void {
 // being a translation of itself, and readers of one language silently miss
 // whole sections.
 export function assertHeadingParity(): void {
+    // strip fenced code blocks first — `#`-comments inside them (bash,
+    // properties) must not count as headings
     const headingCount = (file: string) =>
-        readFileSync(file, 'utf8').split('\n').filter(line => /^#{1,4} /.test(line)).length
+        readFileSync(file, 'utf8').replace(/```[\s\S]*?```/g, '').split('\n')
+            .filter(line => /^#{1,4} /.test(line)).length
     const problems: string[] = []
     for (const file of walkMarkdown(join(root, 'zh'))) {
         const relPath = relative(root, file).split(sep).join('/')

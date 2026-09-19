@@ -28,8 +28,7 @@ table as a data source, and the platform can poll its columns into [PointValues]
 just like it polls a real device.
 
 Seen through the four-layer IoT reference architecture, a database driver talks to the database over TDS on TCP/IP (
-default port `1433`); it is the entry point for moving external data into the platform, and its transport sits at the *
-*network layer**—see the [IoT network-layer chapter](../foundations/data-pipeline) for how data enters the platform
+default port `1433`); it is the entry point for moving external data into the platform, and its transport sits at the **network layer**—see the [IoT network-layer chapter](../foundations/data-pipeline) for how data enters the platform
 pipeline. This driver acts as a database client ([Driver](../introduction/concepts/driver) type `DRIVER_CLIENT`),
 connecting to a SQL Server instance over JDBC (driver class `com.microsoft.sqlserver.jdbc.SQLServerDriver`) and
 reading/writing values by the SQL configured on each [Point](../introduction/concepts/point). Its communication model is

@@ -15,8 +15,7 @@ import EventFlowDiagram from '../../../.vitepress/theme/components/EventFlowDiag
 事件回答的是"设备身上发生了什么"，而不是"某个量现在是多少"。后者是[位号值](./point-value)
 （周期采集的数值快照），前者是离散的、带语义的一次发生：一台门禁设备的"温度 = 25.3℃"是位号值，"门被强行打开"是一个事件。
 
-事件分两层：**定义**（这类设备会上报哪些事件、每个事件带哪些参数）沉淀在模板里，由 `dc3_event` / `dc3_event_param` 承载；*
-*实例**（某台设备某时刻真的报了一次）由驱动上报、落到 `dc3_event_history`。
+事件分两层：**定义**（这类设备会上报哪些事件、每个事件带哪些参数）沉淀在模板里，由 `dc3_event` / `dc3_event_param` 承载；**实例**（某台设备某时刻真的报了一次）由驱动上报、落到 `dc3_event_history`。
 
 ## 关键字段
 
@@ -72,8 +71,7 @@ import EventFlowDiagram from '../../../.vitepress/theme/components/EventFlowDiag
 `dc3_entity_alarm` 生成/更新一条**运行态告警**。
 
 ::: warning EventHistory 不等于告警
-`dc3_event_history` 是"设备说发生了什么"的原始流水，**每次上报都记**；`dc3_entity_alarm` 是"告警引擎判定需要关注"的结果，*
-*只有命中规则才有**。查"设备报过哪些事件"看前者，查"当前有哪些告警"看后者，别混为一谈。
+`dc3_event_history` 是"设备说发生了什么"的原始流水，**每次上报都记**；`dc3_entity_alarm` 是"告警引擎判定需要关注"的结果，**只有命中规则才有**。查"设备报过哪些事件"看前者，查"当前有哪些告警"看后者，别混为一谈。
 :::
 
 ## 示例

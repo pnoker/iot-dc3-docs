@@ -8,16 +8,14 @@ import TroubleshootingDiagram from '../../.vitepress/theme/components/Troublesho
 
 # 故障排查
 
-这页帮你在本地起不来、连不上、被拒绝时快速定位：每条问题都按 **症状 → 根因 → 定位** 展开，不只给解法，还告诉你"
-为什么会这样、该读哪条日志、该看哪个端口"。读完你能独立判断卡在依赖、环境变量、端口还是鉴权上。
+这页帮你在本地起不来、连不上、被拒绝时快速定位：每条问题都按 **症状 → 根因 → 定位** 展开，不只给解法，还告诉你"为什么会这样、该读哪条日志、该看哪个端口"。读完你能独立判断卡在依赖、环境变量、端口还是鉴权上。
 
 > 你在这里：多半是在跟着[从源码本地开发](../quickstart/)或起容器栈，遇到了启动或连接报错。先按下面的决策流程把问题归类，再跳到对应小节。除非特别说明，命令都在
 `iot-dc3/` 目录执行。
 
 ## 先把问题归类：排障决策流程
 
-绝大多数"起不来 / 连不上"都能归到五类：依赖未就绪、环境变量没加载、端口被占、依赖服务启动顺序错、以及鉴权链路问题。按下图自上而下排除，比逐个猜测快得多——平台对外只有网关一个
-HTTP 入口（`8000`），中心服务靠 gRPC facade 互联、驱动与数据中心靠 RabbitMQ 解耦，所以一旦底层依赖（PostgreSQL /
+绝大多数"起不来 / 连不上"都能归到五类：依赖未就绪、环境变量没加载、端口被占、依赖服务启动顺序错、以及鉴权链路问题。按下图自上而下排除，比逐个猜测快得多——平台的 API 流量都经网关（`8000`；app 栈不发布到宿主机，由 web 前端 8080/8443 反代进网关，dev 栈与本地运行可直连），中心服务靠 gRPC facade 互联、驱动与数据中心靠 RabbitMQ 解耦，所以一旦底层依赖（PostgreSQL /
 RabbitMQ）没起，上层会连环失败。
 
 <TroubleshootingDiagram lang="zh" />
@@ -30,8 +28,7 @@ gRPC facade 和驱动注册能否成功。把前四关排掉之后，剩下的�
 **症状**：应用启动日志反复打印 `Connection refused`、`Connection to localhost:35432 refused`，或 RabbitMQ 报
 `Channel shutdown` / `vhost not found`；中心服务起来后又退出。
 
-**根因**：PostgreSQL 或 RabbitMQ 容器尚未启动、健康检查未通过，或本地源码运行时连接参数指向了错误的主机/端口。关键陷阱是 *
-*host 与容器内地址不同**：容器内服务之间用 `dc3-postgres:5432`、`dc3-rabbitmq:5672`，而宿主机上的本地 Java 进程要走对外发布端口
+**根因**：PostgreSQL 或 RabbitMQ 容器尚未启动、健康检查未通过，或本地源码运行时连接参数指向了错误的主机/端口。关键陷阱是 **host 与容器内地址不同**：容器内服务之间用 `dc3-postgres:5432`、`dc3-rabbitmq:5672`，而宿主机上的本地 Java 进程要走对外发布端口
 `localhost:35432`、`localhost:35672`。
 
 **定位与处理**：先确认依赖栈在跑、且发布端口与应用变量一致。
@@ -127,12 +124,11 @@ Stop-Process -Id <PID>        # 核实后结束占用进程
 
 **症状**：驱动注册失败、gRPC 调用报 `UNAVAILABLE`，或中心服务起来后因拿不到下游而异常。
 
-**根因**：中心服务之间通过 gRPC facade 协作，驱动启动时要向管理中心注册并依赖 RabbitMQ。若上游还没就绪就起下游，连接会失败。正确的启动次序是
-**Gateway → Auth → Manager → Data → Agentic → Driver**。
+**根因**：中心服务之间通过 gRPC facade 协作，驱动启动时要向管理中心注册并依赖 RabbitMQ。若上游还没就绪就起下游，连接会失败。正确的启动次序是 **Auth → Manager → Data → Agentic → Gateway → Driver**（驱动依赖 Manager 与 RabbitMQ 就绪，可与网关并行启动）。
 
 **定位与处理**：
 
-1. 按 Gateway → Auth → Manager → Data → Agentic → Driver 顺序启动，每起一个等它就绪再起下一个。
+1. 按 Auth → Manager → Data → Agentic → Gateway → Driver 顺序启动，每起一个等它就绪再起下一个；驱动只依赖 Manager 与 RabbitMQ，可与网关并行。
 2. 本地源码运行确认已 `source dc3/env/dev.env.sh`。
 3. 查看管理中心与驱动日志，确认 gRPC 目标地址（`CENTER_MANAGER_HOST` 等，默认 `localhost`）可达。
 4. 确认 `dc3.driver.code` 唯一且稳定——编码重复会让注册被拒。
@@ -176,8 +172,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 
 ::: danger 生产/预发环境 HMAC 会 fail-fast
 当 Spring profile（或 `spring.env`）命中 `pre` 或 `pro` 时，若 `AUTH_HMAC_SECRET` 为空、或仍是默认弱密钥
-`io.github.pnoker.dc3`，服务会在启动时直接抛 `IllegalStateException` 拒绝启动。这是有意为之的安全闸门：上 `pre`/`pro` 前*
-*必须**把 `AUTH_HMAC_SECRET` 与 `DC3_SECURITY_KEY` 换成强随机值，且不得记录或硬编码。
+`io.github.pnoker.dc3`，服务会在启动时直接抛 `IllegalStateException` 拒绝启动。这是有意为之的安全闸门：上 `pre`/`pro` 前**必须**把 `AUTH_HMAC_SECRET` 与 `DC3_SECURITY_KEY` 换成强随机值，且不得记录或硬编码。
 :::
 
 ## pre/pro profile 本地起不来

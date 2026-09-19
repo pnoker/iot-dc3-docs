@@ -39,7 +39,7 @@ JDK/构建工具，外加一个容器运行时。
 ### 2. 安装 EnvFile 插件
 
 1. **Settings → Plugins → Marketplace**，搜索 **EnvFile**，安装后重启
-2. 打开每个服务的 Run Configuration，在 **EnvFile** 标签页点击 `+`，添加 `dc3/env/dev.env`
+2. EnvFile 的挂载在下面第 3 步创建运行配置时进行
 
 ### 3. 配置运行入口
 
@@ -63,9 +63,9 @@ JDK/构建工具，外加一个容器运行时。
 - **Lombok 报红**：Settings → Annotation Processors → 勾选 **Enable annotation processing**
 - **Maven 索引卡住**：File → Invalidate Caches → Invalidate and Restart
 - **EnvFile 未生效**：检查 Run Configuration 的 EnvFile 标签页是否已勾选 `dev.env`
-- **端口占用**：`lsof -i :8000` 查看，在 Run Configuration 的 Environment variables 中覆盖 `SERVER_PORT`
+- **端口占用**：`lsof -i :8000` 查看（Windows 用 `netstat -ano | findstr :8000`），在 Run Configuration 的 Environment variables 中覆盖 `SERVER_PORT`
 
-## 为什么是这五步
+## 命令行五步为什么是这个顺序
 
 本地起栈的最短闭环是五步，每一步都有明确产物，下一步依赖上一步的产物：先有基础设施（容器），才能加载指向它们的环境变量；先构建出
 jar，才能启动开发栈；服务起来后才谈得上跑测试。
@@ -173,7 +173,7 @@ make up-dev-cn
 只有 Gateway（用户入口）与 listening-virtual 的 TCP 6270 / UDP 6271（设备入口）对宿主映射，其余后端端口都是内部端口。
 :::
 
-验证：栈起来后，对网关跑一次登录黄金路径。登录分两步——先取盐，再用盐哈希后的密码换 12 小时有效的 access token：
+验证：栈起来后，对网关跑一次登录黄金路径。登录分两步——先取盐，再连同盐提交明文密码换 12 小时有效的 access token（盐不参与密码哈希，校验在服务端完成）：
 
 ```bash
 # 1) 取盐（公开端点，建议 5 分钟内使用）
@@ -184,7 +184,7 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
 # 2) 用 salt 哈希密码后换 token（公开端点，access token 12 小时有效）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<上一步的 salt>","password":"<salt 哈希后的密码>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<上一步的 salt>","password":"<明文密码>"}'
 ```
 
 拿到 token 后，受保护端点都通过网关访问，并带上三个鉴权头 `X-Auth-Tenant`、`X-Auth-Login`、`X-Auth-Token`。完整的"建驱动 →
@@ -219,4 +219,4 @@ make test                          # 单元测试套件
 
 - [环境变量详解](./environment) — `.env` 与 `dev.env(.sh)` 的边界、每个变量的作用域与默认值
 - [第一个设备：端到端](./first-device) — 登录后从建驱动到读写位号的最短闭环
-- [系统架构总览](../architecture/) — 五个中心服务如何分工、数据与命令如何流转
+- [系统架构总览](../architecture/) — 网关与四个中心如何分工、数据与命令如何流转

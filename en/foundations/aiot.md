@@ -63,8 +63,7 @@ across industry, energy, buildings, and cities the concrete shape varies, but th
 
 Take the loop apart and every hop carries a trade-off:
 
-**Rules or models?** This is the first choice to make, and it is not "models are fancier, so use them everywhere." For *
-*deterministic judgments** — fixed thresholds, state machines, simple trends — rules are the bargain: explainable,
+**Rules or models?** This is the first choice to make, and it is not "models are fancier, so use them everywhere." For **deterministic judgments** — fixed thresholds, state machines, simple trends — rules are the bargain: explainable,
 auditable, zero training cost, millisecond-fast. Only when "normal" is hard to describe with a threshold (multi-variable
 coupling, drift with operating conditions, periodic swings) is a model worth it. Most production systems are **rules as
 the floor + models for reinforcement**: rules cover the known hard constraints, models find the anomalies rules can't

@@ -87,8 +87,7 @@ Modbus 用"功能码 + 寄存器地址"寻址，BLE 用"服务 UUID + 特征 UUI
 
 ::: warning 写入复用位号上的 UUID，命令属性当前不生效
 BLE 的 `write()` 与 `read()` 一样从位号属性（`point-attribute`）读取 `serviceUuid`/`characteristicUuid`，写哪个特征由位号决定。驱动并未覆写
-`execute()`，而 `command-attribute` 只在 `execute()` 路径才会被消费，因此上表声明的写命令属性是占位配置、当前写路径不读取。*
-*可写位号无需在写命令上重复填 UUID**，把它配在位号上即可。
+`execute()`，而 `command-attribute` 只在 `execute()` 路径才会被消费，因此上表声明的写命令属性是占位配置、当前写路径不读取。**可写位号无需在写命令上重复填 UUID**，把它配在位号上即可。
 :::
 
 ::: warning 写入按 UTF-8 字节下发，不做格式转换

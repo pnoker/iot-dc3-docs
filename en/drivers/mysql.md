@@ -27,8 +27,7 @@ its columns into [PointValues](../introduction/concepts/point-value) just like i
 
 This driver acts as a database client ([Driver](../introduction/concepts/driver) type `DRIVER_CLIENT`), connecting to a
 MySQL database over JDBC (`mysql-connector-j`, driver class `com.mysql.cj.jdbc.Driver`) and reading/writing values by
-the SQL configured on each [Point](../introduction/concepts/point). Its communication model is classic *
-*request-response**—the driver, as a client, actively issues queries; the database never pushes, so collection is driven
+the SQL configured on each [Point](../introduction/concepts/point). Its communication model is classic **request-response**—the driver, as a client, actively issues queries; the database never pushes, so collection is driven
 by cron polling. The shared logic for JDBC connections, connection pooling, and SQL execution lives in the abstract base
 class `AbstractJdbcDriverCustomService` (`dc3-common-sql` module), reused by all four database drivers (MySQL,
 PostgreSQL, Oracle, SQL Server), each of which only supplies JDBC URL construction and the driver class name.

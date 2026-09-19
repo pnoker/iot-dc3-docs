@@ -201,7 +201,7 @@ logging:
     name: dc3/logs/driver/knx/${spring.application.name}.log
 ```
 
-What the attribute fields mean (the prose above builds the mental model; this table is a quick reference):
+Attribute field quick reference (the meanings are explained above):
 
 | Field                 | Description                                                                                                                     |
 |-----------------------|---------------------------------------------------------------------------------------------------------------------------------|
@@ -329,8 +329,7 @@ The `status` values are defined in `EntityStatusEnum`: `ONLINE(0)` / `OFFLINE(1)
 ::: warning The device status TTL must be greater than the read cycle
 Device status is reported as a "lease": if it is not renewed before expiry, the device is judged offline. The TTL must
 be **greater than** the status-report or read cycle, otherwise the device will be judged offline between two heartbeats
-and flap repeatedly. For example, with a read cron of `0/30 * * * * ?` (every 30 seconds), the TTL should be ≥ 25
-seconds. The template's default device health `timeout: 45` seconds leaves plenty of margin.
+and flap repeatedly. For example, with a read cron of `0/30 * * * * ?` (every 30 seconds), the TTL must be greater than 30 seconds — 45 seconds or more is a safe pick. The template's default device health `timeout: 45` seconds leaves plenty of margin.
 :::
 
 ## Naming and routing: the identifier you must not change
@@ -390,7 +389,7 @@ are marked as examples):
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
   -d '{"deviceId": 1, "pointId": 1, "page": {"current": 1, "size": 10}}'
 ```
@@ -401,7 +400,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
   -d '{"deviceId": 1, "pointId": 1, "value": "42"}'
 ```
@@ -414,7 +413,7 @@ written value):
 curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=<commandId>' \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>'
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
 ```
 
 For the full command lifecycle and acknowledgment semantics, see the [Command Plane](../architecture/command-plane).

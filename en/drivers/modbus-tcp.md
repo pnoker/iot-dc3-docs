@@ -102,8 +102,7 @@ determined by the Point's `pointTypeFlag`.
 
 ::: warning Write function code: yml lists 4, the implementation honors only 2
 `application.yml` annotates the write function codes as `[5, 6, 15, 16]` with default `6`, but the current
-`ModbusTcpDriverCustomServiceImpl.writeValue()` handles only **`functionCode=1` (write single coil)** and *
-*`functionCode=3` (write single holding register)**. Any other code (including the default `6`) falls to the `default`
+`ModbusTcpDriverCustomServiceImpl.writeValue()` handles only **`functionCode=1` (write single coil)** and **`functionCode=3` (write single holding register)**. Any other code (including the default `6`) falls to the `default`
 branch and returns `false` (write failed). So set the command's `functionCode` explicitly to `3` to write a register or
 `1` to write a coil — do not keep the default `6`. The semantics of FC05/06/15/16 are not yet implemented in code — the
 code is the source of truth.

@@ -42,8 +42,7 @@ A few MQTT concepts this driver relies on repeatedly:
 - **JSON path (Path)**: a dot-notation path to locate a field in a reported payload, e.g. `$.payload` picks `payload`
   under the root, `$.eventCode` picks the event-code field.
 
-Unlike Modbus or HTTP drivers that actively connect to devices, this driver is a *
-*[Driver](../introduction/concepts/driver) of type `DRIVER_SERVER`**: it does not actively "read" devices but stays
+Unlike Modbus or HTTP drivers that actively connect to devices, this driver is a **[Driver](../introduction/concepts/driver) of type `DRIVER_SERVER`**: it does not actively "read" devices but stays
 subscribed and waits for devices to push data up. It therefore has **no device-level `driver-attribute` table**—which
 broker to connect to is deployment-level config (below), not filled per device.
 

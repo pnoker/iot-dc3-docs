@@ -19,14 +19,17 @@ import CliClassDiagram from '../../.vitepress/theme/components/CliClassDiagram.v
 ## 它是什么、给谁用
 
 `dc3-cli` 不是另一套后端，它只是一个 HTTP 客户端：所有请求都打到你配置的网关地址，路径前缀统一为 `/api/v3/*`
-（网关再聚合到鉴权、管理、数据、智能各中心）。它没有任何 Java 或构建上的耦合，装一个 Node 包即可独立运行。
+（网关再聚合到鉴权、管理、数据、Agentic 各中心）。它没有任何 Java 或构建上的耦合，装一个 Node 包即可独立运行。
 
 它面向三类人：在终端里快速查设备、读值、下发命令的**运维/接入工程师**；把平台操作写进脚本与流水线的**自动化作者**；以及让 AI
 编码工具（Claude Code、Codex、Gemini CLI 等）通过 shell 直接调用平台的 **Agent 集成方**——每个命令都支持 `--format json`
 ，输出可被程序稳定解析。
 
 ```bash
-npm install -g dc3-cli
+# dc3-cli 未发布到 npm registry——从主仓库源码安装（pnpm 项目）
+cd <iot-dc3 检出目录>/dc3-cli
+pnpm install && pnpm build
+pnpm link   # 全局可用 dc3 命令
 ```
 
 三步即可开始：配网关、登录、然后用。
@@ -100,7 +103,7 @@ dc3 auth token --header                # 以 JSON 打印完整鉴权头（排障
 ## 命令模块概览
 
 CLI 共 14 个命令模块，按对象与场景划分。配置与鉴权是入口，元数据类（device/driver/point/profile/group/label）对应管理中心的增删改查，事件/命令/告警/仪表盘对应数据与运行态，
-`chat` 则把请求转发到智能中心。
+`chat` 则把请求转发到 Agentic 中心。
 
 | 模块  | 命令前缀            | 用途                      |
 |-----|-----------------|-------------------------|
@@ -117,7 +120,7 @@ CLI 共 14 个命令模块，按对象与场景划分。配置与鉴权是入口
 | 告警  | `dc3 alert`     | 告警概览、列表、确认、趋势、Top 来源    |
 | 仪表盘 | `dc3 dashboard` | 统计、时序、拓扑、健康、实时流         |
 | 主题  | `dc3 topic`     | 主题列表                    |
-| 智能  | `dc3 chat`      | 与智能中心对话（可选流式、指定模型）      |
+| Agentic | `dc3 chat`    | 与 Agentic 中心对话（可选流式、指定模型）    |
 
 结构上，`dc3` 入口把命令行解析到 14 个命令模块，所有模块再共用同一组核心组件：HTTP 客户端、配置管理、token
 管理与凭据存储。命令模块只描述"做什么"，真正的网关请求、profile 解析、续期与密码读取都收敛在核心层。

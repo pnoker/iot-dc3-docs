@@ -57,7 +57,7 @@ make up STACK=optional SERVICES="prometheus grafana"
 
 :::
 
-EMQX 的端口在 [部署模式与镜像源](./usage) 里也会用到——MQTT 驱动连 `31883`、运维登录 Dashboard 看连接情况走 `18083`
+EMQX 的端口变量见 [环境变量详解](../quickstart/environment)——MQTT 驱动连 `31883`、运维登录 Dashboard 看连接情况走 `18083`
 。Kibana（`5601`）与 Grafana（`3000`）是两个面向人的入口：前者查日志，后者看指标。Elasticsearch、Logstash、APM、Prometheus 与两个
 exporter 都**不对宿主机发布端口**，只在 `dc3net` 内部互通——它们是后端管线，不直接给人访问。
 
@@ -72,7 +72,7 @@ exporter 都**不对宿主机发布端口**，只在 `dc3net` 内部互通——
 
 1. 先确保核心栈（dev 或 app）在跑，日志已写进 `logs` 卷。
 2. `make up-optional` 启动 ELK，Logstash 自动从 `logs` 卷读取。
-3. 浏览器打开 `http://localhost:5601` 进入 Kibana，按服务名、`tenantId`、事件名等字段检索。
+3. 浏览器打开 `http://localhost:5601` 进入 Kibana，按服务名、事件名检索；`tenantId` 目前只作为消息参数出现在正文里，只能全文匹配（字段级检索要等 MDC 接线，见[日志规范](./logging)）。
 
 ::: warning Elasticsearch 吃内存，先调堆
 Elasticsearch 与 Logstash 的 JVM 堆默认偏小，便于在开发机起得来：`DC3_ES_JAVA_OPTS` 默认 `-Xms512m -Xmx512m`，

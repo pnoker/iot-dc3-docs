@@ -189,8 +189,7 @@ workflow, see [Driver Authoring](../development/driver-authoring).
 ## How this differs from the Module Inventory page
 
 This page is about **architecture and dependencies**: what categories the modules fall into, who depends on whom, how
-the facade three-state decouples things, how drivers are grouped, and what the SDK exposes. If what you want is a *
-*per-module purpose quick reference** — a one-line description for each `dc3-common-*` / `dc3-api-*` submodule — go to
+the facade three-state decouples things, how drivers are grouped, and what the SDK exposes. If what you want is a **per-module purpose quick reference** — a one-line description for each `dc3-common-*` / `dc3-api-*` submodule — go to
 the [Module Inventory](../modules/). That page is reference material; this one is the mental model.
 
 ## Further reading

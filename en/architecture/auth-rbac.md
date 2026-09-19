@@ -93,7 +93,7 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
 curl -s -X POST http://localhost:8000/api/v3/manager/device/add \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
   -d '{"deviceName":"...","driverId":...,"profileId":...}'
 ```

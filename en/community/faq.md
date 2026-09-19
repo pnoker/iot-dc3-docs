@@ -149,14 +149,13 @@ For production, configure pgBackRest or scheduled pg_dump tasks with offsite sto
 
 1. Read the [Driver Development Guide](../development/driver-authoring).
 2. Copy the closest existing driver module under `dc3-driver/` as a template.
-3. Implement the `read()`, `write()`, and (optionally) `subscribe()` methods required by the Driver SDK.
+3. Implement the `read()` and `write()` methods required by the Driver SDK (optional hooks such as custom scheduling and health checks are covered in the driver guide).
 4. Add the driver service configuration to `dc3/docker-compose.yml`.
 5. Write documentation (follow the format of existing driver doc pages).
 
 ### Does a driver have to be written in Java?
 
-The Driver SDK itself is in Java, but you can also implement device access in any language via **MQTT bridging** or *
-*HTTP proxy**. A non-Java program publishes data to an MQTT topic → the MQTT driver subscribes → data enters the
+The Driver SDK itself is in Java, but you can also implement device access in any language via **MQTT bridging** or **HTTP proxy**. A non-Java program publishes data to an MQTT topic → the MQTT driver subscribes → data enters the
 platform pipeline. However, this approach loses the SDK's built-in state management, automatic reconnection, and health
 reporting capabilities.
 

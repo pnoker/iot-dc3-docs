@@ -75,8 +75,7 @@ event parameter is exactly identical to a [Point](./point) data type.
 
 A single report (`EventReportDTO`) carries: `recordId` (UUID), `deviceId`, `eventId`, `eventCode`, `eventTypeFlag`,
 `eventLevelFlag`, `paramValues`, `message`, `occurTime`. The data center first persists it as a **raw record** in
-`dc3_event_history`, then submits it to the alarm rule engine; only when a rule matches does it create/update a *
-*runtime alarm** in `dc3_entity_alarm`.
+`dc3_event_history`, then submits it to the alarm rule engine; only when a rule matches does it create/update a **runtime alarm** in `dc3_entity_alarm`.
 
 ::: warning An EventHistory is not an alarm
 `dc3_event_history` is the raw record of "what the device said happened"—**logged on every report**; `dc3_entity_alarm`

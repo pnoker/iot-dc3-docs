@@ -17,8 +17,7 @@ A point value answers "what is this quantity **now / at that moment**." A [point
 the template (this kind of device has an "outlet temperature" measurement); a point value is the "reading" of that
 column across rows over time—one point produces thousands upon thousands of point values as time passes.
 
-It is the complementary upstream counterpart to an [event](./event): a point value is a periodic sample of a *
-*continuous value** (a temperature reading every second), an event is a discrete **business occurrence** ("
+It is the complementary upstream counterpart to an [event](./event): a point value is a periodic sample of a **continuous value** (a temperature reading every second), an event is a discrete **business occurrence** ("
 over-temperature alarm" fired once). For a door-access device, "temperature = 25.3℃" is a point value; "door was forced
 open" is an event.
 

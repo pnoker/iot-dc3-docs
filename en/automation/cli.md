@@ -32,7 +32,10 @@ integrators** who let AI coding tools (Claude Code, Codex, Gemini CLI, and other
 Every command supports `--format json`, so the output is reliable for programs to parse.
 
 ```bash
-npm install -g dc3-cli
+# dc3-cli is not published to the npm registry - install from the main repo source (a pnpm project)
+cd <iot-dc3 checkout>/dc3-cli
+pnpm install && pnpm build
+pnpm link   # makes the dc3 command globally available
 ```
 
 Three steps to get going: configure the gateway, log in, then use it.

@@ -67,10 +67,10 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -d '{"tenant":"default","name":"dc3"}'
 # Example response: {"ok":true,"code":"...","message":"...","data":"a1b2c3d4e5"}
 
-# 2) Hash the password with the salt and exchange it for a token (see the auth docs for the hashing algorithm; PASSWORD_HASH here is an example)
+# 2) Submit the plaintext password together with the salt for a token (the salt does not hash the password; verification is server-side)
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4e5","password":"<PASSWORD_HASH>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4e5","password":"<plaintext password>"}'
 # Example response: {"ok":true,"code":"...","message":"...","data":"<ACCESS_TOKEN>"}
 ```
 

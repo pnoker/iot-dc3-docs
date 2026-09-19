@@ -46,8 +46,7 @@ then compose them per scenario.
 ### Application protocols: how messages are organized and delivered
 
 **MQTT** is the de facto messaging bus of IoT. At its core is the **publish/subscribe (pub/sub)** model: a device does
-not talk to the platform directly—it **publishes** messages to a **topic**, and the platform receives them by *
-*subscribing** to those topics. The two sides are decoupled through an intermediate **broker** (a message relay server
+not talk to the platform directly—it **publishes** messages to a **topic**, and the platform receives them by **subscribing** to those topics. The two sides are decoupled through an intermediate **broker** (a message relay server
 such as EMQX, Mosquitto, or the RabbitMQ MQTT plugin); neither needs the other's address, nor for both to be online at
 once. This "pushed by subscription rather than polled" semantics is precisely what makes massive-device scenarios
 power-efficient and horizontally scalable.
@@ -63,8 +62,7 @@ publishing and subscribing sides, with the weaker side prevailing:
   most reliable and the heaviest, suited to non-repeatable critical commands.
 
 Two more common mechanisms: **retain** lets the broker cache the "last" message for each topic, so a new subscriber
-receives the current value the moment it connects rather than waiting for the next report—ideal for "state" topics; *
-*LWT (Last Will and Testament)** lets the broker send a preset message on the device's behalf when it disconnects
+receives the current value the moment it connects rather than waiting for the next report—ideal for "state" topics; **LWT (Last Will and Testament)** lets the broker send a preset message on the device's behalf when it disconnects
 abnormally, so the platform can detect the offline state.
 
 On versioning, **MQTT 3.1.1** has long been the mainstream; **MQTT 5.0** adds enhancements such as reason codes (making

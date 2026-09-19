@@ -134,9 +134,14 @@ namespace Compose actually reads:
 | `global`         | `pnoker` (Docker Hub)                                                                     | Overseas / general networks                    |
 | `cn`             | `registry.cn-beijing.aliyuncs.com/dc3` (Aliyun)                                           | Mainland China, faster pulls                   |
 
-Any other value fails with `Unsupported REGISTRY`. The image version is controlled by `DC3_IMAGE_TAG` (default
-`2026.6`) — all services and dependency images share the same tag. In production, pin a specific version rather than
+Any other value fails with `Unsupported REGISTRY`. The image version is controlled by `DC3_IMAGE_TAG` (default `2026.6`) — apart from `dc3-web` (which only has `latest` and full-version tags, no series tag), services and dependency images share the same tag. In production, pin a specific version rather than
 `latest`.
+
+::: warning The default tag may not be published yet
+The current image line on Docker Hub is `2026.5` (latest `2026.5.22`); the default `2026.6` has not shipped yet. Bringing
+up the `app` stack with the default fails to pull — set `DC3_IMAGE_TAG` to a released version (e.g. `2026.5.22`) in the
+root `.env` first.
+:::
 
 ::: code-group
 

@@ -25,8 +25,7 @@ decide" actions: Which device went offline? How has this point trended over the 
 back? Each step maps to an HTTP endpoint, but chaining them by hand is slow and error-prone.
 
 The Agentic Center hands this "understand intent → pick the right tool → fetch data → answer" layer to the LLM. Built on
-Spring AI's `ChatClient`, it exposes an OpenAI-compatible chat interface externally while hosting a set of *
-*tenant-isolated built-in tools** internally. Within a single conversation, the model decides which tools to call and in
+Spring AI's `ChatClient`, it exposes an OpenAI-compatible chat interface externally while hosting a set of **tenant-isolated built-in tools** internally. Within a single conversation, the model decides which tools to call and in
 what order, then explains the conclusion in plain language.
 
 AI isn't a prerequisite for device onboarding. Get the device, point, data, and command chains working end to end first,

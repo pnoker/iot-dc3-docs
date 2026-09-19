@@ -34,8 +34,7 @@ IoT DC3 用四个 Compose 栈拼出完整环境：`db` 起依赖、`dev` 从源�
 
 ## 部署拓扑：谁对外、谁只在内网
 
-下图给出四栈如何叠加，以及 ingress 边界——**生产形态（app 栈）只有 `dc3-web` 和 `dc3-driver-listening-virtual` 发布到宿主机
-**，网关与四个中心都在内部 `dc3net` 网络里，靠前端反代或内部调用访问，不直接对外。
+下图给出四栈如何叠加，以及 ingress 边界——**生产形态（app 栈）只有 `dc3-web` 和 `dc3-driver-listening-virtual` 发布到宿主机**，网关与四个中心都在内部 `dc3net` 网络里，靠前端反代或内部调用访问，不直接对外。
 
 <UsageStackDiagram lang="zh" />
 
@@ -105,7 +104,7 @@ make down STACK=dev                   # 停 dev 栈，保留数据
 make reset STACK=db CONFIRM_RESET_VOLUMES=true
 ```
 
-生产环境慎用。删卷后下次起库会重新跑一遍 initdb 种子脚本（见末节）。
+生产环境慎用。删卷后下次起库会重新跑一遍 initdb 种子脚本（见下文"种子数据"一节）。
 :::
 
 ## 镜像源：REGISTRY 选仓库，DC3_IMAGE_TAG 选版本
@@ -118,8 +117,11 @@ make reset STACK=db CONFIRM_RESET_VOLUMES=true
 | `global`   | `pnoker`（Docker Hub）                            | 海外/通用网络           |
 | `cn`       | `registry.cn-beijing.aliyuncs.com/dc3`（阿里云）     | 中国大陆，拉取更快         |
 
-传入其它值会直接报错 `Unsupported REGISTRY`。镜像版本由 `DC3_IMAGE_TAG`（默认 `2026.6`）统一控制——所有服务与依赖镜像共用同一个
-tag，生产建议钉死具体版本而非 `latest`。
+传入其它值会直接报错 `Unsupported REGISTRY`。镜像版本由 `DC3_IMAGE_TAG`（默认 `2026.6`）统一控制——除 `dc3-web`（只有 `latest` 与完整版本号 tag，无系列 tag）外，服务与依赖镜像共用同一个 tag，生产建议钉死具体版本而非 `latest`。
+
+::: warning 默认 tag 可能尚未发布
+Docker Hub 上的当前版本线是 `2026.5`（最新 `2026.5.22`），默认的 `2026.6` 尚未发布。直接用默认值起 app 栈会拉取失败——起栈前先把根目录 `.env` 的 `DC3_IMAGE_TAG` 改成已发布版本（如 `2026.5.22`）。
+:::
 
 ::: code-group
 
@@ -192,7 +194,7 @@ curl -s -X POST http://127.0.0.1:8000/api/v3/auth/token/generate \
 
 ## 完整命令与镜像参考
 
-下面折叠的是 `dc3/doc/USAGE.md` 的完整原文，列出所有 `make` 快捷命令与每个服务在 Docker Hub / 阿里云两套仓库的镜像坐标，作为操作时的速查表。
+下面折叠的是 `dc3/doc/USAGE.md` 的完整原文，列出常用 `make` 命令示例与每个服务在 Docker Hub / 阿里云两套仓库的镜像坐标，作为操作时的速查表。
 
 ::: details 展开完整命令与镜像清单
 <!--@include: ../../dc3/doc/USAGE.md-->

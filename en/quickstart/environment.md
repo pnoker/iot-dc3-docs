@@ -209,7 +209,7 @@ process's internal ports use `TCP_PORT` and `UDP_PORT` (Per-process). Don't conf
 ### Agentic / AI (Runtime)
 
 The `AGENTIC_FALLBACK_OPENAI_*` group only kicks in as a fallback when `dc3_model_provider` has no usable provider
-configured. Conversation memory is off by default.
+configured. Conversation memory is off by default on the `.env.example` injection path (the in-code default is on; see the note below).
 
 | Variable                              | Default                        | Purpose                                                                         |
 |---------------------------------------|--------------------------------|---------------------------------------------------------------------------------|

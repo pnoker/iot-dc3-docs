@@ -41,8 +41,7 @@ once you see that they are all "read/write a value in some address space," the h
 
 ## Key Technologies & Trade-offs
 
-Set syntax details aside and the differences between industrial protocols concentrate in four dimensions: *
-*communication model, addressing, byte order and data types, and polling cadence**. Grasp these four and any unfamiliar
+Set syntax details aside and the differences between industrial protocols concentrate in four dimensions: **communication model, addressing, byte order and data types, and polling cadence**. Grasp these four and any unfamiliar
 protocol becomes approachable.
 
 ### Three communication models

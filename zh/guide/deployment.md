@@ -79,7 +79,7 @@ docker stack rm dc3
 
 ## 形态四：Kubernetes（kustomize）
 
-`dc3/deploy/k8s/` 提供生产级 manifests：gateway/web 带 CPU 自动扩缩（HPA）与 PodDisruptionBudget，滚动更新
+`dc3/deploy/k8s/` 提供生产级 manifests：gateway/web 带 CPU 自动扩缩（HPA），所有无状态服务带 PodDisruptionBudget，滚动更新
 `maxUnavailable: 0`，postgres/rabbitmq 为 StatefulSet + PVC，Ingress 路由 `/api/` → 网关、`/` → web。
 前置条件：集群要有默认 StorageClass（postgres/rabbitmq 的 PVC 才能绑定），且已装 ingress controller（`/api/` 与
 `/` 的路由走 Ingress）：
@@ -118,7 +118,7 @@ gateway 另有 HPA（gateway 2–10、web 1–5），个别行见括注。
 | `web` | Compose 下 1 副本（占用宿主端口） | 要更多容量：Compose 在前面放自己的 LB；swarm 以 ingress 发布可多副本；k8s / helm 交给 HPA + Ingress |
 | `gateway` | ✅ | `dc3-web` 里的 nginx 把 `dc3-gateway` 解析到全部副本并轮询（Compose / Swarm 下扩容后重启 web 刷新地址；k8s 下 web 指向 Service，无需重启） |
 | 四个中心 | ✅（HA 语义） | 网关的 HTTP 路由由 Spring Cloud Gateway 负载均衡；中心间 gRPC 是固定目标的一个长连接——副本重启会切换，但连接不做请求级均衡 |
-| 驱动 | ⚠️ 按驱动评估 | 每个副本独立注册 node、各持一条 RabbitMQ 队列（命令按 node 定向路由），**不是**共享队列分摊——多副本相当于多开一份实例，多数驱动会重复连同一批设备 |
+| 驱动 | ⚠️ 分形态 | Compose/Swarm 保持 1 副本（副本共享 `driver_data` 卷、同时打开同一 SQLite outbox 文件）；k8s 每 Pod 独立 `emptyDir`，可扩——但每个副本独立注册 node、各持一条队列，多副本相当于多开实例，会重复连同一批设备 |
 | `listening-virtual` | ❌ 必须 1 副本 | 入站设备连接钉死在单个容器，多副本时设备连到哪一台不可控 |
 | postgres / rabbitmq | ❌ 有状态单例 | 高可用请用托管服务或自建主从/集群 |
 
@@ -145,8 +145,7 @@ CI 的 `PROFILE=pro` 只是构建参数（Maven `-P pro`）；**运行时 Spring
    [FAQ](../community/faq) 的硬件建议规划容量（全栈最低 8 核 / 16GB / 100GB SSD）。
 4. **高可用**：PostgreSQL 主备或托管实例 + RabbitMQ 集群；swarm/k8s 多节点时有状态卷放共享存储。
 5. **可观测**：叠加 [可观测性](./observability)（Prometheus + Grafana + ELK），对就绪/存活探针告警。
-6. **网络**：出口收敛（中心只需访问 LLM 端点）、后端端口不映射宿主；k8s 开启 Pod Security Admission `baseline`（
-   manifests 未内置，需自行 `kubectl label ns dc3 pod-security.kubernetes.io/enforce=baseline`）。
+6. **网络**：出口收敛（中心只需访问 LLM 端点）、后端端口不映射宿主；k8s 开启 Pod Security Admission `baseline`（manifests 未内置，需自行 `kubectl label ns dc3 pod-security.kubernetes.io/enforce=baseline`）。
 7. **API 面**：Swagger/OpenAPI 只在 `pro` profile 下关闭（构建参数不决定运行行为，见上方 warning），上线前确认
    `NODE_ENV=pro` 已生效、且无调试端点可达。
 
@@ -154,8 +153,7 @@ CI 的 `PROFILE=pro` 只是构建参数（Maven `-P pro`）；**运行时 Spring
 
 - **中心扩了副本为什么 gRPC 不是每条请求都均衡？** 见上文「中心间 gRPC 的均衡边界」：`static://` 固定目标、单通道，
   副本提供的是故障切换与滚动安全；HTTP 每一层（nginx → 网关 → 中心）都是均衡的。
-- **驱动可以 2 副本吗？** 慎重。副本不是共享队列的 worker——每个副本独立注册 node、各持一条队列，相当于多开一份
-  驱动实例，通常会重复连同一批设备。确有按设备/通道分片的需求再按驱动评估；`listening-virtual` 持有入站设备连接，
+- **驱动可以 2 副本吗？** 分形态。Compose/Swarm 下不行——副本共享 `driver_data` 卷、同时打开同一 SQLite outbox 文件，必须保持 1 副本；k8s 下每 Pod 独立 `emptyDir`，可以扩，但副本不是共享队列的 worker——每个副本独立注册 node、各持一条队列，相当于多开一份驱动实例，会重复连同一批设备。`listening-virtual` 持有入站设备连接，
   必须保持 1 副本。
 - **PostgreSQL / RabbitMQ 可以多副本吗？** 本仓库配置不支持——它们是有状态单例。要 HA 就用托管服务，然后把 ConfigMap/环境变量指过去。
 - **k8s / helm 需要依赖镜像吗？** 需要；先用 `scripts/push-images.sh` 构建推送（单节点集群也可 `kind load`）。

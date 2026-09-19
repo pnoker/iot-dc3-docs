@@ -44,7 +44,7 @@ If you use IntelliJ IDEA (Community or Ultimate), these steps set the project up
 ### 2. Install the EnvFile plugin
 
 1. **Settings → Plugins → Marketplace**, search for **EnvFile**, install and restart
-2. Open each service's Run Configuration, go to the **EnvFile** tab, click `+`, and add `dc3/env/dev.env`
+2. The EnvFile wiring happens in step 3 below, when the run configurations are created
 
 ### 3. Configure the run entries
 
@@ -69,10 +69,10 @@ the EnvFile tab:
 - **Lombok shows errors**: Settings → Annotation Processors → check **Enable annotation processing**
 - **Maven indexing hangs**: File → Invalidate Caches → Invalidate and Restart
 - **EnvFile not taking effect**: check that `dev.env` is ticked on the Run Configuration's EnvFile tab
-- **Port already in use**: find it with `lsof -i :8000` and override `SERVER_PORT` in the Run Configuration's
+- **Port already in use**: find it with `lsof -i :8000` (Windows: `netstat -ano | findstr :8000`) and override `SERVER_PORT` in the Run Configuration's
   Environment variables
 
-## Why These Five Steps
+## Why the CLI five steps are in this order
 
 The shortest path to a running local stack is five steps. Each step produces a concrete artifact, and each depends on
 the previous one: you need the infrastructure up before you can load the environment variables that point at it; you
@@ -193,7 +193,7 @@ all other backend ports are internal.
 :::
 
 To verify: once the stack is up, run the login golden path against the gateway. Login takes two steps — first fetch the
-salt, then exchange the salt-hashed password for a 12-hour access token:
+salt, then submit the plaintext password together with it for a 12-hour access token (the salt does not hash the password; verification is server-side):
 
 ```bash
 # 1) Fetch the salt (public endpoint; use within 5 minutes)
@@ -201,10 +201,10 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'      # returns the salt string (sample value)
 
-# 2) Hash the password with the salt and exchange it for a token (public endpoint, access token valid for 12 hours)
+# 2) Submit the plaintext password together with the salt for a token (public endpoint, access token valid for 12 hours)
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<salt from the previous step>","password":"<salt-hashed password>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<salt from the previous step>","password":"<plaintext password>"}'
 ```
 
 Once you have the token, every protected endpoint goes through the gateway with the three auth headers `X-Auth-Tenant`,
@@ -248,5 +248,5 @@ value.
   default value of each variable
 - [First Device: End to End](./first-device) — the shortest loop from creating a driver to reading and writing points
   after login
-- [System Architecture Overview](../architecture/) — how the five center services divide responsibilities, and how data
+- [System Architecture Overview](../architecture/) — how the gateway and four center services divide responsibilities, and how data
   and commands flow

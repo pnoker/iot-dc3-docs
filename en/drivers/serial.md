@@ -16,8 +16,7 @@ for a "send some bytes, get some bytes back" device, and know where to look when
 
 ## Protocol background
 
-Serial is the plainest yet most universal way to wire up the industrial floor. **RS232** point-to-point and *
-*RS485/RS422** buses are widely used by meters, transmitters, energy meters, barcode scanners, PLC serial modules, and
+Serial is the plainest yet most universal way to wire up the industrial floor. **RS232** point-to-point and **RS485/RS422** buses are widely used by meters, transmitters, energy meters, barcode scanners, PLC serial modules, and
 more. It only defines the physical and link layers — what voltage levels, how many wires, what baud rate to send and
 receive bytes at — and **says nothing about what the bytes mean**. Many devices do not speak a standard protocol like
 Modbus but a vendor-proprietary frame: send a fixed byte string, get a fixed-structure byte string back.

@@ -114,8 +114,7 @@ warn 日志、不影响其他消息。批量消息走 `receiveValues()` 合并�
 
 ::: warning 它是服务端，不会去"连"设备
 `DRIVER_SERVER`
-意味着驱动等设备把数据推上来，而不是主动轮询。如果迟迟收不到[位号值](../introduction/concepts/point-value)，*
-*先确认设备端是否真的在往订阅主题发布**、主题字符串两端是否完全一致（含大小写与层级 `/`），而不是去查驱动的"采集周期"
+意味着驱动等设备把数据推上来，而不是主动轮询。如果迟迟收不到[位号值](../introduction/concepts/point-value)，**先确认设备端是否真的在往订阅主题发布**、主题字符串两端是否完全一致（含大小写与层级 `/`），而不是去查驱动的"采集周期"
 ——本驱动定时读取默认就是关的（`schedule.read.enable=false`）。
 :::
 
@@ -139,8 +138,7 @@ warn 日志、不影响其他消息。批量消息走 `receiveValues()` 合并�
 - **能力**（与[驱动能力矩阵](./matrix)一致）：读 `—`、写 `✓`、订阅/上报 `✓`——值经订阅被动到达，无主动读；命令可下发、事件可上报。
 
 ::: info 实现状态：数据接收、命令下发与健康检查已实现，`initial()` 为骨架
-据 `MqttDriverCustomServiceImpl` 与 `MqttReceiveServiceImpl` 源码：**数据接收**（解析为位号值并转发、事件上报与主题匹配）、*
-*写命令**（`write()` / `execute()` 发布报文、QoS 回退、模板渲染）、**`health()` 健康检查**（监听 `MqttSubscribedEvent` /
+据 `MqttDriverCustomServiceImpl` 与 `MqttReceiveServiceImpl` 源码：**数据接收**（解析为位号值并转发、事件上报与主题匹配）、**写命令**（`write()` / `execute()` 发布报文、QoS 回退、模板渲染）、**`health()` 健康检查**（监听 `MqttSubscribedEvent` /
 `MqttConnectionFailedEvent`，实时反映 broker 连接态）均已实现；`read()` 按 pub/sub 语义恒返回 `null`
 （数据靠订阅被动到达，非缺陷）。仍为参考桩的是 `initial()` 空的初始化模板。
 :::

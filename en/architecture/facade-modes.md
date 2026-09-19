@@ -22,8 +22,7 @@ not transport protocol — and why business code never has to change when you fl
 First, the common misreading: `dc3.facade.mode` is not a "gRPC vs REST" transport pick. It's a choice about how many
 processes the center services **run as**.
 
-Business code never touches the other side's gRPC stubs or protobuf classes directly. It depends on a set of *
-*protocol-neutral `*Facade` interfaces** — contracts defined in `dc3-common-facade-api` (16 interfaces such as
+Business code never touches the other side's gRPC stubs or protobuf classes directly. It depends on a set of **protocol-neutral `*Facade` interfaces** — contracts defined in `dc3-common-facade-api` (16 interfaces such as
 `DeviceFacade`, `PointValueFacade`, `TenantFacade`, `PermissionFacade`, and so on). Each interface has two
 implementations, and one is selected and wired at startup based on the value of `dc3.facade.mode`:
 

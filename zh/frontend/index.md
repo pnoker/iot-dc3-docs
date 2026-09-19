@@ -4,7 +4,9 @@ title: 前端开发
 
 # 前端开发
 
-IoT DC3 前端基于 **Vue 3 + TypeScript + Vite + Element Plus** 构建，源码位于仓库的 `dc3-web/` 目录。
+> 你在这里：想参与 `dc3-web/` 前端开发，或本地跑通它的构建与测试。只想使用平台，看 [运营概览](../operation/)。
+
+IoT DC3 前端基于 **Vue 3 + TypeScript + Vite + Element Plus** 构建，源码位于主仓库（iot-dc3）根目录的 `dc3-web/`，是一个独立的 pnpm 项目。
 
 ## 环境准备
 
@@ -129,8 +131,8 @@ CI 门禁：`pnpm lint && pnpm type-check && pnpm test && pnpm build`
 
 前端环境变量在 `src/config/env/` 下按模式组织：
 
-```typescript
-// .env.development
+```properties
+# dc3-web/.env.development（开发请求代理以 vite.config.ts 的 proxy 为准；本值供代码内直接引用）
 VITE_API_BASE_URL=http://localhost:8000
 VITE_APP_TITLE=IoT DC3 (Dev)
 ```

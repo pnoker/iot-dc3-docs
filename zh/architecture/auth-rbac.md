@@ -77,7 +77,7 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
 curl -s -X POST http://localhost:8000/api/v3/manager/device/add \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token>' \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
   -d '{"deviceName":"...","driverId":...,"profileId":...}'
 ```
@@ -90,8 +90,7 @@ curl -s -X POST http://localhost:8000/api/v3/manager/device/add \
 <AuthSequenceDiagram lang="zh" />
 
 网关侧（`AuthenticGatewayFilter`）：身份解析是阻塞式 gRPC 调用，整体放到 `boundedElastic` 线程池执行，避免占住 Netty 事件循环。解析出
-`PrincipalHeader` 后序列化为 `X-Auth-Principal`；若 HMAC 已启用，再写入 `X-Auth-Sign`；*
-*若未启用，则主动删除任何入站的 `X-Auth-Sign` 头**，防止下游被客户端自带的假签名诱骗。
+`PrincipalHeader` 后序列化为 `X-Auth-Principal`；若 HMAC 已启用，再写入 `X-Auth-Sign`；**若未启用，则主动删除任何入站的 `X-Auth-Sign` 头**，防止下游被客户端自带的假签名诱骗。
 
 后端侧（`GatewayJwtConverter`）：
 
@@ -134,8 +133,7 @@ curl -s -X POST http://localhost:8000/api/v3/manager/device/add \
 
 ## RBAC：从身份到资源码
 
-验签拿到 principal 之后，要决定它"能做什么"。IoT DC3 用经典的"主体—角色—资源"三段绑定，但刻意把两段的作用域分开：角色归属是*
-*租户内**的，资源授权是**全局**的。
+验签拿到 principal 之后，要决定它"能做什么"。IoT DC3 用经典的"主体—角色—资源"三段绑定，但刻意把两段的作用域分开：角色归属是**租户内**的，资源授权是**全局**的。
 
 <AuthDecisionFlowDiagram lang="zh" />
 

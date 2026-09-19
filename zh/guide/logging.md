@@ -197,5 +197,5 @@ make logs
 ## 延伸阅读
 
 - [可观测性](./observability) — 日志、指标、追踪如何协同，以及 ELK/Grafana 栈怎么起
-- [故障排查](./troubleshooting) — 拿到 `traceId`/`tenantId` 后如何定位一次失败
+- [故障排查](./troubleshooting) — 起不来、连不上时按日志关键字定位问题
 - [env 目录](../quickstart/environment) — `DC3_LOG_*` 与 `DC3_SECURITY_KEY`/`AUTH_HMAC_SECRET` 等变量的来源与边界

@@ -25,8 +25,7 @@ IoT DC3 把整个平台的 HTTP 能力自动聚合成一份 MCP（Model Context 
 协议发现和调用，鉴权、租户、权限、风险确认全部在网关与鉴权中心收口。
 
 这条链路有三个角色：**鉴权中心（Auth Center / `dc3-center-auth`）** 兼做 OAuth 2.1 授权服务器，负责发 token、做内省、聚合工具目录；
-**网关（Gateway / `dc3-gateway`）** 是 MCP Resource Server，承载 `POST /mcp`，每次调用都重新校验权限并签名转发到后端；后端的*
-*管理中心 / 数据中心 / 智能中心**才真正执行业务。Agent 只跟前两者打交道。
+**网关（Gateway / `dc3-gateway`）** 是 MCP Resource Server，承载 `POST /mcp`，每次调用都重新校验权限并签名转发到后端；后端的**管理中心 / 数据中心 / 智能中心**才真正执行业务。Agent 只跟前两者打交道。
 
 ## 工具目录怎么来：自动聚合，稳定 tool_id
 
