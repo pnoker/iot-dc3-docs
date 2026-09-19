@@ -173,6 +173,12 @@ read path only supports 16-bit types (see its driver page). Before onboarding, d
 each driver page.
 :::
 
+## References
+
+1. Sun Hao, et al. *The Soul of IoT: IoT Protocols and IoT Operating Systems* [M]. Beijing: China Machine Press, 2019.
+   ISBN 978-7-111-62931-3. (ch. 1 §1.14.2 protocol converter over fieldbus, p165 — master/slave model and Modbus
+   function codes; §1.6.1–1.6.2 HTTP, p49/p51 — client-server model; §1.13.2 publish-and-subscribe, p155)
+
 ## Further Reading
 
 - [IoT Protocols & Wireless Networks](./iot-protocols) — the wireless side of the network layer: MQTT, CoAP, LwM2M,

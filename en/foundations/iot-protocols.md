@@ -220,6 +220,15 @@ each have a corresponding driver (see the "IoT / Wireless" group in the [Drivers
 endpoints are usually first aggregated into a broker or REST gateway, then onboarded uniformly through DC3's
 MQTT/CoAP/HTTP drivers—the concrete product form of the "unified protocol-adaptation layer" described above.
 
+## References
+
+1. Sun Hao, et al. *The Soul of IoT: Protocols and IoT Operating Systems* [M]. Beijing: China Machine Press, 2019.
+   ISBN 978-7-111-62931-3. (ch. 1 §1.4.2 CoAP p39–40, §1.4.3 MQTT p41, §1.12.3 NB-IoT power-saving p119)
+2. Jiang Linhua. *5G IoT and NB-IoT Technology Explained* [M]. Beijing: Publishing House of Electronics Industry, 2018.
+   ISBN 978-7-121-33831-1. (ch. 2 §2.5.2 LoRaWAN p71, §2.3 IoT technology taxonomy p58)
+3. Huang Yuhong, Yang Guang (eds.). *NB-IoT Technology Analysis and Case Studies* [M]. Beijing: China Machine Press,
+   2018. ISBN 978-7-111-60888-2. (ch. 1 §1.3 table 1.2: bandwidth/coverage/power/bit-rate comparison, p5)
+
 ## Further Reading
 
 - [Fieldbuses & Industrial Protocols](./fieldbus) — the other half of the network layer: close-range, strongly

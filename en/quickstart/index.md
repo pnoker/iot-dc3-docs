@@ -30,6 +30,48 @@ build toolchain plus a container runtime.
   work.
 - **Podman** — every container operation in this repository uses `podman` (`make` defaults to `podman compose`).
 
+## Developing in JetBrains IDEA
+
+If you use IntelliJ IDEA (Community or Ultimate), these steps set the project up from scratch.
+
+### 1. Open the project
+
+1. **File → Open** (not New → Project from Existing Sources)
+2. Select the `pom.xml` at the repository root
+3. In the dialog, choose **Open as Project**
+4. Wait for Maven indexing to finish (progress bar bottom-right; 2–5 minutes the first time)
+
+### 2. Install the EnvFile plugin
+
+1. **Settings → Plugins → Marketplace**, search for **EnvFile**, install and restart
+2. Open each service's Run Configuration, go to the **EnvFile** tab, click `+`, and add `dc3/env/dev.env`
+
+### 3. Configure the run entries
+
+Open an entry class, click the green button next to `main` → **Modify Run Configuration**, and add `dc3/env/dev.env` on
+the EnvFile tab:
+
+| Service        | Entry class            | Module                              |
+|----------------|------------------------|-------------------------------------|
+| Gateway        | `GatewayApplication`   | `dc3-gateway`                       |
+| Auth Center    | `AuthApplication`      | `dc3-center/dc3-center-auth`        |
+| Manager Center | `ManagerApplication`   | `dc3-center/dc3-center-manager`     |
+| Data Center    | `DataApplication`      | `dc3-center/dc3-center-data`        |
+| Agentic Center | `AgenticApplication`   | `dc3-center/dc3-center-agentic`     |
+
+### 4. Startup order
+
+1. **Auth Center** (8300) → 2. **Manager Center** (8400) → 3. **Data Center** (8500) → 4. **Agentic Center** (8600) →
+5. **Gateway** (8000)
+
+### 5. Common problems
+
+- **Lombok shows errors**: Settings → Annotation Processors → check **Enable annotation processing**
+- **Maven indexing hangs**: File → Invalidate Caches → Invalidate and Restart
+- **EnvFile not taking effect**: check that `dev.env` is ticked on the Run Configuration's EnvFile tab
+- **Port already in use**: find it with `lsof -i :8000` and override `SERVER_PORT` in the Run Configuration's
+  Environment variables
+
 ## Why These Five Steps
 
 The shortest path to a running local stack is five steps. Each step produces a concrete artifact, and each depends on

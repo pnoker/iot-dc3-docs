@@ -30,6 +30,11 @@ M-Bus 是欧洲远程抄表标准，主站发短帧按主地址寻址，仪表�
 | Record Index | recordIndex | INT | 0 | 数据记录 0 基索引 |
 | Data Format | dataFormat | STRING | FLOAT | FLOAT, HEX, ASCII |
 
+## 采集与健康
+
+- **采集周期**：`read` 调度默认 cron `0/30 * * * * ?`（每 30 秒对所有位号跑一轮轮询）。
+- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`。
+
 ## 能力矩阵
 
 | 能力 | 支持 |

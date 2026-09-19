@@ -37,6 +37,11 @@ DNP3（IEEE 1815）是北美电力 SCADA 主流协议，主站连接从站、轮
 | Point Index | pointIndex | INT | 0 | 命令点索引 |
 | Point Type | pointType | STRING | BINARY_OUTPUT | BINARY_OUTPUT 或 ANALOG_OUTPUT |
 
+## 采集与健康
+
+- **采集周期**：`read` 调度默认 cron `0/30 * * * * ?`。
+- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`。
+
 ## 能力矩阵
 
 | 能力 | 支持 |

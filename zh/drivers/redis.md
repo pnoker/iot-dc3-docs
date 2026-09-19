@@ -28,6 +28,11 @@ Redis 是内存键值存储，本驱动把位号映射到键（HASH 时可选字
 | Data Type | dataType | STRING | STRING | STRING 或 HASH |
 | Field | field | STRING | （空） | Hash 字段 |
 
+## 采集与健康
+
+- **采集周期**：`read` 调度默认 cron `0/30 * * * * ?`（每 30 秒对所有位号跑一轮轮询）。
+- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`。
+
 ## 能力矩阵
 
 | 能力 | 支持 |

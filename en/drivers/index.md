@@ -12,6 +12,17 @@ title: Drivers
 For the general onboarding flow see [Device Onboarding](../operation/device-onboarding); for the driver model see
 the [Driver](../introduction/concepts/driver) concept. Pick your protocol by category below:
 
+## The protocol adaptation layer
+
+The device world speaks heterogeneous, siloed protocols: Modbus master/slave, the OPC UA address space, MQTT
+pub/sub, vendor-specific PLC frames, SQL result sets — with no shared addressing and no shared wire format. The 28
+drivers each act as a **sensing-data convergence point** at the network layer (see Wen Zhe & Fan Yabin, *Research and
+Application of Four-Network Convergence Technology Based on the Internet of Things*, Jilin People's Publishing House,
+2016, ch. 1 §3, p13), folding reads and writes across those protocols into unified [point](../introduction/concepts/point)
+values — the "unified data modeling and communication-channel management" of the application layer in the three-tier
+IoT architecture (ibid., p13). Upper-layer applications consume normalized points only and never see the protocol
+differences underneath.
+
 ## Industrial Bus / PLC / SCADA
 
 | Driver                       | Protocol          | Notes                           |
@@ -72,6 +83,11 @@ the [Driver](../introduction/concepts/driver) concept. Pick your protocol by cat
 |------------------------------------------|--------------------------------------------------------------------------|
 | [Virtual](./virtual)                     | Generate simulated data with no real device — for demos and load testing |
 | [Listening Virtual](./listening-virtual) | Listen on a port for device pushes — for integration testing             |
+
+## References
+
+Wen Zhe, Fan Yabin. *Research and Application of Four-Network Convergence Technology Based on the Internet of Things*
+[M]. Changchun: Jilin People's Publishing House, 2016. ISBN 978-7-206-12410-5. (ch. 1 §3, p13)
 
 ## Further Reading
 

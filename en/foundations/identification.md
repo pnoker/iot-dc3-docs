@@ -147,6 +147,15 @@ In one line: identification and positioning make the physical world **addressabl
 *addressable and attributable** — the former is IoT's entry point, the latter is where the platform begins to govern
 those objects.
 
+## References
+
+1. Huang Yulan. *IoT: A Core-Technology Course on Radio-Frequency Identification (RFID)* [M]. Beijing: Posts & Telecom
+   Press, 2016.
+2. Ranasinghe, D. C., et al. *IoT RFID Solutions across Multiple Domains* [M]. Translated by Tang Chaowei, Shao Yanqing,
+   Wang Heng. Beijing: China Machine Press, 2013. (Advanced International Information Engineering Translation Series)
+3. Wang Bo, Liu Xiangsheng, Zhang Cunjie. *IoT and BeiDou Applications* [M]. Beijing: Publishing House of Electronics
+   Industry, 2020.
+
 ## Further Reading
 
 - [Sensing & Measurement](./sensing) — the other half of the perception layer: turning physical quantities into

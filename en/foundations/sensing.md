@@ -160,6 +160,12 @@ few stable Point attributes; upper services need not care about the sensor model
 a unit, a read/write capability, and already scaled to its engineering value." The physical world's complexity is
 absorbed, once, at the Point layer.
 
+## References
+
+1. Fan Maojun. *IoT and Sensor Technology* [M]. Beijing: China Machine Press, 2012.
+2. Li Tongbin, et al. *The Source of IoT: Fundamentals of Cyber-Physical Systems and Information Sensing* [M].
+   Beijing: China Machine Press, 2018.
+
 ## Further Reading
 
 - [Identification & Location](./identification) — the other half of perception: acquiring identity and position

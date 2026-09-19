@@ -145,6 +145,44 @@ docs(env): explain JetBrains IDEA environment variables
   rejected by CI before merge.
   :::
 
+
+## Maven command cheatsheet
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Full compile | `mvn -s .mvn/settings.xml compile` | Compile only, no tests |
+| Quick compile check | `mvn -s .mvn/settings.xml -q -DskipTests compile` | Quiet mode for a fast check after edits |
+| Full package | `mvn -s .mvn/settings.xml clean package` | Compile + tests + package |
+| Package without tests | `mvn -s .mvn/settings.xml -DskipTests clean package` | Skips tests |
+| Single module | `mvn -s .mvn/settings.xml -pl dc3-driver/dc3-driver-virtual package` | `-pl` picks the module |
+| Dependency tree | `mvn -s .mvn/settings.xml dependency:tree -pl <module>` | Chasing transitive conflicts |
+
+::: tip Parallel build
+`.mvn/maven.config` already sets `-T 1C`; no need to add it manually.
+:::
+
+## Debugging tips
+
+### Remote debugging in IDEA
+
+Add `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005` to the VM options, then Run → Attach to
+Process.
+
+Suggested debug ports: Gateway 5005, Auth 5006, Manager 5007, Data 5008, Agentic 5009.
+
+### Module navigation cheatsheet
+
+| I want to... | Go here |
+|--------------|---------|
+| Change device / driver / point business logic | `dc3-center/dc3-center-manager` |
+| Change auth / tenant / RBAC | `dc3-center/dc3-center-auth` |
+| Change point-value storage / command dispatch | `dc3-center/dc3-center-data` |
+| Change AI conversations / tool calls | `dc3-center/dc3-center-agentic` |
+| Change gateway routes / filters | `dc3-gateway` |
+| Add a protocol driver | `dc3-driver/`, copy from `dc3-driver-virtual` |
+| Change gRPC protos | `dc3-api/`, rerun `mvn compile` afterwards |
+| Change the web UI | `dc3-web/` (a separate pnpm project) |
+
 ## Further reading
 
 - [Domain Model](../architecture/domain-model) — fields of each DO/BO/VO layer, enum conversion, and MapStruct
