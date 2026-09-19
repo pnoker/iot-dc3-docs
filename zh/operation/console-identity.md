@@ -39,4 +39,5 @@ title: 控制台 · 用户与租户
 
 - [鉴权 · 租户 · RBAC](../architecture/auth-rbac) — 请求如何被鉴权链路拦截
 - [租户概念](../introduction/concepts/tenant) — 租户隔离的实现语义
+- [控制台 · 分组、标签与身份安全](./console-organize) — 分组/标签/服务账号/审计
 - [安全策略](../community/security) — 口令、密钥与端口的生产基线

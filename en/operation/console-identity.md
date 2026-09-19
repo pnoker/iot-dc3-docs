@@ -39,4 +39,5 @@ The default account `dc3` / initial password exists for first login only. The fi
 
 - [Auth, Tenant & RBAC](../architecture/auth-rbac) — how the auth chain intercepts requests
 - [Tenant concept](../introduction/concepts/tenant) — implementation semantics of tenant isolation
+- [Console · Groups, Labels & Security](./console-organize) — groups/labels/service accounts/audit
 - [Security Policy](../community/security) — the production baseline for passwords, keys, and ports

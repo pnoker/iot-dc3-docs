@@ -85,6 +85,7 @@
   "operation/console-devices": "控制台 · 设备管理",
   "operation/console-entities": "控制台 · 位号与模板",
   "operation/console-identity": "控制台 · 用户与租户",
+  "operation/console-organize": "控制台 · 分组标签与身份安全",
   "operation/console-alarms": "控制台 · 告警",
   "operation/console-mcp": "控制台 · MCP 连接",
   "operation/alarms": "告警与通知",

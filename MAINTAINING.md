@@ -72,7 +72,7 @@ node scripts/scan-facts.mjs --upstream D:/path/iot-dc3   # 指定上游仓库（
 
 ## 6. 已知待补缺口（按读者价值排序）
 
-1. 控制台手册——前端 40+ 设置页面，已有 设备/位号模板/用户租户/告警/MCP连接 五篇（operation/console-*）；下一批：分组/标签（settings/group、settings/label）、服务账号、身份审计
+1. 控制台手册——前端 40+ 设置页面，已有 设备/位号模板/用户租户/分组标签身份安全/告警/MCP连接 六篇（operation/console-*），覆盖最高频页面；余量：模型提供方管理（settings 下的 model/event/command 字典类）、仪表盘定制
 2. ~~MQ 全景拓扑页~~ 已完成（architecture/mq-topology，2026-09-20）
 3. 身份与租户运营（auth 中心 17 个 controller）
 4. 数据中心 6 个业务域（Analytics/Dashboard 确认/事件历史/通知消息等）

@@ -85,6 +85,7 @@
   "operation/console-devices": "Console: Devices",
   "operation/console-entities": "Console: Points & Profiles",
   "operation/console-identity": "Console: Users & Tenants",
+  "operation/console-organize": "Console: Groups, Labels & Security",
   "operation/console-alarms": "Console: Alarms",
   "operation/console-mcp": "Console: MCP",
   "operation/alarms": "Alarms & Notifications",

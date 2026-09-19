@@ -168,7 +168,7 @@ const PILLARS: ReadonlyArray<Pillar> = [
             },
             {key: 'group.frontend', items: [['frontend'], ['frontend/test-debugging']]},
             {key: 'group.automation', items: [['automation'], ['automation/cli']]},
-            {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/console-devices'], ['operation/console-entities'], ['operation/console-identity'], ['operation/console-alarms'], ['operation/console-mcp'], ['operation/alarms']]}
+            {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/console-devices'], ['operation/console-entities'], ['operation/console-identity'], ['operation/console-organize'], ['operation/console-alarms'], ['operation/console-mcp'], ['operation/alarms']]}
         ]
     }
 ]
