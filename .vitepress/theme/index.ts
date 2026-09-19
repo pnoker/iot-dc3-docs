@@ -16,7 +16,8 @@
  */
 
 import type {Theme} from 'vitepress'
-import {h, onBeforeUnmount, onMounted} from 'vue'
+import {h, nextTick, onBeforeUnmount, onMounted, watch} from 'vue'
+import {useRoute} from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import mediumZoom from 'medium-zoom'
 import 'medium-zoom/dist/style.css'
@@ -101,6 +102,22 @@ function handleWechatIconClick(event: MouseEvent) {
     openWechatModal(link)
 }
 
+// Keep the active sidebar entry in view. The sidebar column is tall (all
+// groups expanded) and its scroll container (.nav, see the scroll-hack in
+// style.css) survives SPA navigations with its old scrollTop — so arriving
+// from a header menu click leaves the sidebar scrolled to wherever the
+// reader was, with the active entry far off-screen. 'nearest' only nudges
+// the container when the entry is actually out of view, so hopping between
+// nearby sibling pages never jumps. Desktop only: on narrower viewports the
+// sidebar lives in the off-canvas drawer and must not be scrolled behind
+// the scenes.
+function scrollSidebarToActive() {
+    if (!window.matchMedia('(min-width: 960px)').matches) return
+    const active = document.querySelector<HTMLElement>('.VPSidebar .nav .VPSidebarItem.is-active > .item')
+    if (!active) return
+    active.scrollIntoView({block: 'nearest', inline: 'nearest'})
+}
+
 const theme: Theme = {
     extends: DefaultTheme,
 
@@ -118,18 +135,21 @@ const theme: Theme = {
     },
 
     setup() {
+        const route = useRoute()
         onMounted(() => {
             mediumZoom('.vp-doc img:not(.no-zoom):not(.dc3-diagram img)', {
                 background: 'rgba(0, 0, 0, 0.78)',
                 margin: 24
             })
             document.addEventListener('click', handleWechatIconClick)
+            scrollSidebarToActive()
         })
         onBeforeUnmount(() => {
             document.removeEventListener('click', handleWechatIconClick)
             document.querySelector('.dc3-wechat-modal')?.remove()
             document.body.classList.remove('dc3-modal-open')
         })
+        watch(() => route.path, () => nextTick(scrollSidebarToActive))
     },
 
     enhanceApp({app, router}) {
