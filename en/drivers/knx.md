@@ -53,9 +53,10 @@ KNX is the standard for home and building automation. Group addresses link senso
 | Write | ✓ | |
 | Subscribe | — | |
 
-::: info Implementation status: available ::
+::: info Implementation status: complete
 
 `KnxDriverCustomServiceImpl` caches a `KNXNetworkLink` + `ProcessCommunicator` per device, and a device metadata UPDATE/DELETE event closes the link.
+:::
 
 ## Minimal onboarding example
 

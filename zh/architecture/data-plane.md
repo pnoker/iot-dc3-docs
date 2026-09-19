@@ -61,8 +61,7 @@ RabbitMQ 管理台按名检索。
 `PointValueBO`（JSON 经 `JacksonJsonMessageConverter`）。它走的是**手动 ack**：
 
 - **校验**：`pointValueBO` 为空或缺 `deviceId` → `RabbitAckUtil.reject`（`basicReject` 不重回队列）→ 进死信。
-- **持久化**：根据入站速率二选一——速率低于 `POINT_BATCH_SPEED`（默认 100）时调用 `pointValueService.save(pointValueBO)` *
-  *即时落库**；速率超过阈值时改交 `PointValueJob` **批处理**。速率由 `speed = count / interval` 算出，
+- **持久化**：根据入站速率二选一——速率低于 `POINT_BATCH_SPEED`（默认 100）时调用 `pointValueService.save(pointValueBO)` **即时落库**；速率超过阈值时改交 `PointValueJob` **批处理**。速率由 `speed = count / interval` 算出，
   `POINT_BATCH_INTERVAL`（默认 `5`，单位**秒**，Quartz `IntervalUnit.SECOND`）是这里的除数而非刷新间隔。`PointValueJob` 由
   Quartz 定时触发，每次把整个累积缓冲一次性刷出，与缓冲大小无关——没有"批量大小触发"，也没有"谁先到谁先刷"。
 - **确认**：成功 → `RabbitAckUtil.ack`；处理抛异常 → `RabbitAckUtil.nack(requeue=true)` 重回队列重试。

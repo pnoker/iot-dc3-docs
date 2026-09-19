@@ -18,7 +18,8 @@ Redis 是内存键值存储，本驱动把位号映射到键（HASH 时可选字
 
 | 属性 | code | 类型 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| （连接） | spring.data.redis.* | — | 环境变量 | 通过 Spring Boot 配置 |
+| Key Prefix | keyPrefix | STRING | （空） | 键前缀：实际访问的键 = keyPrefix + 位号的 key |
+| （连接） | spring.data.redis.* | — | 环境变量 | 通过 Spring Boot 配置（REDIS_HOST / REDIS_PORT） |
 
 ### 位号属性
 
@@ -41,9 +42,10 @@ Redis 是内存键值存储，本驱动把位号映射到键（HASH 时可选字
 | 写 | ✓ |
 | 订阅 | — |
 
-::: info 实现状态：可用 :::
+::: info 实现状态：完整
 
 连接通过 spring.data.redis.*（REDIS_HOST/REDIS_PORT）配置。
+:::
 
 ## 最小接入示例
 

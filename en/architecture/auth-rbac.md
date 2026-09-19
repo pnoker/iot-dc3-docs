@@ -86,7 +86,7 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
 # 2) Hash password with salt, then exchange for token
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4-...-e5f6","password":"<hashed>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4-...-e5f6","password":"<plaintext password>"}'
 # Example response (valid for 12 hours): a JWT string
 
 # 3) All subsequent protected requests carry the three headers

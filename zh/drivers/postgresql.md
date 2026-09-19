@@ -128,7 +128,7 @@ SQL、加索引、缩小 `WHERE` 范围，而不是一味调大超时——慢�
 - **读 / 写 / 订阅能力**：与[驱动能力矩阵](./matrix)一致——读 ✓、写 ✓、订阅 —。读走 `SELECT` 取首值，写走 `writeQuery`
   的预编译绑定；数据库没有变更订阅，靠周期轮询拉取。
 
-::: info 实现状态：可用（非骨架）
+::: info 实现状态：完整（非骨架）
 PostgreSQL 驱动是**可用实现**，不是骨架。连接、读、写、健康检查均由共享的 `dc3-common-sql` 抽象基类
 `AbstractJdbcDriverCustomService` 落地（与 MySQL、Oracle、SQL Server 共用同一套逻辑），PostgreSQL 子类只提供 JDBC URL 拼装、驱动类名
 `org.postgresql.Driver` 和默认端口 `5432`。唯一需要留意的是 `command-attribute` 的 `executeQuery` 属性保留但未接线（见上文属性配置）。

@@ -158,6 +158,20 @@ At runtime the driver connects to `192.168.1.10`, reads register `40001`, and wr
 point's [PointValue](./point-value) for reporting. For device #1, just change `configValue` to a different address — the
 attribute definition is fully reused.
 
+## Command attributes and event attributes
+
+Besides the driver/device layer (`DriverAttribute`) and the point layer (`PointAttribute`), the platform declares two more parallel layers:
+
+| Layer | Attribute entity | Config entity | Who reads it |
+|-------|-----------------|---------------|--------------|
+| Command | `CommandAttribute` | `CommandAttributeConfig` | the driver's `execute()` — protocol mapping for device-level custom commands |
+| Event | `EventAttribute` | `EventAttributeConfig` | the driver's event-reporting path — how external events parse into platform events |
+
+Two notes:
+
+- **Point read/write does not go through command attributes**: point-level commands take their values from **point attributes** (`PointAttributeConfig`). Some drivers also register `command-attribute` entries in their yml, but those are only consumed when the driver implements `execute()` — see each driver page's write section.
+- Event attributes are common on listening drivers (e.g. listening-virtual parsing events from inbound frames); keys are in each driver's `event-attribute` config.
+
 ## Further reading
 
 - [Driver](./driver) — the declarer and registration source of attributes

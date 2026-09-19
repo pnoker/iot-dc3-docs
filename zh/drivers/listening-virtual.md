@@ -127,8 +127,7 @@ IP:端口，把一段字节流发过来。本驱动正是为这类场景准备�
 
 1. 用 `Listening Virtual TCP/UDP Driver` 创建[设备](../introduction/concepts/device)（本驱动无 driver
    属性，设备本身不需填连接参数），记下平台分配的数字设备 ID。
-2. 给设备绑定的[模板 Profile](../introduction/concepts/profile) 加一个字符串[位号](../introduction/concepts/point)，*
-   *位号名必须取支持的名字之一**（这里用 `coordinate`，解析为字符串），point 属性填 `key=62`、`start=23`、`end=31`、
+2. 给设备绑定的[模板 Profile](../introduction/concepts/profile) 加一个字符串[位号](../introduction/concepts/point)，**位号名必须取支持的名字之一**（这里用 `coordinate`，解析为字符串），point 属性填 `key=62`、`start=23`、`end=31`、
    `type=string`——即认关键字 `62` 的报文，从载荷起始处取 8 个字节当字符串。位号名若不在
    `altitude/speed/level/direction/locked/coordinate` 之列，驱动采不到值。
 3. 启动驱动；让设备把"22 字节数字设备 ID + 1 字节 `0x62` + 载荷"推到驱动的 TCP `6270`

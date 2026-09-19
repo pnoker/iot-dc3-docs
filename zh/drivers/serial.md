@@ -159,7 +159,7 @@ HEX 字符串再作为命令参数传入。
 | 写  | ✓  | `write()` 渲染 `${value}` 模板、转字节整帧发出（不读回包、不做字节序编码） |
 | 订阅 | —  | 主从轮询模型，设备不主动上报，靠采集周期定时读                          |
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 `SerialDriverCustomServiceImpl` 的 `initial()`/`read()`/`write()`/`health()`/`event()` 与帧解析（`SerialFrameParser`
 ）、连接管理（`SerialPortConnection`，基于 jSerialComm）均已完整实现，非骨架。读路径支持 HEX/ASCII/BINARY/FLOAT 解码与
 CRC16/XOR/NONE 回包校验；连接按设备缓存，设备元数据 UPDATE/DELETE 事件会销毁旧连接（`connectMap.remove` 后 `close()`）。

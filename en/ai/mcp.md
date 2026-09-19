@@ -200,12 +200,12 @@ Phase one: the Agent calls `tools/call` without a valid confirmation. The server
 `CONFIRM_REQUIRED` with a `confirmId` (UUID), default TTL `PT5M`.
 
 Phase two: the Agent calls again with the `confirmId` + `idempotency_key`. The server checks that it isn't expired, the
-`parameter_digest` matches the first call, the principal / connection / tool are unchanged, and it's consumed exactly
+`argument_digest` matches the first call, the principal / connection / tool are unchanged, and it's consumed exactly
 once. `status=PENDING` is the SQL-layer concurrency guard, so a replayed `confirmId` loses the race.
 
 <McpConfirmSequenceDiagram lang="en" />
 
-The confirmation ticket is stored in `dc3_mcp_tool_confirmation` (`confirm_id`, `tool_id`, `parameter_digest`,
+The confirmation ticket is stored in `dc3_mcp_tool_confirmation` (`confirm_id`, `tool_id`, `argument_digest`,
 `idempotency_key`, `status` PENDING/CONSUMED/EXPIRED, `ttl_expires`), with the TTL set by `dc3.mcp.confirm-ttl` (default
 `PT5M`). Every HIGH-risk call is written to `dc3_mcp_audit_log` (`confirm_id`, `idempotency_key`, `argument_digest`,
 `risk_level`, `duration_ms`, `remote_ip`, and so on).

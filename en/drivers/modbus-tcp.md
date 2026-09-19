@@ -163,7 +163,7 @@ them in this order:
   `schedule.read` in the driver's `application.yml`; the `custom` schedule is disabled by default.
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?`, with a lease timeout of `45 seconds`.
 
-::: info Implementation status: available
+::: info Implementation status: complete
 This driver is a **complete implementation** (not a skeleton), built on modbus4j. The read path covers all four register
 spaces, the write path covers coils and holding registers, and it includes connection caching and failure backoff. The
 only caveat is that the yml annotation for write function codes (`[5,6,15,16]`) is broader than the code (only `1/3`) —

@@ -80,6 +80,13 @@ To write your own driver, see [Driver Authoring](../development/driver-authoring
 | `dc3-api-data`    | Data Center gRPC / Protobuf contract    | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-data/README.md)    |
 | `dc3-api-driver`  | Driver gRPC / Protobuf contract         | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-driver/README.md)  |
 
+## Messaging and E2E (main-preview)
+
+| Category | Module | Purpose |
+|----------|--------|---------|
+| Messaging | `dc3-mq-core` / `dc3-mq-rabbitmq` / `dc3-mq-kafka` / `dc3-mq-mqtt` / `dc3-mq-pulsar` etc. | Pluggable message-middleware abstraction (selected via `DC3_MQ_TYPE`; ships with the post-2026.5.x line — the current release line still wires RabbitMQ directly) |
+| Testing | `dc3-e2e` / `dc3-coverage` | End-to-end tests and coverage aggregation |
+
 ## Common Components
 
 | Category               | Module                            | Purpose                                                                          |

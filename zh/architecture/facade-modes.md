@@ -22,8 +22,7 @@ import FacadeModesDiagram from '../../.vitepress/theme/components/FacadeModesDia
 `dc3.facade.mode` 的值在启动时择一装配：
 
 - `grpc` 模式装配 gRPC 实现（`dc3-common-facade-grpc`，如 `DeviceGrpcFacade`）——发起一次跨进程 gRPC 调用，去找独立运行的目标中心。
-- `local` 模式装配进程内实现（`dc3-common-facade-local-*`，如 `DeviceLocalFacade`）——直接调用本进程里的目标 Service，*
-  *没有网络开销**。
+- `local` 模式装配进程内实现（`dc3-common-facade-local-*`，如 `DeviceLocalFacade`）——直接调用本进程里的目标 Service，**没有网络开销**。
 
 `DeviceFacade` 接口自己的 Javadoc 就把这件事说明白了：
 

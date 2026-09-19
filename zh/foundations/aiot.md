@@ -123,8 +123,7 @@ API，经网关注入主体上下文，再由鉴权中心做 RBAC 权限校验�
 Server，工具目录由四个中心的 OpenAPI 自动聚合（约 330+ 个工具），由外部 Agent 自主决定调用哪个。它面向"自己搭 Agent
 让模型自主编排"的场景，约束比对话式更严：
 
-- **仅 OAuth 2.1**：MCP 访问只接受 OAuth 2.1 颁发的短时 JWT（默认 15 分钟有效），公开客户端强制 PKCE（S256）、刷新令牌轮换。*
-  *当前没有 Personal Access Token（PAT）等长期静态令牌**这一接入方式。
+- **仅 OAuth 2.1**：MCP 访问只接受 OAuth 2.1 颁发的短时 JWT（默认 15 分钟有效），公开客户端强制 PKCE（S256）、刷新令牌轮换。**当前没有 Personal Access Token（PAT）等长期静态令牌**这一接入方式。
 - **三层工具可见性过滤**：`tools/list` 返回的工具 = 主体 RBAC 权限 ∩ 该 MCP 连接的工具白名单 ∩ 风险策略（HIGH
   风险默认隐藏，需显式开启）的交集。Agent 看得见、调得动哪些工具，由这三层共同决定。
 - **HIGH 风险两阶段确认**：高风险工具调用先返回 `CONFIRM_REQUIRED` + `confirmId`，客户端须携 `confirmId` +

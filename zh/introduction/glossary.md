@@ -25,6 +25,12 @@ title: 术语表
 | 管理中心 | Manager Center · `dc3-center-manager` | 元数据管理（驱动 / 模板 / 设备 / 位号）。详见 [服务清单](../architecture/services)                   | 中心服务  |
 | 数据中心 | Data Center · `dc3-center-data`       | 位号值落库与命令分发。详见 [数据平面](../architecture/data-plane)                               | 中心服务  |
 | 智能中心 | Agentic Center · `dc3-center-agentic` | LLM 对话与工具调用。详见 [服务清单](../architecture/services)                                | 中心服务  |
+| 指令   | Command                               | 点位级的读写动作走位号读写链路；"自定义指令"是设备级动作，走 `dc3.e.command` 交换机。详见 [指令](./concepts/command)                  | 元数据   |
+| 事件   | Event                                 | 设备或系统上报的一次性事实，可触发告警。详见 [事件](./concepts/event)                                  | 元数据   |
+| 物模型  | Thing Model                           | 模板承载的设备能力描述（位号 / 指令 / 事件三件套），对标 IoT 行业"物模型"。见 [模板](./concepts/profile)                 | 元数据   |
+| 主体   | Principal                             | 租户内可被授权的实体（用户、服务账号等）。见 [租户](./concepts/tenant)                                | 横切    |
+| 租约   | Lease                                 | 驱动/设备的在线状态机制：心跳续约，到期未续即判离线（默认 15s 心跳 / 45s 超时）。见 [设备](./concepts/device)          | 设备接入层 |
+| 超表   | Hypertable                            | TimescaleDB 的自动分区时序表（`dc3_point_value`），查询时当普通表用。见 [位号值](./concepts/point-value)          | 数据    |
 | 租户   | Tenant · `tenantId`                   | 业务数据的隔离边界。详见 [租户](./concepts/tenant)                                           | 横切    |
 | 属性   | Attribute                             | 驱动协议层的配置项，由驱动启动时从 `application.yml` 注册。详见 [属性与配置](./concepts/attribute-config) | 配置    |
 | 配置   | Config                                | 设备实例层为属性填的具体值。详见 [属性与配置](./concepts/attribute-config)                          | 配置    |
@@ -64,15 +70,16 @@ title: 术语表
 |------------------------|--------------|------------------------------------------------------------------|-----|
 | `dc3.driver.code`      | 驱动路由标识       | 驱动的稳定路由标识，用于消息总线寻址；为稳定标识不可随意改                                    | 驱动  |
 | `dc3.e.value`          | RabbitMQ 交换机 | 位号值上报走的交换机，驱动把采集封装为 `PointValue` 发往此处                            | 数据流 |
+| `dc3.e.command`                  | AMQP      | 设备级自定义指令的发布/回执（数据中心）                                            | 指令  |
 | `dc3.e.point_command`  | RabbitMQ 交换机 | 读写命令下发走的交换机，数据中心据此把命令路由到对应驱动                                     | 命令流 |
 | `X-Auth-Tenant`        | HTTP 鉴权头     | 受保护端点上携带的租户标识，参与下游租户隔离                                           | 鉴权  |
 | `X-Auth-Login`         | HTTP 鉴权头     | 受保护端点上携带的登录身份标识                                                  | 鉴权  |
 | `X-Auth-Token`         | HTTP 鉴权头     | 受保护端点上携带的访问令牌                                                    | 鉴权  |
 | `POST /token/salt`     | HTTP 端点（公开）  | 登录第一步：传 `tenant`、`name` 取盐，建议 5 分钟内使用（服务端不强制过期）                  | 登录  |
-| `POST /token/generate` | HTTP 端点（公开）  | 登录第二步：传 `tenant`、`name`、`salt`、用盐哈希后的 `password` 取访问令牌，有效期 12 小时 | 登录  |
+| `POST /token/generate` | HTTP 端点（公开）  | 登录第二步：传 `tenant`、`name`、`salt`、明文 `password`（TLS 保护传输）取访问令牌，有效期 12 小时 | 登录  |
 
 ::: info 登录是两步换取令牌
-先 `POST /token/salt` 取盐，再用盐对密码哈希后 `POST /token/generate` 换访问令牌；拿到令牌后，受保护请求通过网关时带上
+先 `POST /token/salt` 取盐，再 `POST /token/generate` 连同盐提交明文密码换访问令牌（盐不参与密码哈希，校验在服务端完成）；拿到令牌后，受保护请求通过网关时带上
 `X-Auth-Tenant` / `X-Auth-Login` / `X-Auth-Token` 三个头。具体字段以代码为准。
 :::
 

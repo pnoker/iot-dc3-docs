@@ -155,7 +155,7 @@ it wrong means the connection fails.
 
 This matches the [driver capability matrix](./matrix) (read ✓ / write ✓ / subscribe —).
 
-::: info Implementation status: available
+::: info Implementation status: complete
 `OpcUaDriverCustomServiceImpl`'s `read()` / `write()` / `health()` / `validate()` / `event()` are all complete
 implementations (built on Eclipse Milo), not a skeleton. Reading nodes, writing the six types, connection caching and
 reconnect-on-failure, self-signed certificate generation, and clearing connections on device update/delete are all in

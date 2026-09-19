@@ -136,7 +136,7 @@ principal 头。
 四个中心服务本身**无状态**——会话、令牌denylist、最新值等热数据放在 Caffeine
 缓存或数据库里，请求不黏在某个实例上。因此每个中心都可以水平扩展：在网关后面多挂几个同类实例即可分担负载，无需共享内存。
 
-数据中心的吞吐瓶颈在消费侧，而消费并发是可调的：`PointValueReceiver` 用高吞吐监听容器消费 `dc3.q.value.point`
+数据中心的吞吐瓶颈在消费侧，而消费并发是可调的：`PointValueReceiver` 用默认监听容器（并发 2–8）消费 `dc3.q.value.point`
 ，按入站速率在"即时落库"与"`PointValueJob` 批量落库"之间切换；批量阈值由 `POINT_BATCH_SPEED`（默认 100 条）/
 `POINT_BATCH_INTERVAL`（默认 5 秒）控制，谁先满足谁先刷盘。面对采集洪峰，先由 RabbitMQ 削峰，再靠并发消费与批量写入消化。
 

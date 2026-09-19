@@ -51,9 +51,10 @@ KNX 是家居与楼宇自动化标准，组地址连接传感器与执行器，I
 | 写 | ✓ |
 | 订阅 | — |
 
-::: info 实现状态：可用 :::
+::: info 实现状态：完整
 
 KnxDriverCustomServiceImpl 按设备缓存 KNXNetworkLink + ProcessCommunicator，设备 UPDATE/DELETE 事件关闭连接。
+:::
 
 ## 最小接入示例
 

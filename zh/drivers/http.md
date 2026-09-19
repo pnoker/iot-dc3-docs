@@ -14,7 +14,7 @@ HTTP（HyperText Transfer Protocol）与建立在它之上的 REST 风格接口�
 JSON）。它无连接语义简单、几乎所有语言和工具都原生支持、调试方便，因此成为系统间集成的"最大公约数"。
 
 在物联网四层参考架构里，HTTP 属于**网络层**中的**应用层消息协议**一类（与 MQTT、CoAP、LwM2M 并列）——它定义"
-消息长什么样、怎么投递"，而不关心底层走的是 Wi-Fi 还是蜂窝。但要诚实地说：HTTP 报文头臃肿、保活成本高、不为受限设备设计，**并不适合
+消息长什么样、怎么投递"，而不关心底层走的是 Wi-Fi 还是蜂窝。HTTP 报文头臃肿、保活成本高、不为受限设备设计，**并不适合
 **电池供电终端的高频上报。它在 IoT 里的真正位置是**对接现成接口**——第三方平台开放的 REST API、设备自带的 RESTful
 接口、把现场数据聚合成 HTTP 端点的数据网关。这类"上游已经讲 REST、只需周期取数"的场景，正是本驱动的用武之地。关于 HTTP 与
 MQTT/CoAP/LwM2M 的取舍，见[物联网网络层章节](../foundations/iot-protocols)。
@@ -150,7 +150,7 @@ HTTP 方法只来自位号的 `method`，缺省时回退到硬编码的 `GET`，
 
 以上读/写能力与[驱动能力矩阵](./matrix)的 `HTTP (HttpDriver)` 行一致。
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 `HttpDriverCustomServiceImpl` 的 `initial()`/`read()`/`write()`/`health()`/`validate()` 均已完整实现，是可投入采集的成熟驱动。两处实现边界须知：①
 `responsePath` 仅支持简单点号路径，不支持数组/过滤器（见上）；② `headers` 属性已声明但尚未在连接中应用，自定义请求头当前无法生效。
 :::

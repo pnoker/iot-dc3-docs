@@ -56,8 +56,7 @@ publishing and subscribing sides, with the weaker side prevailing:
 
 - **QoS 0 (at most once)**: fire and forget—no acknowledgement, no retransmission. The cheapest; if it is lost, it is
   lost. Good for high-frequency telemetry that can tolerate gaps.
-- **QoS 1 (at least once)**: the receiver must reply `PUBACK`, and unacknowledged messages are resent—no loss, but *
-  *possible duplicates**, so the downstream must be idempotent.
+- **QoS 1 (at least once)**: the receiver must reply `PUBACK`, and unacknowledged messages are resent—no loss, but **possible duplicates**, so the downstream must be idempotent.
 - **QoS 2 (exactly once)**: a four-way handshake (`PUBREC`/`PUBREL`/`PUBCOMP`) guarantees no loss and no duplication—the
   most reliable and the heaviest, suited to non-repeatable critical commands.
 

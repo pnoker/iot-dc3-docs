@@ -84,7 +84,7 @@ scope，并走下文的两阶段确认。这是有意的保守默认，避免 Ag
 | `/oauth2/token`                           | `POST`（form） | 换取 access_token / refresh_token   |
 | `/oauth2/jwks`                            | `GET`        | 公钥集（RS256，供验签）                    |
 | `/oauth2/revoke`                          | `POST`（form） | 撤销 token（含重放检测）                   |
-| `/oauth2/register`                        | `POST`（JSON） | 动态客户端注册（管理员受限）                    |
+| `/oauth2/register`                        | `POST`（JSON） | 动态客户端注册（需已登录 principal，注册后归属该主体）                    |
 
 token 内省 `introspect` **不暴露为 HTTP 端点**——它是 gRPC 内部接口，只给网关这个 Resource Server 校验 Bearer 用。
 
@@ -174,13 +174,13 @@ OpenAPI。
 第一阶段：Agent 调 `tools/call` 但没带有效确认，服务端不执行，返回 `CONFIRM_REQUIRED` 和一个 `confirmId`（UUID），默认 TTL
 `PT5M`。
 
-第二阶段：Agent 带着 `confirmId` + `idempotency_key` 重新调用。服务端校验：未过期、`parameter_digest` 与首次一致、principal /
+第二阶段：Agent 带着 `confirmId` + `idempotency_key` 重新调用。服务端校验：未过期、`argument_digest` 与首次一致、principal /
 连接 / 工具均未变、且为一次性消费（`status=PENDING` 在 SQL 层做并发护栏，重放的 `confirmId` 会输掉竞争）。
 
 <McpConfirmSequenceDiagram lang="zh" />
 
-确认票据落在 `dc3_mcp_tool_confirmation`（`confirm_id`、`tool_id`、`parameter_digest`、`idempotency_key`、`status`
-PENDING/CONSUMED/EXPIRED、`ttl_expires`），TTL 由 `dc3.mcp.confirm-ttl`（默认 `PT5M`）控制。每一次 HIGH 风险调用都审计进
+确认票据落在 `dc3_mcp_tool_confirmation`（`confirm_id`、`tool_id`、`argument_digest`、`idempotency_key`、`status`
+PENDING/CONSUMED、`expire_time`），TTL 由 `dc3.mcp.confirm-ttl`（默认 `PT5M`）控制。每一次 HIGH 风险调用都审计进
 `dc3_mcp_audit_log`（含 `confirm_id`、`idempotency_key`、`argument_digest`、`risk_level`、`duration_ms`、`remote_ip` 等）。
 
 ## 约束与边界（诚实标注）

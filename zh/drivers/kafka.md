@@ -46,9 +46,10 @@ Kafka 是分布式发布订阅流，值异步到达，按消息键（无键按�
 | 写 | ✓ |
 | 订阅 | ✓ |
 
-::: info 实现状态：可用 :::
+::: info 实现状态：可用
 
 连接通过 spring.kafka.*（KAFKA_BOOTSTRAP_SERVERS）配置。
+:::
 
 ## 最小接入示例
 

@@ -99,8 +99,7 @@ yml 里 `port` 默认 `18600`（本地内置 Milo 示例服务端的端口）。
 - **设备一直离线**：健康检查每 15 秒做一次 `connect()` 探活，连续失败即判离线。先确认 `host`/`port`/`path` 拼出的端点地址正确、网络可达（
   `telnet host port` 或 `nc -vz host port` 验端口通），再确认服务端进程在跑、防火墙未拦 `opc.tcp` 端口。
 
-- **读到的值为 null 或状态码不为 Good**：驱动读节点时若 `StatusCode` 不是 Good、或值为空，会抛 `ReadPointException` 并*
-  *主动断开并剔除该连接**（下一轮重连）。常见原因：NodeId 写错（namespace 或 tag 不存在）、节点无读权限、节点当前无值。用
+- **读到的值为 null 或状态码不为 Good**：驱动读节点时若 `StatusCode` 不是 Good、或值为空，会抛 `ReadPointException` 并**主动断开并剔除该连接**（下一轮重连）。常见原因：NodeId 写错（namespace 或 tag 不存在）、节点无读权限、节点当前无值。用
   UaExpert 等工具核对节点 `ns=<namespace>;s=<tag>` 是否真实存在且可读。
 
 - **读/写超时**：驱动的连接超时 5 秒、读超时 1 秒、写超时 1 秒。网络抖动或服务端响应慢时易超时，超时同样会剔除连接触发重连。若服务端确实慢，需在网络侧排查链路时延，而非调大单点超时。
@@ -124,7 +123,7 @@ yml 里 `port` 默认 `18600`（本地内置 Milo 示例服务端的端口）。
 
 以上与[驱动能力矩阵](./matrix)的标注一致（读 ✓ / 写 ✓ / 订阅 —）。
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 `OpcUaDriverCustomServiceImpl` 的 `read()` / `write()` / `health()` / `validate()` / `event()` 均为完整实现（基于 Eclipse
 Milo），非骨架。读节点、写六种类型、连接缓存与失效重连、自签名证书生成、设备更新或删除时清理连接等行为都已落地，可直接接入真实
 OPC UA 服务端。

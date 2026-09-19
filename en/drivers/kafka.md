@@ -48,9 +48,10 @@ Kafka is a distributed publish/subscribe stream. Values arrive asynchronously, s
 | Write | ✓ | |
 | Subscribe | ✓ | |
 
-::: info Implementation status: usable ::
+::: info Implementation status: available
 
 Broker connection is configured through Spring Boot `spring.kafka.*` (`KAFKA_BOOTSTRAP_SERVERS`); the consumer group id defaults to `dc3-driver-kafka-group`.
+:::
 
 ## Minimal onboarding example
 

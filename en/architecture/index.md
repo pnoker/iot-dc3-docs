@@ -178,7 +178,7 @@ horizontally: attach a few more instances of the same kind behind the gateway to
 needed.
 
 The data center's throughput bottleneck is on the consumption side, and consumption concurrency is tunable.
-`PointValueReceiver` consumes `dc3.q.value.point` with a high-throughput listener container, switching between "
+`PointValueReceiver` consumes `dc3.q.value.point` with the default listener container (concurrency 2–8), switching between "
 immediate write" and "`PointValueJob` batch write" based on the inbound rate. The batch threshold is controlled by
 `POINT_BATCH_SPEED` (default 100 records) and `POINT_BATCH_INTERVAL` (default 5 s) — whichever is met first flushes to
 disk. Under a collection flood, RabbitMQ absorbs the burst first, and concurrent consumption plus batch writes then

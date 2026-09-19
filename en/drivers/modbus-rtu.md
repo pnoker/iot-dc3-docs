@@ -151,7 +151,7 @@ Per the [driver capability matrix](./matrix), this driver's capabilities are:
 | Write      | ✓         | **Only** `01` (write coil) and `03` (write holding register)                                      |
 | Subscribe  | —         | Master/slave polling protocol; no device-initiated reports, the collection cycle reads on a timer |
 
-::: info Implementation status: available
+::: info Implementation status: complete
 `ModbusRtuDriverCustomServiceImpl`'s `read()`/`write()`/`health()` and connection management are fully implemented (on
 modbus4j + jSerialComm) — not a skeleton. The read path supports all four read function codes; connection handling,
 backoff, health detection, and metadata events (destroying the stale connection when a device is updated or deleted) are

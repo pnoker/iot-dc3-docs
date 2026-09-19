@@ -108,7 +108,7 @@ PLC 工程里 MC 服务的端口与协议（TCP）设置。
 
 ## 在 IoT DC3 中如何落地
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 Melsec 驱动的读、写路径均已完整实现——`read()` / `write()` 通过 `iot-communication` 的 `McPLC` 调用真实的 MC 读写（
 `readInt16` / `writeInt16` / `readString` 等），按数据类型选用正确字宽。这是一个可用驱动，行为与 `application.yml` 声明一致。
 :::

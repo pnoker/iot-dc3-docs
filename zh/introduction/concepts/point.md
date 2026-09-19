@@ -19,8 +19,7 @@ import PointRelationDiagram from '../../../.vitepress/theme/components/PointRela
 
 - **位号 ≠ 位号值**。位号是"列"的定义（叫什么、什么类型、能不能写、单位是什么），稳定不变；位号值是"格"
   的取值，随采集不断变化。详见[位号值](./point-value)。
-- **位号 ≠ 指令**。位号是"量"，[指令](./command)是"动作"（重启、校准、切换模式）。一个位号能不能被写，由它自己的 `rwFlag` 决定，*
-  *不需要、也不会**在 `dc3_command` 指令表里登记。读写位号走的是 `PointCommand` 链路，自定义指令才走 `Command` 链路。
+- **位号 ≠ 指令**。位号是"量"，[指令](./command)是"动作"（重启、校准、切换模式）。一个位号能不能被写，由它自己的 `rwFlag` 决定，**不需要、也不会**在 `dc3_command` 指令表里登记。读写位号走的是 `PointCommand` 链路，自定义指令才走 `Command` 链路。
 
 ## 关键字段
 

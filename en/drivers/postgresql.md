@@ -153,7 +153,7 @@ raising the timeout—a slow query holds a pool connection (only 5 exist) and dr
   Reads take the first value of a `SELECT`; writes use the prepared binding of `writeQuery`; a database has no change
   subscription, so values are pulled by periodic polling.
 
-::: info Implementation status: available (not a skeleton)
+::: info Implementation status: complete (not a skeleton)
 The PostgreSQL driver is an **available implementation**, not a skeleton. Connection, read, write, and health check are
 all provided by the shared `dc3-common-sql` abstract base service `AbstractJdbcDriverCustomService` (the same logic
 shared with MySQL, Oracle, and SQL Server); the PostgreSQL subclass only supplies JDBC URL construction, the driver

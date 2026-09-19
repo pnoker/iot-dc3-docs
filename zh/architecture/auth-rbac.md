@@ -67,10 +67,10 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -d '{"tenant":"default","name":"dc3"}'
 # 返回示例（建议 5 分钟内使用）："a1b2c3d4-...-e5f6"
 
-# 2) 用盐哈希密码后换令牌
+# 2) 连同盐提交明文密码换令牌（校验在服务端完成）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4-...-e5f6","password":"<hashed>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4-...-e5f6","password":"<明文密码>"}'
 # 返回示例（12 小时有效）：JWT 字符串
 
 # 3) 之后所有受保护请求都带三个头

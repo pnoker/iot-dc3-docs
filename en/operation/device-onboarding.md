@@ -241,8 +241,7 @@ in [Data and Commands](./data-commands).
 
 **If there's no data, work backward along this chain.** Each hop maps onto the data-flow diagram above:
 
-1. **Driver status**: Is the driver online? Is the device health status `ONLINE`? The status TTL the driver reports *
-   *must be greater than the read cycle** — for a 30-second cron, the TTL should be at least 25 seconds, or the device
+1. **Driver status**: Is the driver online? Is the device health status `ONLINE`? The status TTL the driver reports **must be greater than the read cycle** — for a 30-second cron, the TTL should be at least 25 seconds, or the device
    will keep dropping offline.
 2. **Driver logs**: Are there protocol connection errors (can't reach host/port, register out of range, authentication
    failure)?

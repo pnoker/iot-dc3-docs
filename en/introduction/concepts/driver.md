@@ -137,5 +137,5 @@ driver's responsibility see the [Module Map](../../architecture/modules).
   DriverAttribute
 - [Point](./point) — the target data points a driver collects
 - [Core Concepts Overview](../concepts) — the object model and three-layer configuration at a glance
-- [Module Map](../../architecture/modules) — the list of 28 built-in drivers and the service topology
+- [Module Map](../../architecture/modules) — the list of 36 built-in drivers and the service topology
 - [Driver Authoring Guide](../../development/driver-authoring) — how to write your own `dc3-driver-*`

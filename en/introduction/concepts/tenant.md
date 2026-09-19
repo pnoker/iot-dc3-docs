@@ -77,8 +77,7 @@ tenant, and cross-tenant access is reported as nonexistent or dropped.
 <TenantAuthDiagram lang="en" />
 
 - **Controller layer (single by ID)**: after fetching an entity, `BaseController.requireTenant()` compares the entity's
-  `tenantId` against the caller's tenant; on mismatch (or a missing entity) it throws `NotFoundException`, returning *
-  *404** to the outside.
+  `tenantId` against the caller's tenant; on mismatch (or a missing entity) it throws `NotFoundException`, returning **404** to the outside.
 - **Controller layer (bulk)**: `BaseController.filterTenant()` keeps only entries belonging to the caller's tenant,
   dropping records of other tenants.
 - **Database-level auto-append of `WHERE tenant_id = ?`**: not currently enabled (`MybatisPlusConfig` only registers

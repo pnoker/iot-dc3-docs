@@ -159,7 +159,7 @@ SQL 里手动拼接值，也不要用 `${value}` 这类模板语法，那样既�
 - **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`；判定靠 `conn.isValid(5)`
   。在线状态机制见[设备](../introduction/concepts/device)。
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 本驱动是**完整实现**（非骨架）。Oracle 专属的 SID / Service Name 两种 JDBC URL 拼装、读、写、健康检查、按设备缓存的 HikariCP
 连接池、失败时连接池失效重建均已落地，复用经测试的 `AbstractJdbcDriverCustomService` 基类。唯一需注意的差异是
 `command-attribute` 上的 `executeQuery` 属性保留但未被代码消费——写值一律走位号的 `writeQuery`（见上方警告）。

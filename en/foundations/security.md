@@ -155,8 +155,7 @@ trust travels as an HMAC-SHA256 signature:
 - The gateway's `AuthenticGatewayFilter` verifies the three headers `X-Auth-Tenant` / `X-Auth-Login` / `X-Auth-Token`
   against the Auth Center, resolves the real principal, serializes it to `X-Auth-Principal`, signs it with the shared
   secret into `X-Auth-Sign`, and passes both downstream.
-- The backend's `GatewayJwtConverter` recomputes the HMAC with the same secret, compares it to `X-Auth-Sign` in *
-  *constant time**, and rejects on mismatch; it also rejects when `tenantId` or `principalId` is missing.
+- The backend's `GatewayJwtConverter` recomputes the HMAC with the same secret, compares it to `X-Auth-Sign` in **constant time**, and rejects on mismatch; it also rejects when `tenantId` or `principalId` is missing.
 - When HMAC is disabled, the gateway **actively strips any inbound `X-Auth-Sign`**, so a downstream service can't be
   tricked by a fake signature the client brought along.
 

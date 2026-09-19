@@ -172,7 +172,7 @@ structure (no SQL injection). Do not concatenate the value into the SQL by hand,
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?` with a lease timeout of `45 seconds`; the
   verdict relies on `conn.isValid(5)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
 
-::: info Implementation status: available
+::: info Implementation status: complete
 This driver is a **complete implementation** (not a skeleton). Reading, writing, the health check, the per-device cached
 HikariCP pool, and pool invalidation-and-rebuild on failure are all in place, reusing the tested
 `AbstractJdbcDriverCustomService` base class. The only thing to note is that the `command-attribute` `executeQuery` is

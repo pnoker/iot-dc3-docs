@@ -62,6 +62,12 @@ are naturally server-side deployments. We chose AGPL v3 to:
 - **Encourage upstream contributions**: AGPL's copyleft scope gives companies a strong incentive to push changes
   upstream rather than maintaining private forks.
 
+## Commercial Licensing and the Pro Edition
+
+The community edition is fully open source under AGPL-3.0 and free for commercial use. When AGPL does not fit your scenario (closed-source integration, OEM distribution), the Enterprise edition offers a commercial license; the Pro edition subscribes by point-count tiers with official support and scale coverage — tiers define the scale the team officially supports, not feature unlocks. Plans and pricing: [dc3.site/en/pricing](https://dc3.site/en/pricing/); common questions are covered in the [FAQ](../community/faq).
+
+The two license files at the repository root have different roles: `LICENSE-AGPL.txt` is the full AGPL-3.0 license text; `LICENSE.txt` is the layered notice (community AGPL + commercial licensing + commercial plugins + trademark terms).
+
 ## Further Reading
 
 - [Contributing Guide](../community/contributing) — how to submit code, with license compliance notes

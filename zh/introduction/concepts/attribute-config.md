@@ -134,12 +134,26 @@ dc3:
 
 3 号温度传感器，绑定 Modbus 驱动：
 
-- 驱动注册的属性：`DriverAttribute(host)`、`PointAttribute(registerAddress)`。
+- 驱动注册的属性（示意）：`DriverAttribute(host)`、`PointAttribute(registerAddress)`——键名以各驱动 `application.yml` 为准（如 Modbus TCP 实际用 `slaveId`/`functionCode`/`offset`）。
 - 设备填的配置：`DriverAttributeConfig{ deviceId: 3, configValue: "192.168.1.10" }`（连接到这台网关）；温度位号填
   `PointAttributeConfig{ deviceId: 3, pointId: 温度位号, configValue: "40001" }`。
 
 运行时驱动据此连接 `192.168.1.10`、读寄存器 `40001`，把读数封装成该位号的[位号值](./point-value)上报。换成 1 号设备，
 `configValue` 改成另一个地址即可，属性定义完全复用。
+
+## 指令属性与事件属性
+
+除了驱动/设备层（`DriverAttribute`）与位号层（`PointAttribute`），平台还有两层同构的属性声明，服务于指令与事件：
+
+| 层 | 属性实体 | 配置实体 | 谁来读 |
+|---|---------|---------|-------|
+| 指令 | `CommandAttribute` | `CommandAttributeConfig` | 驱动的 `execute()`——设备级"自定义指令"的协议映射（如 Modbus 功能码模板） |
+| 事件 | `EventAttribute` | `EventAttributeConfig` | 驱动的事件上报路径——外部事件如何解析为平台事件 |
+
+两点注意：
+
+- **位号读写不走指令属性**：位号级读写命令的取值来源是**位号属性**（`PointAttributeConfig`，如 Modbus 的 `slaveId`/`functionCode`/`offset`）。部分驱动在 yml 里也注册了 `command-attribute`，但仅当该驱动实现了 `execute()`（设备级自定义指令）时才被消费——以各驱动页的"写命令属性"节为准。
+- 事件属性常见于监听型驱动（如 listening-virtual 从报文解析事件），键名见各驱动的 `event-attribute` 配置。
 
 ## 延伸阅读
 

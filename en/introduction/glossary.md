@@ -78,10 +78,10 @@ we give each one's role in the pipeline.
 | `X-Auth-Login`         | HTTP auth header          | The login-identity identifier carried on protected endpoints                                                                     | Auth         |
 | `X-Auth-Token`         | HTTP auth header          | The access token carried on protected endpoints                                                                                  | Auth         |
 | `POST /token/salt`     | HTTP endpoint (public)    | Login step one: send `tenant` and `name` to get the salt; use it within 5 minutes (server does not enforce the timeout)          | Login        |
-| `POST /token/generate` | HTTP endpoint (public)    | Login step two: send `tenant`, `name`, `salt`, and the salt-hashed `password` to get an access token valid for 12 hours          | Login        |
+| `POST /token/generate` | HTTP endpoint (public)    | Login step two: send `tenant`, `name`, `salt`, and the plaintext `password` (transport protected by TLS) to get an access token valid for 12 hours          | Login        |
 
 ::: info Login is a two-step token exchange
-First `POST /token/salt` to get the salt, then hash the password with the salt and `POST /token/generate` to exchange it
+First `POST /token/salt` to get the salt, then `POST /token/generate` with the plaintext password and the salt to exchange it (the salt does not hash the password; verification is server-side)
 for an access token. With the token in hand, protected requests carry `X-Auth-Tenant` / `X-Auth-Login` / `X-Auth-Token`
 through the gateway. Treat the source as the authority for exact fields.
 :::

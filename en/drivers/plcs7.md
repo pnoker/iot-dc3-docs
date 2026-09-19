@@ -137,7 +137,7 @@ uncheck "Optimized block access"; after compiling and downloading, the offset ad
   the [driver capability matrix](./matrix).
 - **Health check**: device health check defaults to cron `0/15 * * * * ?`, lease timeout `45` seconds.
 
-::: info Implementation status: available
+::: info Implementation status: complete
 `read()` / `write()` / `initial()` / `event()` / `validate()` in `PlcS7DriverCustomServiceImpl` are all fully
 implemented, backed by the `iot-communication` (`S7PLC`) library, with auto-reconnect enabled, connections reused per
 `deviceId`, and a `ReentrantLock` serializing reads/writes. This is a working driver, not a skeleton.

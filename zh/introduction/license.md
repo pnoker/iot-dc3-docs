@@ -53,9 +53,15 @@ mvn -s .mvn/settings.xml license:aggregate-add-third-party
 - **保护用户权利**：任何使用 IoT DC3 衍生版本的用户都有权获取源码。
 - **鼓励上游贡献**：AGPL 的传染性让商业公司更愿意把改动推回上游而非维护私有 fork。
 
+## 商业授权与专业版
+
+社区版基于 AGPL-3.0 完整开源、可免费商用。当你的场景无法满足 AGPL（例如闭源集成、OEM 发行）时，企业版提供商业授权；专业版按位号档位订阅，提供官方支持与规模保障——档位定义的是官方承接的规模边界，不是功能解锁。方案与定价见 [dc3.site/zh/pricing](https://dc3.site/zh/pricing/)，常见问题见[这里](../community/faq)。
+
+仓库根有两份许可文件，分工不同：`LICENSE-AGPL.txt` 是完整的 AGPL-3.0 许可证文本；`LICENSE.txt` 是分层说明（社区版 AGPL + 商业授权 + 商业插件 + 商标条款）。
+
 ## 延伸阅读
 
 - [贡献指南](../community/contributing) — 如何提交代码，许可合规注意事项
 - [署名文件](https://github.com/pnoker/iot-dc3/blob/main/COPYRIGHT) — 仓库根的 COPYRIGHT 原文
-- [AGPL v3 常见问题](https://www.gnu.org/licenses/agpl-3.0.html) — GNU 官方 FAQ
+- [AGPL v3 许可证文本](https://www.gnu.org/licenses/agpl-3.0.html) — GNU 官方原文（FAQ 见 [gnu.org/licenses/agpl-3.0-faq](https://www.gnu.org/licenses/gpl-faq.html)）
 - [贡献者公约](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) — 社区行为准则参考

@@ -48,9 +48,10 @@ M-Bus (EN 13757) is the European standard for remote meter reading. A master sen
 | Write | ✓ (SND_NKE reset and SND_UD select frames) | |
 | Subscribe | — | |
 
-::: info Implementation status: available ::
+::: info Implementation status: complete
 
 Frames are self-built (no native jrxtx dependency); `MbusFrame` handles REQ_UD2/SND_NKE/SND_UD building, checksum verification, and DIF/VIF record parsing.
+:::
 
 ## Minimal onboarding example
 

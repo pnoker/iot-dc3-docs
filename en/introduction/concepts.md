@@ -36,7 +36,7 @@ produces many point values.
 ## Object by Object
 
 - **Driver (`dc3-driver-*`)**: a protocol-adapter service that talks to devices or data sources. On startup it registers
-  itself, plus the configuration items (attributes) it accepts, with the management center. The platform ships 28
+  itself, plus the configuration items (attributes) it accepts, with the management center. The platform ships 36
   built-in drivers covering Modbus, OPC UA, S7, MQTT, and more — see the [module map](../architecture/modules).
 - **Profile**: a capability template for similar devices. It records which points this kind of device has, which custom
   commands it supports, and which events it reports, so devices can reuse it.

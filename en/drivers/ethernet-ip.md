@@ -132,11 +132,10 @@ not touch). First confirm `host:44818` is reachable from the driver host (`telne
 
 44818. A failed connect in `getConnector()` throws `ConnectorException`; the log contains
        `EtherNet/IP connection failed`.
-       :::
+:::
 
 ::: warning tagName does not exist or case mismatches
-CIP is addressed by name, so `tagName` must match the variable name in the PLC program **verbatim and case-sensitively
-**. This differs from Modbus `offset`: a wrong Modbus offset silently reads a different register, whereas a non-existent
+CIP is addressed by name, so `tagName` must match the variable name in the PLC program **verbatim and case-sensitively**. This differs from Modbus `offset`: a wrong Modbus offset silently reads a different register, whereas a non-existent
 CIP tag name fails the read outright and throws `ReadPointException`. When troubleshooting, go back to the PLC project
 first to check the tag spelling and scope (controller-level vs program-level tags).
 :::

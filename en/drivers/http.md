@@ -186,7 +186,7 @@ JSON the endpoint accepts; on failure the driver throws `WritePointException` an
 
 These read/write capabilities match the `HTTP (HttpDriver)` row in the [driver capability matrix](./matrix).
 
-::: info Implementation status: available
+::: info Implementation status: complete
 `HttpDriverCustomServiceImpl` fully implements `initial()`/`read()`/`write()`/`health()`/`validate()`; it is a mature
 driver ready for collection. Two implementation boundaries to know: (1) `responsePath` supports only simple dot paths,
 not arrays/filters (above); (2) the `headers` attribute is declared but not yet applied to the connection, so custom

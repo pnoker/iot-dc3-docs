@@ -179,7 +179,7 @@ effect.
   the [driver capability matrix](./matrix). The driver polls actively as an SNMP manager and does not listen for device
   pushes, so there is no subscribe direction.
 
-::: info Implementation status: available
+::: info Implementation status: complete
 In `SnmpDriverCustomServiceImpl`, `read()` (GET), `write()` (SET), `getConnector()` (session management), `health()`,
 and `event()` (destroying a session on device update/delete) are all implemented; the SNMP4J v1/v2c send/receive path is
 complete and usable. Known boundaries: SNMPv3/USM is not wired up (see the three USM fields above), `write()` does not

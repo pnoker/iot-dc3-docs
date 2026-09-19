@@ -112,7 +112,7 @@ TIA Portal 里选中该 DB → 属性 → 取消勾选「优化的块访问」�
   —」一致。
 - **健康检查**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45` 秒。
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 `PlcS7DriverCustomServiceImpl` 的 `read()` / `write()` / `initial()` / `event()` / `validate()` 均已完整实现，底层基于
 `iot-communication`（`S7PLC`）库，连接开启自动重连、按 `deviceId` 复用并加 `ReentrantLock` 串行化读写。这是一个可用驱动，非骨架。
 :::

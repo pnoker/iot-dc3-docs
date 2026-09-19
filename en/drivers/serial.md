@@ -188,7 +188,7 @@ Per the [driver capability matrix](./matrix), this driver's capabilities are:
 | Write      | ✓         | `write()` renders the `${value}` template and sends the frame (no response read, no byte-order encoding) |
 | Subscribe  | —         | Master/slave polling model; devices do not push, polled on the collection cycle                          |
 
-::: info Implementation status: available
+::: info Implementation status: complete
 `SerialDriverCustomServiceImpl`'s `initial()`/`read()`/`write()`/`health()`/`event()`, the frame parser (
 `SerialFrameParser`), and connection management (`SerialPortConnection`, on jSerialComm) are all fully implemented — not
 a skeleton. The read path supports HEX/ASCII/BINARY/FLOAT decoding and CRC16/XOR/NONE response checksum verification;

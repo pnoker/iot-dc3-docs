@@ -151,7 +151,7 @@ SNMPv3，用本驱动连不上，且不会有"版本不支持"的明确报错，
 - **`dc3.driver.code`**：`SnmpDriver`（驱动名 `SNMP Driver`，类型 `DRIVER_CLIENT`，主动连设备）。这是稳定的路由标识，不可随意改。
 - **读 / 写 / 订阅能力**：读 ✓、写 ✓、订阅 —，与[驱动能力矩阵](./matrix)一致。驱动作为 SNMP 管理端主动轮询，不监听设备上报，因此没有订阅方向。
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 `SnmpDriverCustomServiceImpl` 的 `read()`（GET）、`write()`（SET）、`getConnector()`（会话管理）、`health()`、`event()`
 （设备更新/删除时销毁会话）均已实现，基于 SNMP4J 的 v1/v2c 收发链路完整可用。已知边界：SNMPv3/USM 未接（见上文 USM
 三项说明）、写入未校验响应 `errorStatus`、健康检查为本地会话存活判定而非端到端探测。这些是当前实现的取舍，不影响 v1/v2c

@@ -62,8 +62,7 @@ Before each later API call, the CLI does two things so you almost never hit a 40
 - **Proactive renewal**: if the current token is within the renewal threshold of expiring, the CLI silently re-logs in
   to get a fresh token before the call runs. The threshold comes from the profile's `renewal_threshold_hours`, which
   defaults to **1 hour** — it renews once less than an hour of validity remains.
-- **401 fallback**: if a 401 still slips through (clock drift, service restart, and so on), the CLI renews and then *
-  *retries the request once**.
+- **401 fallback**: if a 401 still slips through (clock drift, service restart, and so on), the CLI renews and then **retries the request once**.
 
 Requests to protected endpoints carry the platform's standard three headers — `X-Auth-Tenant`, `X-Auth-Login`,
 `X-Auth-Token` — where `X-Auth-Token` carries `{ salt, token }`.

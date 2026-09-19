@@ -78,6 +78,13 @@ title: 模块清单
 | `dc3-api-data`    | Data Center gRPC / Protobuf 合约    | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-data/README.md)    |
 | `dc3-api-driver`  | Driver gRPC / Protobuf 合约         | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-driver/README.md)  |
 
+## 消息与端到端（main 前瞻）
+
+| 分类 | 模块 | 用途 |
+|-----|------|-----|
+| 消息抽象 | `dc3-mq-core` / `dc3-mq-rabbitmq` / `dc3-mq-kafka` / `dc3-mq-mqtt` / `dc3-mq-pulsar` 等 | 可插拔消息中间件抽象（`DC3_MQ_TYPE` 选择实现；随 2026.5.x 之后的版本线发布，当前 release 线仍是 RabbitMQ 直连） |
+| 测试 | `dc3-e2e` / `dc3-coverage` | 端到端测试与覆盖率聚合 |
+
 ## 公共组件
 
 | 分类    | 模块                                | 用途                                     |

@@ -115,8 +115,7 @@ must count from `23`; the default `start=0` lands inside the device name and rea
 
 - **Keyword mismatch**: a point's `key` must exactly equal the hexadecimal of the packet's 23rd byte (e.g. `62`). Points
   whose `key` does not match are silently skipped for that frame; first confirm which byte the device actually sends.
-- **Byte order**: fixed-length numbers are read with Netty `ByteBuf`'s `getFloat/getDouble/getLong/getInt`, all *
-  *big-endian**. If the device packs little-endian, the parsed numbers come out garbled—pack big-endian on the device
+- **Byte order**: fixed-length numbers are read with Netty `ByteBuf`'s `getFloat/getDouble/getLong/getInt`, all **big-endian**. If the device packs little-endian, the parsed numbers come out garbled—pack big-endian on the device
   side or adjust the parsing logic yourself.
 - **Packet too short / offset out of bounds**: a frame shorter than 23 bytes (`payloadTooShort`), or a point whose
   `start+length` exceeds the actual packet length (`payloadOutOfBounds`), yields no value for that point on that frame.

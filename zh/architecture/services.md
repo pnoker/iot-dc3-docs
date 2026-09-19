@@ -12,7 +12,7 @@ import ServicesSequenceDiagram from '../../.vitepress/theme/components/ServicesS
 IoT DC3 不是一个单体进程，而是一组可独立部署、靠 gRPC 与 RabbitMQ 协作的服务。这页讲清平台由哪些可部署单元构成、它们之间怎么连线、以及为什么必须按某个固定顺序启动——读完你能看懂
 `docker-compose.yml` 里的每一条 `depends_on`，也能自己排查"为什么网关起不来"。
 
-> 你在这里：已读 [系统架构总览](./)，想把"五个中心 + 驱动"
+> 你在这里：已读 [系统架构总览](./)，想把"网关 + 四个中心 + 驱动"
 > 落到具体进程、端口和启动次序。下一步可看 [Facade 模式](./facade-modes)
 > 理解服务间怎么调用，或直接 [快速开始](../quickstart/) 把这套栈跑起来。
 
@@ -30,8 +30,7 @@ RabbitMQ 消息洪峰。拆开之后，每一类单元可以单独扩容、单�
 - **管理中心 Manager Center（`dc3-center-manager`）**——驱动、模板、设备、位号等元数据管理。
 - **数据中心 Data Center（`dc3-center-data`）**——位号值落库、命令分发与回执、告警引擎。
 - **智能中心 Agentic Center（`dc3-center-agentic`）**——Spring AI 会话、工具调用、对话持久化。
-- **协议驱动 Drivers（`dc3-driver-*`）**——驱动目录共 36 个协议适配实现，`docker-compose.yml` 默认内置其中 22 个驱动容器（未内置
-  `ble`/`iec104`/`lwm2m`/`sl651`/`zigbee`/`can` 这 6 个，需要时自行启动对应容器）；南向接设备、北向经 RabbitMQ
+- **协议驱动 Drivers（`dc3-driver-*`）**——驱动目录共 36 个协议适配实现，`docker-compose.yml` 默认内置全部 36 个驱动容器；南向接设备、北向经 RabbitMQ
   与数据中心解耦。
 - **single 单体（`dc3-center-single`）**——把四个中心的能力合并进一个进程，用 `dc3.facade.mode: local`
   在进程内直连，适合本地开发与轻量部署（见 [Facade 模式](./facade-modes)）。
@@ -117,7 +116,7 @@ make up-db
 make up STACK=app
 
 # 跟随日志，确认各服务 readiness 依次通过
-make logs
+make logs STACK=app
 ```
 
 ```bash [podman compose（底层）]

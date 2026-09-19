@@ -20,6 +20,7 @@ Redis is an in-memory key/value store. This driver maps a Point to a key (and op
 
 | Attribute | code | Type | Default | Description |
 |-----------|------|------|---------|-------------|
+| Key Prefix | `keyPrefix` | STRING | (empty) | Key prefix: the actual key accessed = keyPrefix + the point's `key` |
 | (broker connection) | `spring.data.redis.*` | — | env | Configured via Spring Boot `spring.data.redis.*` properties |
 
 ### Point attributes (`point-attribute`)
@@ -43,9 +44,10 @@ Redis is an in-memory key/value store. This driver maps a Point to a key (and op
 | Write | ✓ | |
 | Subscribe | — | |
 
-::: info Implementation status: available ::
+::: info Implementation status: complete
 
 Connection is configured through Spring Boot `spring.data.redis.*` (`REDIS_HOST` / `REDIS_PORT` environment variables); no driver-level connection attribute is required.
+:::
 
 ## Minimal onboarding example
 

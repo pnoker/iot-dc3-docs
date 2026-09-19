@@ -66,11 +66,11 @@ title: 驱动总览
 
 | 驱动                         | 数据源        | 说明      |
 |----------------------------|------------|---------|
-| [MySQL](./mysql)           | MySQL      | 从库表采集点位 |
-| [PostgreSQL](./postgresql) | PostgreSQL | 从库表采集点位 |
-| [Oracle](./oracle)         | Oracle     | 从库表采集点位 |
-| [SQL Server](./sqlserver)  | SQL Server | 从库表采集点位 |
-| [Redis](./redis)           | Redis      | 从键采集点位   |
+| [MySQL](./mysql)           | MySQL      | 从库表采集位号 |
+| [PostgreSQL](./postgresql) | PostgreSQL | 从库表采集位号 |
+| [Oracle](./oracle)         | Oracle     | 从库表采集位号 |
+| [SQL Server](./sqlserver)  | SQL Server | 从库表采集位号 |
+| [Redis](./redis)           | Redis      | 从键采集位号   |
 
 ## 虚拟 / 测试
 

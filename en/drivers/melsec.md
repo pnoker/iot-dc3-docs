@@ -134,7 +134,7 @@ corresponding connection.
 
 ## How it lands in IoT DC3
 
-::: info Implementation status: available
+::: info Implementation status: complete
 Both the read and write paths of the Melsec driver are fully implemented — `read()` / `write()` call real MC
 reads/writes through `iot-communication`'s `McPLC` (`readInt16` / `writeInt16` / `readString`, etc.), selecting the
 correct word width by data type. This is an available driver, and its behavior matches the `application.yml`

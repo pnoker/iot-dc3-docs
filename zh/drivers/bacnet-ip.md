@@ -151,7 +151,7 @@ BACnet/IP 接入失败大多集中在广播发现、对象寻址、写值编码�
 - **采集周期**：默认 cron `0/30 * * * * ?`（每 30 秒读一轮），在驱动 `application.yml` 的 `schedule.read` 配置。
 - **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`，按 `LocalDevice.isInitialized()` 判定。
 
-::: info 实现状态：可用
+::: info 实现状态：完整
 本驱动是**完整实现**（非骨架），底层基于 BACnet4J。`read()` / `write()` 走真实的 BACnet 读写请求，`health()` 按本地设备初始化状态判在线，
 `validate()` / `validatePoint()` 做必填校验，并按设备 ID 缓存 `LocalDevice` 连接。需注意两处与直觉不同的行为：①
 `objectType` / `propertyId` 拼错会**静默回退**而非报错；② 找不到 `remoteDeviceId` 会**阻塞至超时**——均见上文。

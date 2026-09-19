@@ -52,10 +52,14 @@ DNP3 (IEEE 1815) is the predominant SCADA protocol in North American utilities. 
 | Write | ✓ | DIRECT_OPERATE for binary/analog outputs |
 | Subscribe | — | |
 
-::: info Implementation status: available :::
+::: info Implementation status: available
+The `io.stepfunc:dnp3` native stack loads and the read/write path is implemented.
+:::
 
 ::: warning Native stack requires outstation commissioning
-The `io.stepfunc:dnp3` native stack (Rust `dnp3` runtime with per-platform native libraries) loads and the read/write path is implemented, but on-wire behaviour must still be commissioned against a real outstation in the target environment. :::
+On-wire behaviour must still be commissioned against a real outstation in the target environment before production use.
+:::
+
 
 ## Minimal onboarding example
 

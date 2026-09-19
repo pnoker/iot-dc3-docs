@@ -187,7 +187,7 @@ timeout (see Troubleshooting item 2 above).
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?`, with a lease timeout of `45 seconds`, judged
   by `LocalDevice.isInitialized()`.
 
-::: info Implementation status: available
+::: info Implementation status: complete
 This driver is a **complete implementation** (not a skeleton), built on BACnet4J. `read()` / `write()` issue real BACnet
 read/write requests, `health()` judges online status by the local device's initialization state, `validate()` /
 `validatePoint()` perform required-field checks, and it caches the `LocalDevice` connection by device ID. Note two
