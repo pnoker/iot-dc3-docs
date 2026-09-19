@@ -433,15 +433,6 @@ const copy = computed(() => props.lang === 'en' ? {
   background: var(--dg-card-soft);
 }
 
-/* every diagram component wraps itself in DiagramFrame, whose zoom button
-   (a magnifier) makes no sense here — the card already opens this lightbox,
-   and inside the lightbox the diagram is already enlarged. Hide it in both
-   gallery contexts. */
-.dg-thumb :deep(.dc3-frame__btn),
-.dg-zoom-body :deep(.dc3-frame__btn) {
-  display: none;
-}
-
 .dg-thumb :deep(.dc3-diagram) {
   margin: 0;
   border: 0;
