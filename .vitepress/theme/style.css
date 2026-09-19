@@ -797,24 +797,15 @@ body {
     font-weight: 650;
 }
 
-/* Active/hover highlight — a rounded pill, applied to .link so both states share
-   the exact same box and align perfectly. The default theme's markup puts .link
-   inside .item (a full-width flex row); we give .link its own padding + a small
-   negative left margin so the tint bleeds slightly left of the text (a "wrapped"
-   look) while keeping the right edge inside the scroll area — it never reaches
-   the scrollbar track. Replaces the default left vertical-bar indicator. */
-.VPSidebarItem.is-link > .item > .link {
-    margin: 2px -8px;
-    padding: 2px 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
-}
-
-.VPSidebarItem.is-link:not(.is-active) > .item > .link:hover {
-    background: color-mix(in srgb, var(--vp-c-brand-soft) 45%, transparent);
-}
-
-.VPSidebarItem.is-active > .item > .link {
+/* Active item: a light-blue pill + bold brand text on the WHOLE row (not the
+   inner .link), roomy enough to read as a row highlight rather than a text
+   box; the negative side margins let the tint bleed past the text column.
+   Replaces the default left vertical-bar indicator. Ported from iot-dc3-book;
+   hover keeps the default theme's text-color change. */
+.VPSidebarItem.is-active > .item {
+    margin: 0 -12px;
+    padding: 5px 12px;
+    border-radius: 7px;
     background: var(--vp-c-brand-soft);
 }
 
