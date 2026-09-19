@@ -65,13 +65,18 @@ const filtered = computed(() => {
 // flat list drives the lightbox prev/next order
 const flat = computed(() => filtered.value)
 
+// Group by PAGE, not by component class name: readers think "the diagrams
+// on the alarm page", not "AlarmErDiagram". Page order follows the url, which
+// tracks the site's information architecture.
 const groups = computed(() => {
-    const map = new Map<string, Entry[]>()
+    const map = new Map<string, { pageTitle: string, entries: Entry[] }>()
     for (const e of filtered.value) {
-        if (!map.has(e.component)) map.set(e.component, [])
-        map.get(e.component)!.push(e)
+        if (!map.has(e.url)) map.set(e.url, { pageTitle: e.pageTitle, entries: [] })
+        map.get(e.url)!.entries.push(e)
     }
     return [...map.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([url, g]) => ({ url, ...g }))
 })
 
 // ── lazy thumbnails: only mount diagrams near the viewport ──────────
@@ -191,21 +196,21 @@ const copy = computed(() => props.lang === 'en' ? {
     <!-- results -->
     <p v-else-if="filtered.length === 0" class="dg-empty">{{ copy.empty }}</p>
 
-    <section v-for="([component, uses]) in groups" :key="component" class="dg-section">
+    <section v-for="group in groups" :key="group.url" class="dg-section">
       <h3 class="dg-group-title">
-        <span class="dg-group-name">{{ component }}</span>
-        <span class="dg-group-note">{{ copy.usedOn(uses.length) }}</span>
+        <span class="dg-group-name">{{ group.pageTitle }}</span>
+        <span class="dg-group-note">{{ group.url }}</span>
       </h3>
       <div class="dg-grid">
         <article
-          v-for="e in uses"
+          v-for="e in group.entries"
           :key="e.url + (e.anchor ?? '')"
           class="dg-card"
           :data-key="component + '|' + e.url + '|' + (e.anchor ?? '')"
           :data-mounted="mountedKeys.has(component + '|' + e.url + '|' + (e.anchor ?? '')) || null"
           role="button"
           :tabindex="0"
-          :aria-label="component + ' — ' + e.pageTitle"
+          :aria-label="e.pageTitle + ' — ' + e.component"
           @click="openZoom(flat.indexOf(e))"
           @keydown.enter="openZoom(flat.indexOf(e))"
         >
@@ -218,7 +223,7 @@ const copy = computed(() => props.lang === 'en' ? {
             <div v-else class="dg-shimmer dg-shimmer--fill"/>
           </div>
           <footer class="dg-card-foot">
-            <span class="dg-page" :title="e.pageTitle">{{ e.pageTitle }}</span>
+            <span class="dg-page" :title="e.component">{{ e.component }}</span>
             <span
               class="dg-jump"
               role="link"
@@ -422,17 +427,22 @@ const copy = computed(() => props.lang === 'en' ? {
   overflow: hidden;
 }
 
-/* scale the diagram to cover the thumb box: wide SVGs shrink, tall ones crop */
+/* CONTAIN, never cover: a cropped diagram cannot answer "is this the one
+   I'm looking for" — completeness beats filling the box. The SVG keeps its
+   intrinsic aspect ratio inside the letterboxed area. */
+.dg-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
 .dg-thumb :deep(svg) {
-  position: absolute;
-  left: 50%;
-  top: 50%;
+  display: block;
   width: auto;
   height: auto;
-  min-width: 100%;
-  min-height: 100%;
-  max-width: none;
-  transform: translate(-50%, -50%);
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .dg-card-foot {
