@@ -16,14 +16,15 @@
   -->
 
 <script lang="ts" setup>
-import {computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
+import {computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import {useData, useRouter} from 'vitepress'
 
 const props = defineProps<{ lang: 'zh' | 'en' }>()
 const {isDark} = useData()
 const router = useRouter()
 
-// ── diagram components, lazily loaded on demand ─────────────────────
+// ── diagram components, lazily loaded per chunk (browser handles the rest
+//    via content-visibility on the cards — no JS visibility race) ──────
 const loaders = import.meta.glob<{ default: unknown }>('./*Diagram.vue')
 const cache = new Map<string, ReturnType<typeof defineAsyncComponent>>()
 const resolve = (name: string) => {
@@ -44,7 +45,6 @@ onMounted(async () => {
         entries.value = index[props.lang] ?? []
     } finally {
         loading.value = false
-        nextTick(rescan)
     }
 })
 
@@ -78,30 +78,6 @@ const groups = computed(() => {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([url, g]) => ({ url, ...g }))
 })
-
-// ── lazy thumbnails: only mount diagrams near the viewport ──────────
-const mountedKeys = ref(new Set<string>())
-let io: IntersectionObserver | null = null
-
-function rescan() {
-    if (typeof document === 'undefined') return
-    io?.disconnect()
-    io = new IntersectionObserver(records => {
-        let touched = false
-        for (const r of records) {
-            if (r.isIntersecting) {
-                mountedKeys.value.add((r.target as HTMLElement).dataset.key!)
-                io!.unobserve(r.target)
-                touched = true
-            }
-        }
-        if (touched) mountedKeys.value = new Set(mountedKeys.value)
-    }, {rootMargin: '400px 0px'})
-    document.querySelectorAll('.dg-card[data-key]:not([data-mounted])').forEach(el => io!.observe(el))
-}
-
-watch(filtered, () => nextTick(rescan))
-onBeforeUnmount(() => io?.disconnect())
 
 // ── lightbox ─────────────────────────────────────────────────────────
 const zoomIndex = ref(-1)
@@ -146,9 +122,11 @@ onBeforeUnmount(() => {
 
 // ── copy ─────────────────────────────────────────────────────────────
 const copy = computed(() => props.lang === 'en' ? {
+    kicker: 'Index',
+    title: 'Diagram Index',
+    lead: 'Every architecture, flow, state-machine, and relationship diagram on the site, grouped by page. Click a card to enlarge; jump to its place in the text from the lightbox.',
     placeholder: 'Search diagrams, page titles, or paths…',
     count: (n: number) => `${n} diagram${n === 1 ? '' : 's'}`,
-    usedOn: (n: number) => `used on ${n} page${n === 1 ? '' : 's'}`,
     empty: 'No diagram matches this query.',
     loading: 'Loading diagram index…',
     prev: 'Previous diagram',
@@ -157,9 +135,11 @@ const copy = computed(() => props.lang === 'en' ? {
     jump: 'Open in context',
     of: (i: number, n: number) => `${i + 1} / ${n}`,
 } : {
+    kicker: '图录',
+    title: '图表总览',
+    lead: '全站架构图、流程图、状态机与关系图按页面归组。点击卡片放大查看，从放大层直达它在正文中的位置。',
     placeholder: '搜索图表名、页面标题或路径…',
     count: (n: number) => `共 ${n} 张图`,
-    usedOn: (n: number) => `出现在 ${n} 个页面`,
     empty: '没有匹配的图表。',
     loading: '正在载入图表索引…',
     prev: '上一张（←）',
@@ -171,64 +151,65 @@ const copy = computed(() => props.lang === 'en' ? {
 </script>
 
 <template>
-  <div class="dg" :class="{ 'dg-dark': isDark }">
-    <!-- toolbar -->
+  <div :class="{ 'dg-dark': isDark }" class="dg">
+    <!-- page header (site voice: kicker pill + title + lead) -->
+    <header class="dg-head">
+      <p class="dg-kicker">{{ copy.kicker }}</p>
+      <h2 class="dg-title">{{ copy.title }}</h2>
+      <p class="dg-lead">{{ copy.lead }}</p>
+    </header>
+
+    <!-- toolbar: full-width search + count -->
     <div class="dg-toolbar">
-      <svg aria-hidden="true" class="dg-search-icon" fill="none" height="15" stroke="currentColor"
-           stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="15">
-        <circle cx="11" cy="11" r="7"/>
-        <line x1="21" x2="16.65" y1="21" y2="16.65"/>
-      </svg>
-      <input v-model="query" :aria-label="copy.placeholder" :placeholder="copy.placeholder" class="dg-search"
-             type="search">
-      <span class="dg-count">{{ copy.count(filtered.length) }}</span>
+      <div class="dg-search-wrap">
+        <svg aria-hidden="true" class="dg-search-icon" fill="none" height="15" stroke="currentColor"
+             stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="15">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="21" x2="16.65" y1="21" y2="16.65"/>
+        </svg>
+        <input v-model="query" :aria-label="copy.placeholder" :placeholder="copy.placeholder" class="dg-search"
+               type="search">
+      </div>
+      <span class="dg-count">{{ loading ? '…' : copy.count(filtered.length) }}</span>
     </div>
 
     <!-- loading skeletons -->
     <div v-if="loading" class="dg-grid">
-      <div v-for="i in 6" :key="i" class="dg-card dg-skeleton">
+      <div v-for="i in 8" :key="i" class="dg-card dg-skeleton">
         <div class="dg-thumb dg-shimmer"/>
         <div class="dg-card-foot"><span class="dg-shimmer-line"/></div>
       </div>
-      <p class="dg-note">{{ copy.loading }}</p>
     </div>
 
     <!-- results -->
     <p v-else-if="filtered.length === 0" class="dg-empty">{{ copy.empty }}</p>
 
-    <section v-for="group in groups" :key="group.url" class="dg-section">
+    <section v-for="group in groups" v-else :key="group.url" class="dg-section">
       <h3 class="dg-group-title">
         <span class="dg-group-name">{{ group.pageTitle }}</span>
-        <span class="dg-group-note">{{ group.url }}</span>
+        <span class="dg-group-note">{{ group.entries.length }}</span>
       </h3>
       <div class="dg-grid">
         <article
           v-for="e in group.entries"
           :key="e.url + (e.anchor ?? '')"
+          :aria-label="e.pageTitle + ' — ' + e.component"
           class="dg-card"
-          :data-key="component + '|' + e.url + '|' + (e.anchor ?? '')"
-          :data-mounted="mountedKeys.has(component + '|' + e.url + '|' + (e.anchor ?? '')) || null"
           role="button"
           :tabindex="0"
-          :aria-label="e.pageTitle + ' — ' + e.component"
           @click="openZoom(flat.indexOf(e))"
           @keydown.enter="openZoom(flat.indexOf(e))"
         >
           <div class="dg-thumb">
-            <component
-              :is="resolve(component)"
-              v-if="mountedKeys.has(component + '|' + e.url + '|' + (e.anchor ?? ''))"
-              :lang="props.lang"
-            />
-            <div v-else class="dg-shimmer dg-shimmer--fill"/>
+            <component :is="resolve(e.component)" :lang="props.lang"/>
           </div>
           <footer class="dg-card-foot">
-            <span class="dg-page" :title="e.component">{{ e.component }}</span>
+            <span :title="e.component" class="dg-page">{{ e.component }}</span>
             <span
+              :aria-label="copy.jump"
               class="dg-jump"
               role="link"
               :tabindex="0"
-              :aria-label="copy.jump"
               @click.stop="gotoPage(e)"
               @keydown.enter.stop="gotoPage(e)"
             >{{ copy.jump }} ↗</span>
@@ -289,6 +270,9 @@ const copy = computed(() => props.lang === 'en' ? {
   --dg-tint: rgba(18, 150, 219, 0.07);
   --dg-shadow: 0 8px 24px rgba(16, 42, 72, 0.06);
   --dg-shadow-hover: 0 14px 32px rgba(16, 42, 72, 0.13);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 8px 4px 40px;
 }
 
 .dg-dark {
@@ -298,28 +282,69 @@ const copy = computed(() => props.lang === 'en' ? {
   --dg-shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.38);
 }
 
-/* ── toolbar ─────────────────────────────────────────────────────── */
+/* ── page header ─────────────────────────────────────────────────── */
+.dg-head { margin: 18px 0 22px; }
+
+.dg-kicker {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 3px 12px;
+  border: 1px solid color-mix(in srgb, var(--vp-c-brand-1) 32%, var(--dg-line));
+  border-radius: 999px;
+  background: var(--dg-tint);
+  color: var(--vp-c-brand-1);
+  font-size: 12px;
+  font-weight: 640;
+  letter-spacing: 0.12em;
+}
+
+.dg-title {
+  margin: 0 0 8px;
+  color: var(--dg-ink);
+  font-size: clamp(26px, 3.4vw, 36px);
+  font-weight: 740;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+.dg-lead {
+  max-width: 720px;
+  margin: 0;
+  color: var(--dg-ink-2);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ── toolbar: full-width search ──────────────────────────────────── */
 .dg-toolbar {
   position: sticky;
   top: calc(var(--vp-nav-height) + 10px);
   z-index: 10;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  margin: 4px 0 22px;
+  margin: 0 0 22px;
+}
+
+.dg-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .dg-search-icon {
   position: absolute;
-  left: 16px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--dg-ink-2);
   pointer-events: none;
 }
 
 .dg-search {
-  flex: 1;
-  max-width: 480px;
-  padding: 10px 16px 10px 40px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 16px 10px 38px;
   border: 1px solid var(--dg-line);
   border-radius: 999px;
   background: var(--dg-card);
@@ -336,13 +361,15 @@ const copy = computed(() => props.lang === 'en' ? {
 }
 
 .dg-count {
-  padding: 4px 12px;
+  flex-shrink: 0;
+  padding: 6px 12px;
   border: 1px solid var(--dg-line);
   border-radius: 999px;
   background: var(--dg-card);
   box-shadow: var(--dg-shadow);
   color: var(--dg-ink-2);
   font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -373,9 +400,15 @@ const copy = computed(() => props.lang === 'en' ? {
 }
 
 .dg-group-note {
-  color: var(--dg-ink-2);
-  font-size: 12px;
-  font-weight: 400;
+  min-width: 20px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--dg-tint);
+  color: var(--vp-c-brand-1);
+  font-size: 11.5px;
+  font-weight: 640;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 /* ── responsive grid: 1 → 2 → 3 → 4 columns by available width ──── */
@@ -384,8 +417,6 @@ const copy = computed(() => props.lang === 'en' ? {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 16px;
 }
-
-.dg-note { grid-column: 1 / -1; color: var(--dg-ink-2); font-size: 13px; }
 
 /* ── card ────────────────────────────────────────────────────────── */
 .dg-card {
@@ -399,6 +430,10 @@ const copy = computed(() => props.lang === 'en' ? {
   background: var(--dg-card);
   box-shadow: var(--dg-shadow);
   cursor: zoom-in;
+  /* the browser skips rendering off-screen cards — same effect as the old
+     IntersectionObserver lazy-mount, but without its hydration race */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
@@ -411,9 +446,13 @@ const copy = computed(() => props.lang === 'en' ? {
 }
 
 .dg-thumb {
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   aspect-ratio: 16 / 10;
   overflow: hidden;
+  padding: 12px;
   border-radius: 12px 12px 0 0;
   background: var(--dg-card-soft);
 }
@@ -423,20 +462,15 @@ const copy = computed(() => props.lang === 'en' ? {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  padding: 10px;
+  padding: 0;
   overflow: hidden;
-}
-
-/* CONTAIN, never cover: a cropped diagram cannot answer "is this the one
-   I'm looking for" — completeness beats filling the box. The SVG keeps its
-   intrinsic aspect ratio inside the letterboxed area. */
-.dg-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
 }
 
+/* CONTAIN, never cover: a cropped diagram cannot answer "is this the one
+   I'm looking for" — completeness beats filling the box. */
 .dg-thumb :deep(svg) {
   display: block;
   width: auto;
@@ -481,20 +515,16 @@ const copy = computed(() => props.lang === 'en' ? {
 /* ── skeleton shimmer ────────────────────────────────────────────── */
 .dg-skeleton { pointer-events: none; }
 
-.dg-shimmer,
-.dg-shimmer--fill {
+.dg-shimmer {
   background: linear-gradient(100deg, var(--dg-card-soft) 40%, color-mix(in srgb, var(--dg-card-soft) 60%, #c8d4e0) 50%, var(--dg-card-soft) 60%);
   background-size: 200% 100%;
   animation: dg-shimmer 1.4s ease-in-out infinite;
 }
 
-.dg-dark .dg-shimmer,
-.dg-dark .dg-shimmer--fill {
+.dg-dark .dg-shimmer {
   background: linear-gradient(100deg, var(--dg-card-soft) 40%, color-mix(in srgb, var(--dg-card-soft) 55%, #2b3a4d) 50%, var(--dg-card-soft) 60%);
   background-size: 200% 100%;
 }
-
-.dg-shimmer--fill { position: absolute; inset: 0; }
 
 .dg-shimmer-line {
   display: inline-block;
@@ -622,6 +652,14 @@ const copy = computed(() => props.lang === 'en' ? {
 .dg-zoom-nav--next { right: 14px; top: 50%; transform: translateY(-50%); }
 
 @media (max-width: 720px) {
+  .dg { padding: 8px 2px 32px; }
+
+  .dg-toolbar { flex-wrap: wrap; }
+
+  .dg-search-wrap { flex-basis: 100%; }
+
+  .dg-count { margin-left: auto; }
+
   .dg-zoom-nav--prev,
   .dg-zoom-nav--next { top: auto; bottom: 18px; transform: none; }
   .dg-zoom-nav--prev { left: calc(50% - 52px); }
@@ -632,8 +670,7 @@ const copy = computed(() => props.lang === 'en' ? {
 @media (prefers-reduced-motion: reduce) {
   .dg-zoom,
   .dg-zoom-figure,
-  .dg-shimmer,
-  .dg-shimmer--fill { animation: none; }
+  .dg-shimmer { animation: none; }
   .dg-card { transition: none; }
 }
 </style>
