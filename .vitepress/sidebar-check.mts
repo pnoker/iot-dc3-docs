@@ -98,6 +98,38 @@ export function assertSidebarRegistersAllPages(sidebars: Readonly<Record<'zh' | 
     }
 }
 
+// Markdown hygiene: catches the two recurring rendering defects this site
+// has shipped before — bold markers split across a hard line break (renders
+// literal asterisks) and single-line ::: containers (the closer must sit on
+// its own line, otherwise the container title and following text render
+// outside the box). Code fences, inline code spans and 4+ asterisk runs
+// (password placeholders) are excluded before counting.
+export function assertMarkdownHygiene(): void {
+    const stripNoise = (md: string) =>
+        md.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '').replace(/\*{4,}/g, '')
+    const problems: string[] = []
+    for (const lang of ['zh', 'en'] as const) {
+        for (const file of walkMarkdown(join(root, lang))) {
+            const relPath = relative(root, file).split(sep).join('/')
+            if (isExcluded(relPath)) continue
+            const raw = readFileSync(file, 'utf8')
+            for (const para of stripNoise(raw).split(/\n\s*\n/)) {
+                if (para.includes('**') && para.split('**').length % 2 === 0) {
+                    problems.push(`  ${relPath} — unbalanced ** in paragraph: ${para.split('\n')[0].slice(0, 48)}`)
+                }
+            }
+            for (const line of raw.split('\n')) {
+                if (/^:::.*:::\s*$/.test(line.trim()) && line.trim() !== ':::') {
+                    problems.push(`  ${relPath} — single-line ::: container: ${line.slice(0, 48)}`)
+                }
+            }
+        }
+    }
+    if (problems.length) {
+        throw new Error(`[sidebar-check] markdown rendering defects:\n${problems.join('\n')}`)
+    }
+}
+
 // locales/zh.json and locales/en.json must carry the same key set so both
 // languages resolve every sidebar/nav entry to their own copy (t() falls back
 // to zh silently — this guard makes the drift visible at build time instead).

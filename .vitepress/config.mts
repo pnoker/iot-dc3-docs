@@ -19,7 +19,7 @@ import {defineConfig} from 'vitepress'
 import {Lang, t} from './i18n'
 import {transformHead} from './seo.mts'
 import {resolveVersion} from './version.mts'
-import {assertHeadingParity, assertLocaleParity, assertSidebarRegistersAllPages, SRC_EXCLUDE} from './sidebar-check.mts'
+import {assertHeadingParity, assertLocaleParity, assertMarkdownHygiene, assertSidebarRegistersAllPages, SRC_EXCLUDE} from './sidebar-check.mts'
 
 const versionInfo = resolveVersion()
 
@@ -252,6 +252,7 @@ const sidebars = {zh: buildSidebar('zh'), en: buildSidebar('en')}
 assertSidebarRegistersAllPages(sidebars)
 assertLocaleParity()
 assertHeadingParity()
+assertMarkdownHygiene()
 
 function buildNav(lang: Lang) {
     const p = lang === 'en' ? '/en' : '/zh'
