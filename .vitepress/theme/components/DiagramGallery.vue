@@ -15,30 +15,37 @@
   - along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<script setup lang="ts">
-import {computed, defineAsyncComponent, onMounted, ref} from 'vue'
+<script lang="ts" setup>
+import {computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import {useData, useRouter} from 'vitepress'
 
 const props = defineProps<{ lang: 'zh' | 'en' }>()
 const {isDark} = useData()
 const router = useRouter()
 
-// Every diagram component, lazily loaded — the browser only fetches the ones
-// actually rendered on screen.
+// ── diagram components, lazily loaded on demand ─────────────────────
 const loaders = import.meta.glob<{ default: unknown }>('./*Diagram.vue')
+const cache = new Map<string, ReturnType<typeof defineAsyncComponent>>()
 const resolve = (name: string) => {
-    const loader = loaders[`./${name}.vue`]
-    if (!loader) return null
-    return defineAsyncComponent(loader as never)
+    if (!loaders[`./${name}.vue`]) return null
+    if (!cache.has(name)) cache.set(name, defineAsyncComponent(loaders[`./${name}.vue`] as never))
+    return cache.get(name)!
 }
 
+// ── data ─────────────────────────────────────────────────────────────
 type Entry = { component: string, url: string, pageTitle: string, anchor?: string }
 const entries = ref<Entry[]>([])
+const loading = ref(true)
 const query = ref('')
 
 onMounted(async () => {
-    const index = await fetch('/diagram-index.json').then(r => r.json())
-    entries.value = index[props.lang] ?? []
+    try {
+        const index = await fetch('/diagram-index.json').then(r => r.json())
+        entries.value = index[props.lang] ?? []
+    } finally {
+        loading.value = false
+        nextTick(rescan)
+    }
 })
 
 const filtered = computed(() => {
@@ -49,12 +56,14 @@ const filtered = computed(() => {
             || e.pageTitle.toLowerCase().includes(q)
             || e.url.toLowerCase().includes(q))
         : entries.value
-    // stable grouping: alphabetical by component, then by page
     return [...list].sort((a, b) =>
         a.component === b.component
             ? a.pageTitle.localeCompare(b.pageTitle)
             : a.component.localeCompare(b.component))
 })
+
+// flat list drives the lightbox prev/next order
+const flat = computed(() => filtered.value)
 
 const groups = computed(() => {
     const map = new Map<string, Entry[]>()
@@ -65,89 +74,251 @@ const groups = computed(() => {
     return [...map.entries()]
 })
 
-const go = (e: Entry) => {
+// ── lazy thumbnails: only mount diagrams near the viewport ──────────
+const mountedKeys = ref(new Set<string>())
+let io: IntersectionObserver | null = null
+
+function rescan() {
+    if (typeof document === 'undefined') return
+    io?.disconnect()
+    io = new IntersectionObserver(records => {
+        let touched = false
+        for (const r of records) {
+            if (r.isIntersecting) {
+                mountedKeys.value.add((r.target as HTMLElement).dataset.key!)
+                io!.unobserve(r.target)
+                touched = true
+            }
+        }
+        if (touched) mountedKeys.value = new Set(mountedKeys.value)
+    }, {rootMargin: '400px 0px'})
+    document.querySelectorAll('.dg-card[data-key]:not([data-mounted])').forEach(el => io!.observe(el))
+}
+
+watch(filtered, () => nextTick(rescan))
+onBeforeUnmount(() => io?.disconnect())
+
+// ── lightbox ─────────────────────────────────────────────────────────
+const zoomIndex = ref(-1)
+const zoomOpen = computed(() => zoomIndex.value >= 0 && zoomIndex.value < flat.value.length)
+const zoomEntry = computed(() => flat.value[zoomIndex.value])
+
+function openZoom(index: number) {
+    zoomIndex.value = index
+}
+
+function closeZoom() {
+    zoomIndex.value = -1
+}
+
+function step(delta: number) {
+    if (!zoomOpen.value || flat.value.length === 0) return
+    zoomIndex.value = (zoomIndex.value + delta + flat.value.length) % flat.value.length
+}
+
+function gotoPage(e: Entry) {
+    closeZoom()
     router.go(e.url + (e.anchor ? `#${e.anchor}` : ''))
 }
 
+function onKey(e: KeyboardEvent) {
+    if (!zoomOpen.value) return
+    if (e.key === 'Escape') closeZoom()
+    else if (e.key === 'ArrowLeft') step(-1)
+    else if (e.key === 'ArrowRight') step(1)
+}
+
+watch(zoomOpen, v => {
+    if (typeof document === 'undefined') return
+    document.body.style.overflow = v ? 'hidden' : ''
+})
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', onKey)
+    if (typeof document !== 'undefined') document.body.style.overflow = ''
+})
+
+// ── copy ─────────────────────────────────────────────────────────────
 const copy = computed(() => props.lang === 'en' ? {
     placeholder: 'Search diagrams, page titles, or paths…',
     count: (n: number) => `${n} diagram${n === 1 ? '' : 's'}`,
-    open: 'Open',
-    empty: 'No diagram matches this query.',
     usedOn: (n: number) => `used on ${n} page${n === 1 ? '' : 's'}`,
+    empty: 'No diagram matches this query.',
+    loading: 'Loading diagram index…',
+    prev: 'Previous diagram',
+    next: 'Next diagram',
+    close: 'Close (Esc)',
+    jump: 'Open in context',
+    of: (i: number, n: number) => `${i + 1} / ${n}`,
 } : {
     placeholder: '搜索图表名、页面标题或路径…',
     count: (n: number) => `共 ${n} 张图`,
-    open: '前往',
-    empty: '没有匹配的图表。',
     usedOn: (n: number) => `出现在 ${n} 个页面`,
+    empty: '没有匹配的图表。',
+    loading: '正在载入图表索引…',
+    prev: '上一张（←）',
+    next: '下一张（→）',
+    close: '关闭（Esc）',
+    jump: '前往正文',
+    of: (i: number, n: number) => `${i + 1} / ${n}`,
 })
 </script>
 
 <template>
-  <div class="dg-gallery" :class="{ dark: isDark }">
+  <div class="dg" :class="{ 'dg-dark': isDark }">
+    <!-- toolbar -->
     <div class="dg-toolbar">
-      <input
-        v-model="query"
-        class="dg-search"
-        type="search"
-        :placeholder="copy.placeholder"
-        :aria-label="copy.placeholder"
-      >
+      <svg aria-hidden="true" class="dg-search-icon" fill="none" height="15" stroke="currentColor"
+           stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="15">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" x2="16.65" y1="21" y2="16.65"/>
+      </svg>
+      <input v-model="query" :aria-label="copy.placeholder" :placeholder="copy.placeholder" class="dg-search"
+             type="search">
       <span class="dg-count">{{ copy.count(filtered.length) }}</span>
     </div>
 
-    <p v-if="filtered.length === 0" class="dg-empty">{{ copy.empty }}</p>
+    <!-- loading skeletons -->
+    <div v-if="loading" class="dg-grid">
+      <div v-for="i in 6" :key="i" class="dg-card dg-skeleton">
+        <div class="dg-thumb dg-shimmer"/>
+        <div class="dg-card-foot"><span class="dg-shimmer-line"/></div>
+      </div>
+      <p class="dg-note">{{ copy.loading }}</p>
+    </div>
 
-    <section v-for="[component, uses] in groups" :key="component" class="dg-group">
+    <!-- results -->
+    <p v-else-if="filtered.length === 0" class="dg-empty">{{ copy.empty }}</p>
+
+    <section v-for="([component, uses]) in groups" :key="component" class="dg-section">
       <h3 class="dg-group-title">
-        {{ component }}
+        <span class="dg-group-name">{{ component }}</span>
         <span class="dg-group-note">{{ copy.usedOn(uses.length) }}</span>
       </h3>
-      <article v-for="e in uses" :key="e.url + e.anchor" class="dg-card" @click="go(e)">
-        <div class="dg-thumb">
-          <component :is="resolve(e.component)" :lang="props.lang" />
-        </div>
-        <footer class="dg-card-foot">
-          <span class="dg-page">{{ e.pageTitle }}</span>
-          <span class="dg-open">{{ copy.open }} ↗</span>
-        </footer>
-      </article>
+      <div class="dg-grid">
+        <article
+          v-for="e in uses"
+          :key="e.url + (e.anchor ?? '')"
+          class="dg-card"
+          :data-key="component + '|' + e.url + '|' + (e.anchor ?? '')"
+          :data-mounted="mountedKeys.has(component + '|' + e.url + '|' + (e.anchor ?? '')) || null"
+          role="button"
+          :tabindex="0"
+          :aria-label="component + ' — ' + e.pageTitle"
+          @click="openZoom(flat.indexOf(e))"
+          @keydown.enter="openZoom(flat.indexOf(e))"
+        >
+          <div class="dg-thumb">
+            <component
+              :is="resolve(component)"
+              v-if="mountedKeys.has(component + '|' + e.url + '|' + (e.anchor ?? ''))"
+              :lang="props.lang"
+            />
+            <div v-else class="dg-shimmer dg-shimmer--fill"/>
+          </div>
+          <footer class="dg-card-foot">
+            <span class="dg-page" :title="e.pageTitle">{{ e.pageTitle }}</span>
+            <span
+              class="dg-jump"
+              role="link"
+              :tabindex="0"
+              :aria-label="copy.jump"
+              @click.stop="gotoPage(e)"
+              @keydown.enter.stop="gotoPage(e)"
+            >{{ copy.jump }} ↗</span>
+          </footer>
+        </article>
+      </div>
     </section>
+
+    <!-- lightbox -->
+    <Teleport to="body">
+      <div v-if="zoomOpen && zoomEntry" :aria-label="copy.close" aria-modal="true" class="dg-zoom" role="dialog"
+           @click.self="closeZoom">
+        <button :aria-label="copy.close" class="dg-zoom-close" type="button" @click="closeZoom">
+          <svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+               stroke-width="2" viewBox="0 0 24 24" width="18">
+            <line x1="18" x2="6" y1="6" y2="18"/>
+            <line x1="6" x2="18" y1="6" y2="18"/>
+          </svg>
+        </button>
+        <button :aria-label="copy.prev" class="dg-zoom-nav dg-zoom-nav--prev" type="button" @click="step(-1)">
+          <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+               stroke-width="2" viewBox="0 0 24 24" width="20">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <button :aria-label="copy.next" class="dg-zoom-nav dg-zoom-nav--next" type="button" @click="step(1)">
+          <svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+               stroke-width="2" viewBox="0 0 24 24" width="20">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
+        <figure class="dg-zoom-figure">
+          <header class="dg-zoom-head">
+            <span class="dg-zoom-title">{{ zoomEntry.component }}</span>
+            <span class="dg-zoom-page">{{ zoomEntry.pageTitle }}</span>
+          </header>
+          <div class="dg-zoom-body">
+            <component :is="resolve(zoomEntry.component)" :key="zoomEntry.component + zoomIndex" :lang="props.lang"/>
+          </div>
+          <footer class="dg-zoom-foot">
+            <span class="dg-zoom-counter">{{ copy.of(zoomIndex, flat.length) }}</span>
+            <button class="dg-zoom-jump" type="button" @click="gotoPage(zoomEntry)">{{ copy.jump }} ↗</button>
+          </footer>
+        </figure>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
-.dg-gallery {
+.dg {
   --dg-card: #ffffff;
+  --dg-card-soft: var(--vp-c-bg-soft);
   --dg-ink: var(--vp-c-text-1);
   --dg-ink-2: var(--vp-c-text-2);
   --dg-line: var(--vp-c-divider);
-  --dg-tint: rgba(18, 150, 219, 0.08);
+  --dg-tint: rgba(18, 150, 219, 0.07);
+  --dg-shadow: 0 8px 24px rgba(16, 42, 72, 0.06);
+  --dg-shadow-hover: 0 14px 32px rgba(16, 42, 72, 0.13);
 }
 
-.dg-gallery.dark {
+.dg-dark {
   --dg-card: #161f2b;
-  --dg-tint: rgba(30, 150, 230, 0.12);
+  --dg-tint: rgba(30, 150, 230, 0.1);
+  --dg-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --dg-shadow-hover: 0 14px 34px rgba(0, 0, 0, 0.38);
 }
 
+/* ── toolbar ─────────────────────────────────────────────────────── */
 .dg-toolbar {
   position: sticky;
-  top: calc(var(--vp-nav-height) + 8px);
+  top: calc(var(--vp-nav-height) + 10px);
   z-index: 10;
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 4px 0 22px;
+}
+
+.dg-search-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--dg-ink-2);
+  pointer-events: none;
 }
 
 .dg-search {
   flex: 1;
-  max-width: 460px;
-  padding: 10px 16px;
+  max-width: 480px;
+  padding: 10px 16px 10px 40px;
   border: 1px solid var(--dg-line);
   border-radius: 999px;
   background: var(--dg-card);
+  box-shadow: var(--dg-shadow);
   color: var(--dg-ink);
   font-size: 14px;
   outline: none;
@@ -159,80 +330,300 @@ const copy = computed(() => props.lang === 'en' ? {
   box-shadow: 0 0 0 3px rgba(18, 150, 219, 0.15);
 }
 
-.dg-count { color: var(--dg-ink-2); font-size: 13px; white-space: nowrap; }
+.dg-count {
+  padding: 4px 12px;
+  border: 1px solid var(--dg-line);
+  border-radius: 999px;
+  background: var(--dg-card);
+  box-shadow: var(--dg-shadow);
+  color: var(--dg-ink-2);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
 
-.dg-empty { color: var(--dg-ink-2); padding: 32px 0; }
-
-.dg-group { margin-bottom: 28px; }
+/* ── groups ──────────────────────────────────────────────────────── */
+.dg-section { margin-bottom: 26px; }
 
 .dg-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--dg-line);
   color: var(--dg-ink);
   font-size: 15px;
   font-weight: 650;
-  border-bottom: 1px solid var(--dg-line);
-  padding-bottom: 8px;
+}
+
+.dg-group-name::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: var(--vp-c-brand-1);
+  vertical-align: baseline;
 }
 
 .dg-group-note {
-  margin-left: 8px;
   color: var(--dg-ink-2);
   font-size: 12px;
   font-weight: 400;
 }
 
+/* ── responsive grid: 1 → 2 → 3 → 4 columns by available width ──── */
+.dg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+
+.dg-note { grid-column: 1 / -1; color: var(--dg-ink-2); font-size: 13px; }
+
+/* ── card ────────────────────────────────────────────────────────── */
 .dg-card {
-  display: block;
-  /* SVGs carry intrinsic widths (often 1400px+); without min-width:0 that
-     forces the grid track open and the gallery collapses to one column. */
+  display: flex;
+  flex-direction: column;
+  /* diagrams carry intrinsic SVG widths — without min-width:0 they force
+     the grid track open and the gallery collapses to a single column */
   min-width: 0;
   border: 1px solid var(--dg-line);
   border-radius: 12px;
   background: var(--dg-card);
-  cursor: pointer;
+  box-shadow: var(--dg-shadow);
+  cursor: zoom-in;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
-.dg-card:hover {
+.dg-card:hover,
+.dg-card:focus-visible {
   border-color: rgba(18, 150, 219, 0.45);
-  box-shadow: 0 10px 26px rgba(12, 24, 40, 0.12);
+  box-shadow: var(--dg-shadow-hover);
   transform: translateY(-2px);
+  outline: none;
 }
 
 .dg-thumb {
-  padding: 14px;
+  position: relative;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
+  border-radius: 12px 12px 0 0;
+  background: var(--dg-card-soft);
 }
 
 .dg-thumb :deep(.dc3-diagram) {
   margin: 0;
-  max-height: 300px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 10px;
   overflow: hidden;
 }
 
-.dg-thumb :deep(svg) { width: 100%; height: auto; }
+/* scale the diagram to cover the thumb box: wide SVGs shrink, tall ones crop */
+.dg-thumb :deep(svg) {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: auto;
+  height: auto;
+  min-width: 100%;
+  min-height: 100%;
+  max-width: none;
+  transform: translate(-50%, -50%);
+}
 
 .dg-card-foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-top: 1px solid var(--dg-line);
-  background: var(--dg-tint);
   border-radius: 0 0 12px 12px;
+  background: var(--dg-tint);
 }
 
-.dg-page { color: var(--dg-ink); font-size: 13px; font-weight: 560; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.dg-open { color: var(--vp-c-brand-1); font-size: 12.5px; white-space: nowrap; }
-
-@media (min-width: 720px) {
-  .dg-group { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .dg-group-title, .dg-empty { grid-column: 1 / -1; }
+.dg-page {
+  flex: 1;
+  color: var(--dg-ink);
+  font-size: 12.5px;
+  font-weight: 560;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (min-width: 1100px) {
-  .dg-group { grid-template-columns: repeat(3, 1fr); }
+.dg-jump {
+  color: var(--vp-c-brand-1);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dg-jump:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.dg-empty { color: var(--dg-ink-2); padding: 40px 0; text-align: center; }
+
+/* ── skeleton shimmer ────────────────────────────────────────────── */
+.dg-skeleton { pointer-events: none; }
+
+.dg-shimmer,
+.dg-shimmer--fill {
+  background: linear-gradient(100deg, var(--dg-card-soft) 40%, color-mix(in srgb, var(--dg-card-soft) 60%, #c8d4e0) 50%, var(--dg-card-soft) 60%);
+  background-size: 200% 100%;
+  animation: dg-shimmer 1.4s ease-in-out infinite;
+}
+
+.dg-dark .dg-shimmer,
+.dg-dark .dg-shimmer--fill {
+  background: linear-gradient(100deg, var(--dg-card-soft) 40%, color-mix(in srgb, var(--dg-card-soft) 55%, #2b3a4d) 50%, var(--dg-card-soft) 60%);
+  background-size: 200% 100%;
+}
+
+.dg-shimmer--fill { position: absolute; inset: 0; }
+
+.dg-shimmer-line {
+  display: inline-block;
+  width: 40%;
+  height: 10px;
+  border-radius: 5px;
+}
+
+@keyframes dg-shimmer {
+  to { background-position: -200% 0; }
+}
+
+/* ── lightbox — visual aligned with DiagramFrame / medium-zoom ───── */
+.dg-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 48px);
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(4px);
+  animation: dg-zoom-in 0.18s ease both;
+}
+
+@keyframes dg-zoom-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dg-zoom-figure {
+  display: flex;
+  flex-direction: column;
+  width: min(96vw, 1500px);
+  max-height: calc(100vh - 64px);
+  border-radius: 14px;
+  background: var(--vp-c-bg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  animation: dg-zoom-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dg-zoom-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.dg-zoom-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.dg-zoom-title { color: var(--vp-c-text-1); font-size: 14px; font-weight: 650; }
+
+.dg-zoom-page {
+  flex: 1;
+  color: var(--vp-c-text-2);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dg-zoom-body {
+  flex: 1;
+  overflow: auto;
+  padding: 18px;
+}
+
+.dg-zoom-body :deep(.dc3-diagram) { margin: 0; }
+
+.dg-zoom-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+.dg-zoom-counter { color: var(--vp-c-text-2); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+.dg-zoom-jump {
+  padding: 5px 14px;
+  border: 1px solid rgba(18, 150, 219, 0.4);
+  border-radius: 999px;
+  background: rgba(18, 150, 219, 0.08);
+  color: var(--vp-c-brand-1);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.dg-zoom-jump:hover { background: rgba(18, 150, 219, 0.16); border-color: rgba(18, 150, 219, 0.6); }
+
+.dg-zoom-close,
+.dg-zoom-nav {
+  position: fixed;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dg-zoom-close:hover,
+.dg-zoom-nav:hover { background: rgba(255, 255, 255, 0.22); }
+
+.dg-zoom-close { top: 18px; right: 18px; }
+
+.dg-zoom-nav--prev { left: 14px; top: 50%; transform: translateY(-50%); }
+
+.dg-zoom-nav--next { right: 14px; top: 50%; transform: translateY(-50%); }
+
+@media (max-width: 720px) {
+  .dg-zoom-nav--prev,
+  .dg-zoom-nav--next { top: auto; bottom: 18px; transform: none; }
+  .dg-zoom-nav--prev { left: calc(50% - 52px); }
+  .dg-zoom-nav--next { right: calc(50% - 52px); }
+  .dg-zoom-figure { max-height: calc(100vh - 96px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-zoom,
+  .dg-zoom-figure,
+  .dg-shimmer,
+  .dg-shimmer--fill { animation: none; }
+  .dg-card { transition: none; }
 }
 </style>
