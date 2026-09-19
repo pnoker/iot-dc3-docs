@@ -780,9 +780,16 @@ body {
            originally drew it — instead of eating into the 208px content width.
            Without this, moving the scroll onto .nav shrinks the usable width by
            the scrollbar's ~15px and every menu row (and its active pill) overflows
-           under the scrollbar. */
+           under the scrollbar.
+           The mirrored -12px on the left buys bleed room INSIDE the overflow-x
+           clip region for the active pill's negative left margin: with 0 left
+           padding the clip edge sits exactly on the text column, cutting off the
+           pill's 12px left inset and leaving the text flush against the tint.
+           padding-left: 12px + margin-left: -12px keeps every text exactly where
+           it was while letting the pill's left edge show. */
         margin-right: -32px;
-        padding: 6px 32px 24px 0;
+        margin-left: -12px;
+        padding: 6px 32px 24px 12px;
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
