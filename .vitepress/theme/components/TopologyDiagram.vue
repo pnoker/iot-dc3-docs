@@ -381,11 +381,8 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
   --dc3-region-be: rgba(5, 150, 105, 0.05);
   --dc3-region-amber: rgba(217, 119, 6, 0.06);
 
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 16px 0 8px;
+  /* card chrome (border/bg/padding/radius/margin) lives on the outer
+     .dc3-diagram wrapper — duplicating it here stacked two borders */
   overflow-x: auto;
 }
 

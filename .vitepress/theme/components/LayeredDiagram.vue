@@ -639,11 +639,7 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
   --dc3-rose-stroke: #e11d48;
   --dc3-amber-stroke: #d97706;
 
-  background: var(--vp-c-bg-soft);
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 16px 0 8px;
+  /* card chrome lives on the outer .dc3-diagram wrapper */
   overflow-x: auto;
 }
 
