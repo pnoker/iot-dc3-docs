@@ -9,11 +9,12 @@
   },
   "scripts": {
     "dev": "vitepress dev",
-    "build": "vitepress build && node scripts/generate-llms-full.cjs && node scripts/sitemap-clean.cjs",
+    "build": "node scripts/gen-diagram-index.mjs && vitepress build && node scripts/generate-llms-full.cjs && node scripts/sitemap-clean.cjs",
     "preview": "vitepress preview",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "scan:facts": "node scripts/scan-facts.mjs",
+    "gen:diagrams": "node scripts/gen-diagram-index.mjs",
     "docs:preview": "vitepress preview"
   },
   "devDependencies": {

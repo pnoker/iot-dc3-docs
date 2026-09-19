@@ -108,6 +108,7 @@
   "automation/cli": "CLI 使用指南",
   "frontend": "前端开发指南",
   "frontend/test-debugging": "测试调试 FAQ",
+  "diagrams": "图表总览",
   "community/contributing": "贡献指南",
   "community/code-of-conduct": "行为准则",
   "community/security": "安全策略",

@@ -111,6 +111,20 @@ function handleWechatIconClick(event: MouseEvent) {
 // nearby sibling pages never jumps. Desktop only: on narrower viewports the
 // sidebar lives in the off-canvas drawer and must not be scrolled behind
 // the scenes.
+// Internal links inside the social icon row (the diagram-index entry) must
+// navigate in-app instead of opening a new tab — VPSocialLink always renders
+// target=_blank, so strip it for hrefs starting with '/'. The drawer and the
+// extra menu mount these links lazily, hence the MutationObserver.
+function fixInternalSocialLinks() {
+    document.querySelectorAll<HTMLAnchorElement>('.VPSocialLink[href^="/"]:not([href$=".jpg"])').forEach(a => {
+        a.removeAttribute('target')
+        a.removeAttribute('rel')
+    })
+}
+
+// drawer / extra-menu links mount late; observer lives for the session
+let socialObserver: MutationObserver | null = null
+
 function scrollSidebarToActive() {
     if (!window.matchMedia('(min-width: 960px)').matches) return
     const active = document.querySelector<HTMLElement>('.VPSidebar .nav .VPSidebarItem.is-active > .item')
@@ -143,9 +157,13 @@ const theme: Theme = {
             })
             document.addEventListener('click', handleWechatIconClick)
             scrollSidebarToActive()
+            fixInternalSocialLinks()
+            socialObserver = new MutationObserver(fixInternalSocialLinks)
+            socialObserver.observe(document.body, {childList: true, subtree: true})
         })
         onBeforeUnmount(() => {
             document.removeEventListener('click', handleWechatIconClick)
+            socialObserver.disconnect()
             document.querySelector('.dc3-wechat-modal')?.remove()
             document.body.classList.remove('dc3-modal-open')
         })
