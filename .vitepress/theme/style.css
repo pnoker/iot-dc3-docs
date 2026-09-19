@@ -1267,6 +1267,18 @@ body.dc3-modal-open {
     white-space: nowrap;
 }
 
+/* Diagram-index page container: layout:page renders content as a direct
+   child of .VPPage, which carries no padding of its own — without this the
+   gallery cards sit flush against the browser edges. */
+.diagrams-gallery .VPPage {
+    box-sizing: border-box;
+    padding: 4px clamp(20px, 4vw, 56px) 72px;
+}
+
+.diagrams-gallery .VPLocalNav {
+    display: none;
+}
+
 .VPDocFooter {
     border-top-color: var(--vp-c-divider);
 }

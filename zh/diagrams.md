@@ -1,5 +1,6 @@
 ---
 layout: page
+pageClass: diagrams-gallery
 title: 图表总览
 ---
 

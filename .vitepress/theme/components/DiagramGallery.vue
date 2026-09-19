@@ -272,7 +272,6 @@ const copy = computed(() => props.lang === 'en' ? {
   --dg-shadow-hover: 0 14px 32px rgba(16, 42, 72, 0.13);
   max-width: 1280px;
   margin: 0 auto;
-  padding: 8px 4px 40px;
 }
 
 .dg-dark {
@@ -430,10 +429,6 @@ const copy = computed(() => props.lang === 'en' ? {
   background: var(--dg-card);
   box-shadow: var(--dg-shadow);
   cursor: zoom-in;
-  /* the browser skips rendering off-screen cards — same effect as the old
-     IntersectionObserver lazy-mount, but without its hydration race */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 260px;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
@@ -547,7 +542,6 @@ const copy = computed(() => props.lang === 'en' ? {
   justify-content: center;
   padding: clamp(16px, 4vw, 48px);
   background: rgba(0, 0, 0, 0.78);
-  backdrop-filter: blur(4px);
   animation: dg-zoom-in 0.18s ease both;
 }
 
@@ -594,11 +588,21 @@ const copy = computed(() => props.lang === 'en' ? {
 
 .dg-zoom-body {
   flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   overflow: auto;
   padding: 18px;
 }
 
-.dg-zoom-body :deep(.dc3-diagram) { margin: 0; }
+.dg-zoom-body :deep(.dc3-diagram) {
+  margin: 0 auto;
+}
+
+.dg-zoom-body :deep(svg) {
+  max-width: 100%;
+  height: auto;
+}
 
 .dg-zoom-foot {
   display: flex;

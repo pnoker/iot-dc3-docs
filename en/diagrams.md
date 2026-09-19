@@ -1,5 +1,6 @@
 ---
 layout: page
+pageClass: diagrams-gallery
 title: Diagram Index
 ---
 
