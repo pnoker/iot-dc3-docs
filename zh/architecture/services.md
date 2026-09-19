@@ -30,7 +30,7 @@ RabbitMQ 消息洪峰。拆开之后，每一类单元可以单独扩容、单�
 - **管理中心 Manager Center（`dc3-center-manager`）**——驱动、模板、设备、位号等元数据管理。
 - **数据中心 Data Center（`dc3-center-data`）**——位号值落库、命令分发与回执、告警引擎。
 - **智能中心 Agentic Center（`dc3-center-agentic`）**——Spring AI 会话、工具调用、对话持久化。
-- **协议驱动 Drivers（`dc3-driver-*`）**——驱动目录共 28 个协议适配实现，`docker-compose.yml` 默认内置其中 22 个驱动容器（未内置
+- **协议驱动 Drivers（`dc3-driver-*`）**——驱动目录共 36 个协议适配实现，`docker-compose.yml` 默认内置其中 22 个驱动容器（未内置
   `ble`/`iec104`/`lwm2m`/`sl651`/`zigbee`/`can` 这 6 个，需要时自行启动对应容器）；南向接设备、北向经 RabbitMQ
   与数据中心解耦。
 - **single 单体（`dc3-center-single`）**——把四个中心的能力合并进一个进程，用 `dc3.facade.mode: local`

@@ -33,7 +33,7 @@ architecture. Layer by layer:
   the [Point](../introduction/concepts/point) — capturing semantics like "temperature" or "switch" stably.
   See [Sensing & Measurement](./sensing) and [Auto-ID & Positioning](./identification).
 - **Network → protocol drivers**. Dozens of heterogeneous protocols — Modbus, OPC UA, MQTT, BACnet… — are unified by
-  DC3's [28 protocol drivers](../drivers/) and normalized into semantically labeled point values.
+  DC3's [36 protocol drivers](../drivers/) and normalized into semantically labeled point values.
   See [Industrial Buses & Protocols](./fieldbus) and [IoT Protocols & Wireless](./iot-protocols).
 - **Platform → center services and the data plane**. Device metadata is managed by
   the [center services](../architecture/services); point values flow through
@@ -57,4 +57,4 @@ trade-offs, engineering notes," and closes with "how it lands in IoT DC3," so th
 
 - [Core Concepts](../introduction/concepts) — DC3's base objects: Profile, Device, Point, Tenant
 - [Architecture](../architecture/) — DC3's own service topology, data plane and command plane
-- [Connectivity & Drivers](../drivers/) — how 28 protocol drivers bring heterogeneous devices in
+- [Connectivity & Drivers](../drivers/) — how 36 protocol drivers bring heterogeneous devices in

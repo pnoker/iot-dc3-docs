@@ -164,7 +164,7 @@ temperature in bytes 3 and 4):
 
 ## Further Reading
 
-- [Drivers Overview](./index) — the panorama and grouping of all 28 protocol drivers
+- [Drivers Overview](./index) — the panorama and grouping of all 36 protocol drivers
 - [Driver Capability Matrix](./matrix) — read/write/subscribe capability across drivers
 - [Device Onboarding](../operation/device-onboarding) — a full onboarding walkthrough
 - [IoT Protocols & Wireless Networks](../foundations/iot-protocols) — the network layer TCP/UDP sits in and its relation

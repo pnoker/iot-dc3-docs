@@ -21,7 +21,7 @@ import DeviceOnboardingFlowDiagram from '../../.vitepress/theme/components/Devic
 接入的第一个决策是**按设备说的协议挑驱动**。驱动（Driver / `dc3-driver-*`）是协议适配实例——它知道怎么和某一类设备通信，并把"
 这类设备/位号需要哪些配置项"注册到管理中心。选错协议，后面的模板和位号都对不上。
 
-平台内置 28 个驱动，覆盖工业现场总线、IoT 无线、数据库桥接和基础通信。下面这张图按协议把常见选择收敛到一个驱动模块：
+平台内置 36 个驱动，覆盖工业现场总线、IoT 无线、数据库桥接和基础通信。下面这张图按协议把常见选择收敛到一个驱动模块：
 
 <DeviceOnboardingSelectDiagram lang="zh" />
 
@@ -34,7 +34,7 @@ import DeviceOnboardingFlowDiagram from '../../.vitepress/theme/components/Devic
 
 :::
 
-完整的 28 个驱动清单（工业/IoT/数据库/计量/仿真分类）见 [驱动开发](../development/driver-authoring) 与模块地图。下文用
+完整的 36 个驱动清单（工业/IoT/数据库/计量/仿真分类）见 [驱动开发](../development/driver-authoring) 与模块地图。下文用
 `dc3-driver-virtual` 走一遍真实接入。
 
 ## 接入的数据走向
@@ -232,4 +232,4 @@ TTL 配成略大于读取周期即可。
 - [第一个设备](../quickstart/first-device) — 更短的复制粘贴上手版，先跑通再回来细读
 - [数据与命令](./data-commands) — 接入后如何查历史值、下发读写命令与回执
 - [核心概念](../introduction/concepts) — 驱动/模板/设备/位号与三层配置（Param/Attribute/Config）的心智模型
-- [驱动开发](../development/driver-authoring) — 28 个驱动的清单、SPI 契约，以及从 `dc3-driver-virtual` 写一个新协议驱动
+- [驱动开发](../development/driver-authoring) — 36 个驱动的清单、SPI 契约，以及从 `dc3-driver-virtual` 写一个新协议驱动

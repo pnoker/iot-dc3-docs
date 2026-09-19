@@ -156,7 +156,7 @@ endpoint 与位号路径。设备在公网/蜂窝上时，记得放行对应的 
 
 ## 延伸阅读
 
-- [驱动总览](./index) — 28 个驱动的全景与分组
+- [驱动总览](./index) — 36 个驱动的全景与分组
 - [驱动能力矩阵](./matrix) — 各驱动读/写/订阅能力速查
 - [设备接入](../operation/device-onboarding) — 一次完整的接入流程
 - [IoT 协议与无线网络](../foundations/iot-protocols) — LwM2M 在网络层的位置与 CoAP/MQTT 的取舍

@@ -36,7 +36,7 @@ IoT DC3 是连接现场设备的工业物联网平台，一处安全缺口可能
 
 发现潜在安全漏洞时，请通过以下任一私有渠道上报：
 
-1. **邮件上报**：发送邮件至 [pnokers@gmail.com](mailto:pnokers@gmail.com)，主题包含关键词 `Security Vulnerability`，便于优先识别与分流。
+1. **邮件上报**：发送邮件至 [pnokers@icloud.com](mailto:pnokers@icloud.com)，主题包含关键词 `Security Vulnerability`，便于优先识别与分流。
 2. **私信上报**：通过 Gitee 或 GitHub 的私信功能直接联系项目维护者（@pnoker）。
 
 为便于复现与定位，建议在上报中包含：受影响的版本线、复现步骤或最小复现用例、影响面（数据泄露 / 越权 /

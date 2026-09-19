@@ -156,7 +156,7 @@ warn 日志、不影响其他消息。批量消息走 `receiveValues()` 合并�
 
 ## 延伸阅读
 
-- [驱动总览](./index) — 28 个驱动的全景与分类
+- [驱动总览](./index) — 36 个驱动的全景与分类
 - [驱动能力矩阵](./matrix) — 各驱动读/写/订阅能力一览
 - [设备接入](../operation/device-onboarding) — 一次完整的接入流程
 - [网络层：物联网协议](../foundations/iot-protocols) — MQTT 与 CoAP/LwM2M/HTTP 的选型权衡

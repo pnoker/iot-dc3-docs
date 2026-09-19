@@ -11,7 +11,7 @@ import ModulesClassDiagram from '../../.vitepress/theme/components/ModulesClassD
 
 IoT DC3's code splits into three kinds of modules: deployment units, shared contracts, and protocol drivers. This page
 covers the architecture side — which modules ship as runnable services, which shared libraries and contracts they lean
-on to talk to each other, how the 28 drivers break down by protocol, and what the Driver SDK's SPI looks like. Read it
+on to talk to each other, how the 36 drivers break down by protocol, and what the Driver SDK's SPI looks like. Read it
 once and you'll know where any feature lives and what it depends on.
 
 > Where this fits: you've already read the [System Architecture Overview](./) and [Services & Topology](./services). Now
@@ -123,7 +123,7 @@ Latest-value caching, the token denylist, permission caching, and the like all u
 
 ## Drivers grouped by protocol
 
-The 28 drivers carry the platform's protocol breadth. Grouping them by protocol family makes the one you need easier to
+The 36 drivers carry the platform's protocol breadth. Grouping them by protocol family makes the one you need easier to
 find than a long flat list. Each driver is a `dc3-driver-<protocol>` module. They all inherit the same SDK, and differ
 only in the protocol adaptation.
 

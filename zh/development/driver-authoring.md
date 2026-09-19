@@ -405,7 +405,7 @@ curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_comm
 ## 延伸阅读
 
 - [命令平面](../architecture/command-plane) — 读/写命令如何下发、去重、加锁、回执，与本页的 `read()`/`write()` 对接
-- [模块地图](../architecture/modules) — 28 个驱动模块的全貌与 `dc3-common-driver` SDK 在依赖树中的位置
+- [模块地图](../architecture/modules) — 36 个驱动模块的全貌与 `dc3-common-driver` SDK 在依赖树中的位置
 - [领域模型](../architecture/domain-model) — Profile / Point / Device 与 Param/Attribute/Config 三层的字段与边界
 - [API 文档](./api-documentation) — 鉴权流程、网关合约与 OpenAPI
 - [故障排查](../guide/troubleshooting) — 启动依赖、端口与环境变量类问题

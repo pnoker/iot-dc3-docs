@@ -62,7 +62,7 @@ read and write, and every step is bounded by permission and confirmation checks 
 
 ## Capability Pillars
 
-1. **Multi-protocol device connectivity** — 28 driver modules cover industrial fieldbuses, IoT wireless protocols,
+1. **Multi-protocol device connectivity** — 36 driver modules cover industrial fieldbuses, IoT wireless protocols,
    database bridging, basic communication, and simulation.
 2. **AI capability integration** — the agentic center is built on Spring AI, so LLMs read and write points, run
    commands, and analyze alarms through tool calling, compatible with mainstream models including GPT, Claude, DeepSeek,
@@ -82,7 +82,7 @@ What sets IoT DC3 apart isn't multi-protocol support on its own — plenty of pl
 is:
 
 - **AI-native integration**: built in through Spring AI, not bolted on as a separate analytics service.
-- **Protocol breadth**: 28 drivers, including less common ones like database bridging.
+- **Protocol breadth**: 36 drivers, including less common ones like database bridging.
 - **Structured AI output**: `PointValue` carries semantic tags, so models consume it directly.
 - **Closed-loop command execution**: LLM decisions go back down to devices for execution.
 - **Fully open source**: no proprietary core.

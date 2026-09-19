@@ -32,7 +32,7 @@ import ConceptsFlowDiagram from '../../.vitepress/theme/components/ConceptsFlowD
 ## 逐个对象
 
 - **驱动 Driver（`dc3-driver-*`）**：一个协议适配服务实例，负责和设备或数据源通信。启动时它会把自己和它能接受的配置项（属性）注册到管理中心。平台内置
-  28 个驱动，覆盖 Modbus、OPC UA、S7、MQTT 等，详见 [模块地图](../architecture/modules)。
+  36 个驱动，覆盖 Modbus、OPC UA、S7、MQTT 等，详见 [模块地图](../architecture/modules)。
 - **模板 Profile**：同类设备的能力模板。它把"这类设备有哪些位号、支持哪些自定义命令、会上报哪些事件"沉淀下来，设备复用它即可。
 - **设备 Device**：现场一台具体设备的平台镜像。它绑定一个模板（决定有哪些位号）和一个驱动（决定怎么通信）。
 - **位号 Point**：一个数据项。关键字段是 `pointTypeFlag`（数据类型）和 `rwFlag`（读写方向）。

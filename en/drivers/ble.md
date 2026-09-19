@@ -194,7 +194,7 @@ Bring in a BLE thermometer at MAC `AA:BB:CC:DD:EE:FF`:
 
 ## Further reading
 
-- [Driver overview](./index) — grouping and selection across all 28 drivers
+- [Driver overview](./index) — grouping and selection across all 36 drivers
 - [Driver capability matrix](./matrix) — a read/write/subscribe overview of every driver
 - [Device onboarding](../operation/device-onboarding) — a full onboarding walkthrough
 - [IoT protocols and wireless networks](../foundations/iot-protocols) — where BLE sits on the wireless-access side of

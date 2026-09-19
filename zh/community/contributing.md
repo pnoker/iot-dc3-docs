@@ -93,6 +93,8 @@ EnvFile 插件读）或 `dc3/env/dev.env.sh`（`source` 进 shell）。四个文
 - 非根级的微小改动尽量带 scope。
 - 不要用 `update`、`fix`、`misc`、`wip`、`.` 这类弱 subject——它们会让发布说明无法读。
 
+仓库内置 `.husky/commit-msg` 钩子（type 白名单、可选 scope、10–100 字符的小写祈使句英文描述），不合规的提交在本地就会被拒绝；merge、revert 与 fixup 直接放行。
+
 真实示例：
 
 ```text

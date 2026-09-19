@@ -56,7 +56,7 @@ title: 行为准则
 
 辱骂、骚扰或其他不可接受的行为可以通过以下任一渠道举报：
 
-1. **邮件上报** — 发送邮件至 [pnokers@gmail.com](mailto:pnokers@gmail.com)，主题包含 `Code of Conduct` 字样便于优先分流。
+1. **邮件上报** — 发送邮件至 [pnokers@icloud.com](mailto:pnokers@icloud.com)，主题包含 `Code of Conduct` 字样便于优先分流。
 2. **私信上报** — 通过 GitHub 或 Gitee 的私信功能直接联系项目维护者（@pnoker）。
 
 所有举报将被**及时、公正**地审查和调查。处理结果会反馈给举报人（如举报人愿意提供联系方式），涉及隐私的部分不会公开。

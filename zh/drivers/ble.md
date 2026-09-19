@@ -150,7 +150,7 @@ yml 中虽配了一条 `custom` cron（`0/5 * * * * ?`），但驱动的 `schedu
 
 ## 延伸阅读
 
-- [驱动总览](./index) — 全部 28 个驱动的分组与选型
+- [驱动总览](./index) — 全部 36 个驱动的分组与选型
 - [驱动能力矩阵](./matrix) — 各驱动读/写/订阅能力一览
 - [设备接入](../operation/device-onboarding) — 一次完整的接入流程
 - [IoT 协议与无线网络](../foundations/iot-protocols) — BLE 在网络层无线接入侧的定位与权衡

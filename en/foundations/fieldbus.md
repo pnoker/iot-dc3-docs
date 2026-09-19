@@ -120,7 +120,7 @@ Whether the underlying layer is a Modbus register, a CIP tag, or an OBIS code, i
 same [PointValue](../introduction/concepts/point-value) of a [Point](../introduction/concepts/point), and the upper
 layers — storage, query, alarming, AI — need not care about protocol details at all.
 
-DC3 ships **28 drivers** in total, and most industrial protocols in this chapter have a corresponding one:
+DC3 ships **36 drivers** in total, and most industrial protocols in this chapter have a corresponding one:
 
 - [Modbus TCP](../drivers/modbus-tcp) / [Modbus RTU](../drivers/modbus-rtu) — Ethernet / serial Modbus master
 - [OPC UA](../drivers/opc-ua) / [OPC DA](../drivers/opc-da) — OPC Unified Architecture client / classic Data Access
@@ -185,6 +185,6 @@ each driver page.
 - [Sensing & Measurement](./sensing) — where the values the protocols carry come from: sensors, transduction, range and
   accuracy
 - [IoT Technology Overview](./) — the four-layer reference architecture and a reading map for this part
-- [Connectivity & Drivers](../drivers/) — how 28 drivers unify heterogeneous devices into one ingress
+- [Connectivity & Drivers](../drivers/) — how 36 drivers unify heterogeneous devices into one ingress
 - [Attribute and Config](../introduction/concepts/attribute-config) — how protocol parameters become driver attributes
   filled by the device instance

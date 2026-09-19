@@ -170,5 +170,5 @@ Onboard a GPS terminal that pushes data over TCP:
 ## Further Reading
 
 - [Drivers Overview](./index) — what a driver is, registration and lifecycle, the three-tier origin of config
-- [Driver Capability Matrix](./matrix) — read/write/subscribe across 28 drivers, to confirm this driver's positioning
+- [Driver Capability Matrix](./matrix) — read/write/subscribe across 36 drivers, to confirm this driver's positioning
 - [Device Onboarding](../operation/device-onboarding) — a full device onboarding walkthrough

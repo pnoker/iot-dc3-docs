@@ -8,7 +8,7 @@ The IoT DC3 modules, grouped by repository directory. Each module links to its `
 `release` branch on GitHub.
 
 ::: tip Source of Truth
-Driver counts and module names match the current repository layout: 28 connectivity driver modules live under
+Driver counts and module names match the current repository layout: 36 connectivity driver modules live under
 `dc3-driver/`.
 :::
 
@@ -44,16 +44,24 @@ Driver counts and module names match the current repository layout: 28 connectiv
 | Industrial protocols            | `dc3-driver-iec104`            | IEC 60870-5-104                        |
 | Industrial protocols            | `dc3-driver-sl651`             | SL651 hydrological monitoring protocol |
 | Industrial protocols            | `dc3-driver-dlms`              | DLMS / COSEM                           |
+| Industrial protocols            | `dc3-driver-knx`               | KNX                                    |
+| Industrial protocols            | `dc3-driver-dnp3`              | DNP3                                   |
+| Industrial protocols            | `dc3-driver-iec61850`          | IEC 61850                              |
+| Industrial protocols            | `dc3-driver-dlt645`            | DL/T645                                |
+| Industrial protocols            | `dc3-driver-mbus`              | M-Bus                                  |
 | IoT protocols                   | `dc3-driver-mqtt`              | MQTT                                   |
 | IoT protocols                   | `dc3-driver-coap`              | CoAP                                   |
 | IoT protocols                   | `dc3-driver-lwm2m`             | LwM2M                                  |
 | IoT protocols                   | `dc3-driver-http`              | HTTP                                   |
 | IoT protocols                   | `dc3-driver-ble`               | Bluetooth Low Energy                   |
 | IoT protocols                   | `dc3-driver-zigbee`            | Zigbee                                 |
+| IoT protocols                   | `dc3-driver-lorawan`           | LoRaWAN                                |
+| IoT protocols                   | `dc3-driver-kafka`             | Kafka                                  |
 | Data bridging                   | `dc3-driver-mysql`             | MySQL data source                      |
 | Data bridging                   | `dc3-driver-postgresql`        | PostgreSQL data source                 |
 | Data bridging                   | `dc3-driver-oracle`            | Oracle data source                     |
 | Data bridging                   | `dc3-driver-sqlserver`         | SQL Server data source                 |
+| Data bridging                   | `dc3-driver-redis`             | Redis data source                      |
 | Base communication & management | `dc3-driver-tcp-udp`           | TCP / UDP                              |
 | Base communication & management | `dc3-driver-serial`            | Serial                                 |
 | Base communication & management | `dc3-driver-snmp`              | SNMP                                   |

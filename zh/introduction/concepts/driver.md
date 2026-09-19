@@ -109,7 +109,7 @@ Web 不用改。
 
 ## 内置驱动
 
-DC3 自带 **28 个**开箱即用的协议驱动，覆盖工业现场协议（Modbus RTU/TCP、OPC UA/DA、PLC
+DC3 自带 **36 个**开箱即用的协议驱动，覆盖工业现场协议（Modbus RTU/TCP、OPC UA/DA、PLC
 S7、Melsec、BACnet/IP、IEC104、DLMS、SNMP、CAN…）、物联协议（MQTT、CoAP、LwM2M、HTTP、ZigBee、BLE…）、串口/网络透传（Serial、TCP/UDP）以及数据库接入（MySQL、PostgreSQL、Oracle、SQLServer）。完整清单与各驱动职责见[模块地图](../../architecture/modules)。
 
 ## 延伸阅读
@@ -118,5 +118,5 @@ S7、Melsec、BACnet/IP、IEC104、DLMS、SNMP、CAN…）、物联协议（MQTT
 - [连接配置 DriverAttributeConfig](./attribute-config) — 设备按驱动声明的 DriverAttribute 填的连接值
 - [位号 Point](./point) — 驱动采集的目标数据点
 - [核心概念概览](../concepts) — 对象模型与三层配置的全景
-- [模块地图](../../architecture/modules) — 28 个内置驱动清单与服务拓扑
+- [模块地图](../../architecture/modules) — 36 个内置驱动清单与服务拓扑
 - [驱动开发指南](../../development/driver-authoring) — 如何自己写一个 `dc3-driver-*`

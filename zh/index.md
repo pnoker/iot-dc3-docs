@@ -1,11 +1,11 @@
 ---
 layout: home
-title: 多协议接入的开源工业物联网平台
+title: 连接物理世界与 AI 的开源 Physical AI Runtime
 
 hero:
   name: IoT DC3
-  text: 多协议接入、云原生、开源的工业物联网平台
-  tagline: AI 赋能，从设备连接走向工业智能体。28 个多协议驱动接入异构设备，通过 Spring AI 让大模型读写设备数据、下发命令，形成「感知—决策—执行」闭环。多租户、边云协同、全开源。
+  text: 连接物理世界与 AI 的开源 Physical AI Runtime
+  tagline: 位于智能体意图与物理世界之间的执行层——36 个多协议驱动感知现场，Spring AI 接入大模型，让智能体看见、理解、决策、行动，并追溯每一次执行。多租户、边云协同、全开源。
   image:
     src: /images/logo.svg
     alt: IoT DC3 平台 logo —— 多协议设备接入与数据采集架构
@@ -30,7 +30,7 @@ features:
     linkText: 读懂架构
   - icon: 🔌
     title: 驱动
-    details: 28 个多协议驱动接入异构设备，含设备接入流程与驱动能力矩阵。
+    details: 36 个多协议驱动接入异构设备，含设备接入流程与驱动能力矩阵。
     link: ./drivers/
     linkText: 浏览驱动
   - icon: 🤖
@@ -57,12 +57,15 @@ features:
 
 ## IoT DC3 是什么
 
-IoT DC3 是一个多协议接入、云原生、AI 赋能的开源工业物联网平台，面向智能体演进（基于 AGPL-3.0），覆盖**设备接入、数据采集、运营管理与智能分析**，帮助构建工业
-IoT 解决方案。它内置 **28 个接入驱动模块**，把异构设备的数据采上来、归一为带语义的位号值；再通过 **Spring AI**
-把大语言模型接入运营流程——模型不仅能查询设备、读写位号、执行命令，还能做告警分析与数据洞察，把"感知—决策—执行—反馈"打通成闭环。
+AI 不应只理解世界，还应安全地行动于世界。IoT DC3 是面向 Physical AI 的开源工业物联网 Runtime（基于
+AGPL-3.0）：**位于智能体意图与物理世界之间的执行层**——模型负责推理，IoT DC3 负责感知、连接、治理与执行。
 
-它适合需要接入多类工业协议、管理设备与位号、查询实时/历史数据，并希望在 Spring 生态里做二次开发、甚至引入 AI
-辅助运营的团队。想先理解它解决什么问题、与同类平台的差异，请看 [平台定位](./introduction/)。
+它内置 **36 个接入驱动模块**，把异构设备的数据采上来、归一为带语义的位号值；再通过 **Spring AI**
+把大语言模型接入运营流程。智能体由此获得一条完整链路：**看见**（读设备、遥测与告警）→ **理解**（物理信号结构化为模型可用的上下文）→
+**决策**（模型结合工业规则与历史推理）→ **行动**（经权限、白名单与风险分级的策略门下发命令）→ **追溯**（每次执行保留从意图到反馈的完整审计链路）。
+
+完整的产品愿景见 [dc3.site](https://dc3.site/zh/)。它适合需要接入多类工业协议、管理设备与位号、查询实时/历史数据，并希望在 Spring
+生态里做二次开发、让 AI 安全参与运营的团队。想先理解它解决什么问题、与同类平台的差异，请看 [平台定位](./introduction/)。
 
 ## 架构一览
 
@@ -75,12 +78,11 @@ RabbitMQ 异步解耦。
 
 ## 技术栈
 
-- **语言与框架
-  **：[Java 21](https://www.java.com) · [Spring Boot 4](https://spring.io/projects/spring-boot) · [Spring Cloud 2025](https://spring.io/projects/spring-cloud) · [Spring AI 2.0.0](https://spring.io/projects/spring-ai)
+- **语言与框架**：[Java 21](https://www.java.com) · [Spring Boot 4](https://spring.io/projects/spring-boot) · [Spring Cloud 2025](https://spring.io/projects/spring-cloud) · [Spring AI 2.0.0](https://spring.io/projects/spring-ai)
 - **数据、缓存与调度**：PostgreSQL（+ TimescaleDB / AGE / pgvector）· Caffeine · MyBatis-Plus · Quartz
 - **消息与通信**：RabbitMQ · gRPC · MQTT（Paho + EMQX）· Protobuf
 - **安全与认证**：Spring Security · JWT · BouncyCastle
-- **前端**：Vue 3 · TypeScript 6 · Vite 8 · Element Plus · AntV G2/G6（源码在本仓库 `dc3-web/` 目录，原独立仓库
+- **前端**：Vue 3 · TypeScript 6 · Vite 8 · Element Plus · AntV G2/G6（源码在主仓库 iot-dc3 的 `dc3-web/` 目录，原独立仓库
   `iot-dc3-web` 已归档）
 
 完整说明见 [技术栈](./development/technology-stack)。

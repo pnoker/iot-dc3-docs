@@ -25,7 +25,7 @@ IoT DC3 不是又一份"通用 IoT 理论"的复述，而是这套四层架构�
   里被抽象为[模板 Profile](../introduction/concepts/profile)、[设备 Device](../introduction/concepts/device)
   与[位号 Point](../introduction/concepts/point)——把"温度""开关"
   这类语义稳定地建模下来。详见[传感与测量](./sensing)、[自动识别与定位](./identification)。
-- **网络层 → 协议驱动**。Modbus、OPC UA、MQTT、BACnet……几十种异构协议，由 DC3 的 [28 个协议驱动](../drivers/)
+- **网络层 → 协议驱动**。Modbus、OPC UA、MQTT、BACnet……几十种异构协议，由 DC3 的 [36 个协议驱动](../drivers/)
   统一适配，归一成带语义的位号值。详见[工业总线与协议](./fieldbus)、[IoT 协议与无线网络](./iot-protocols)。
 - **平台层 → 中心服务与数据平面**。设备元数据由[管理中心](../architecture/services)
   管理，位号值经[数据平面](../architecture/data-plane)写入 TimescaleDB
@@ -45,4 +45,4 @@ IoT DC3 不是又一份"通用 IoT 理论"的复述，而是这套四层架构�
 
 - [核心概念](../introduction/concepts) — DC3 的模板、设备、位号、租户等基础对象
 - [系统架构](../architecture/) — DC3 自身的服务拓扑、数据平面与命令平面
-- [设备接入与驱动](../drivers/) — 28 个协议驱动如何把异构设备接进来
+- [设备接入与驱动](../drivers/) — 36 个协议驱动如何把异构设备接进来

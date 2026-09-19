@@ -191,7 +191,7 @@ For the full flow, see [Device Onboarding](../operation/device-onboarding).
 
 ## Further reading
 
-- [Drivers overview](./index) — the full landscape and categories of the 28 drivers
+- [Drivers overview](./index) — the full landscape and categories of the 36 drivers
 - [Driver capability matrix](./matrix) — read/write/subscribe capabilities at a glance
 - [Device Onboarding](../operation/device-onboarding) — a complete onboarding walkthrough
 - [Network layer: IoT protocols](../foundations/iot-protocols) — trade-offs between MQTT and CoAP/LwM2M/HTTP

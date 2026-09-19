@@ -234,4 +234,4 @@ MQTT/CoAP/HTTP drivers—the concrete product form of the "unified protocol-adap
 - [Edge & Cloud Architecture](./edge-cloud) — above protocol access, how data is split between edge and cloud
 - [IoT Technology Overview](./) — the four-layer reference architecture and the DC3 panorama
 - [MQTT Driver](../drivers/mqtt) — how pub/sub, QoS and brokers land in DC3
-- [Connectivity & Drivers](../drivers/) — how 28 protocol drivers bring heterogeneous devices in
+- [Connectivity & Drivers](../drivers/) — how 36 protocol drivers bring heterogeneous devices in

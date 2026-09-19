@@ -77,7 +77,7 @@ tolerated.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through either of these channels:
 
-1. **Email a maintainer** — write to [pnokers@gmail.com](mailto:pnokers@gmail.com) with `Code of Conduct` in the
+1. **Email a maintainer** — write to [pnokers@icloud.com](mailto:pnokers@icloud.com) with `Code of Conduct` in the
    subject line for prompt triage.
 2. **Direct message** — contact the maintainer (@pnoker) through GitHub or Gitee private messages.
 

@@ -1,11 +1,11 @@
 ---
 layout: home
-title: Open-Source Industrial IoT Platform
+title: Open-Source Physical AI Runtime
 
 hero:
   name: IoT DC3
-  text: Multi-protocol · Cloud-native · Open-source Industrial IoT Platform
-  tagline: AI-powered — from device connectivity to industrial agents. 28 multi-protocol drivers bring data up from heterogeneous devices; Spring AI lets large language models read that data and drive commands back to devices, closing the sense–decide–act loop. Multi-tenant, edge-to-cloud, fully open source.
+  text: An Open-Source Physical AI Runtime Connecting the Physical World with AI
+  tagline: The execution layer between an agent's intent and the physical world — 36 multi-protocol drivers sense the field, Spring AI brings LLMs in, so agents can see, understand, decide, act, and trace every execution. Multi-tenant, edge-to-cloud, fully open source.
   image:
     src: /images/logo.svg
     alt: IoT DC3 platform logo — multi-protocol device connectivity and data acquisition architecture
@@ -30,7 +30,7 @@ features:
     linkText: Understand the design
   - icon: 🔌
     title: Drivers
-    details: 28 multi-protocol drivers for heterogeneous devices, with the onboarding flow and a driver capability matrix.
+    details: 36 multi-protocol drivers for heterogeneous devices, with the onboarding flow and a driver capability matrix.
     link: /en/drivers/
     linkText: Browse drivers
   - icon: 🤖
@@ -57,15 +57,20 @@ features:
 
 ## What is IoT DC3
 
-IoT DC3 is a multi-protocol, cloud-native, AI-powered, open-source industrial IoT platform evolving toward AI agents (AGPL-3.0). It covers **device connectivity,
-data collection, operations management, and intelligent analytics** for industrial IoT. **28 driver modules** pull data
-up from heterogeneous devices and normalize it into semantically labeled point values; **Spring AI** then plugs large
-language models into operations — a model can query devices, read and write points, run commands, analyze alarms, and
-surface insights, closing the sense–decide–act–feedback loop.
+AI should not only understand the world — it should act in it, safely. IoT DC3 is an open-source Physical AI Runtime
+for industrial IoT (AGPL-3.0): **the execution layer between an agent's intent and the physical world**. Models reason;
+IoT DC3 handles sensing, connectivity, governance, and execution.
 
-It's a good fit for teams that need to connect many industrial protocols, manage devices and points, query real-time and
-historical data, and build on the platform within the Spring ecosystem — including bringing AI into operations. To
-understand the problem it solves and how it compares to alternatives, start with [the pitch](/en/introduction/).
+**36 driver modules** pull data up from heterogeneous devices and normalize it into semantically labeled point values;
+**Spring AI** plugs large language models into operations. The result is a complete loop for agents: **see** (devices,
+telemetry, alarms) → **understand** (physical signals structured into model-ready context) → **decide** (models
+reasoning with industrial rules and history) → **act** (commands issued through permission, whitelist, and risk-tier
+policy gates) → **trace** (a full audit trail from intent to execution and feedback).
+
+For the full product vision see [dc3.site](https://dc3.site/en/). It's a good fit for teams that need to connect many
+industrial protocols, manage devices and points, query real-time and historical data, and build on the platform within
+the Spring ecosystem — including letting AI take part in operations, safely. To understand the problem it solves and
+how it compares to alternatives, start with [the pitch](/en/introduction/).
 
 ## Architecture at a glance
 

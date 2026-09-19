@@ -263,7 +263,9 @@ function buildNav(lang: Lang) {
     return [
         {text: lang === 'en' ? 'Home' : '首页', link: `${p}/`},
         ...pillars,
-        {text: t(lang, 'community'), items: itemsOf(lang, COMMUNITY)}
+        {text: t(lang, 'community'), items: itemsOf(lang, COMMUNITY)},
+        // commercial entry, aligned with the quick-entry on dc3.site
+        {text: lang === 'en' ? 'Pricing' : '价格', link: `https://dc3.site${lang === 'en' ? '/en' : '/zh'}/pricing/`}
     ]
 }
 

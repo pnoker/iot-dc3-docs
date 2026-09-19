@@ -158,7 +158,7 @@ Industrial environments are the perfect use case for AI-assisted operations:
   and who confirmed the write — all auditable.
 
 - **Multi-vendor reality.** Factories have devices from Siemens, Rockwell, Mitsubishi, and a dozen other
-  vendors. DC3's 28 protocol drivers abstract this heterogeneity behind a uniform device model, and the AI
+  vendors. DC3's 36 protocol drivers abstract this heterogeneity behind a uniform device model, and the AI
   tools query that uniform model — the model doesn't need to know about Modbus register maps or OPC UA
   node IDs.
 

@@ -204,7 +204,7 @@ See [Device onboarding](../operation/device-onboarding) for the full flow.
 ## Further reading
 
 - [Drivers overview](./index) — the general driver model, registration, and lifecycle
-- [Driver capability matrix](./matrix) — read/write/subscribe capability of all 28 drivers
+- [Driver capability matrix](./matrix) — read/write/subscribe capability of all 36 drivers
 - [Device onboarding](../operation/device-onboarding) — a full onboarding flow
 - [Industrial Buses & Protocols](../foundations/fieldbus) — the network layer SNMP belongs to, and the "protocol
   parameters are driver attributes" model

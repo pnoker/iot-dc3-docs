@@ -42,7 +42,7 @@ exposes unpatched instances to attack. Use the private channels below instead.
 
 If you find a potential security vulnerability, report it through either private channel:
 
-1. **Email**: Write to [pnokers@gmail.com](mailto:pnokers@gmail.com) with `Security Vulnerability` in the subject so it
+1. **Email**: Write to [pnokers@icloud.com](mailto:pnokers@icloud.com) with `Security Vulnerability` in the subject so it
    gets triaged first.
 2. **Direct message**: Reach the maintainer (@pnoker) directly via a GitHub or Gitee private message.
 

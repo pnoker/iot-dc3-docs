@@ -7,7 +7,7 @@ title: 模块清单
 本页按仓库目录列出 IoT DC3 当前模块。每个模块链接指向 GitHub `release` 分支中的原始 `README.md` 或源码目录，便于进一步查看实现。
 
 ::: tip 事实来源
-驱动数量和模块名称以仓库当前目录为准：`dc3-driver/` 下共有 28 个接入驱动模块。
+驱动数量和模块名称以仓库当前目录为准：`dc3-driver/` 下共有 36 个接入驱动模块。
 :::
 
 ## 网关
@@ -42,16 +42,24 @@ title: 模块清单
 | 工业协议    | `dc3-driver-iec104`            | IEC 60870-5-104      |
 | 工业协议    | `dc3-driver-sl651`             | SL651 水文监测协议         |
 | 工业协议    | `dc3-driver-dlms`              | DLMS / COSEM         |
+| 工业协议    | `dc3-driver-knx`               | KNX                  |
+| 工业协议    | `dc3-driver-dnp3`              | DNP3                 |
+| 工业协议    | `dc3-driver-iec61850`          | IEC 61850            |
+| 工业协议    | `dc3-driver-dlt645`            | DL/T645              |
+| 工业协议    | `dc3-driver-mbus`              | M-Bus                |
 | 物联网协议   | `dc3-driver-mqtt`              | MQTT                 |
 | 物联网协议   | `dc3-driver-coap`              | CoAP                 |
 | 物联网协议   | `dc3-driver-lwm2m`             | LwM2M                |
 | 物联网协议   | `dc3-driver-http`              | HTTP                 |
 | 物联网协议   | `dc3-driver-ble`               | Bluetooth Low Energy |
 | 物联网协议   | `dc3-driver-zigbee`            | Zigbee               |
+| 物联网协议   | `dc3-driver-lorawan`           | LoRaWAN              |
+| 物联网协议   | `dc3-driver-kafka`             | Kafka                |
 | 数据桥接    | `dc3-driver-mysql`             | MySQL 数据源            |
 | 数据桥接    | `dc3-driver-postgresql`        | PostgreSQL 数据源       |
 | 数据桥接    | `dc3-driver-oracle`            | Oracle 数据源           |
 | 数据桥接    | `dc3-driver-sqlserver`         | SQL Server 数据源       |
+| 数据桥接    | `dc3-driver-redis`             | Redis 数据源           |
 | 基础通信与管理 | `dc3-driver-tcp-udp`           | TCP / UDP            |
 | 基础通信与管理 | `dc3-driver-serial`            | Serial               |
 | 基础通信与管理 | `dc3-driver-snmp`              | SNMP                 |

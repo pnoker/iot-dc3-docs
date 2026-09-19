@@ -181,7 +181,7 @@ Onboard a LwM2M sensor whose endpoint name is `urn:imei:860000000000001` and who
 
 ## Further Reading
 
-- [Drivers Overview](./index) — the full landscape and grouping of the 28 drivers
+- [Drivers Overview](./index) — the full landscape and grouping of the 36 drivers
 - [Driver Capability Matrix](./matrix) — a quick reference for each driver's read/write/subscribe support
 - [Device Onboarding](../operation/device-onboarding) — a complete onboarding walkthrough
 - [IoT Protocols & Wireless Networks](../foundations/iot-protocols) — LwM2M's place in the network layer and its

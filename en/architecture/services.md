@@ -38,7 +38,7 @@ process:
 - **Data Center (`dc3-center-data`)** — point-value persistence, command dispatch and acknowledgment, and the alarm
   engine.
 - **Agentic Center (`dc3-center-agentic`)** — Spring AI conversations, tool calls, and chat persistence.
-- **Protocol Drivers (`dc3-driver-*`)** — the driver catalog has 28 protocol adapters; `docker-compose.yml` ships 22 by
+- **Protocol Drivers (`dc3-driver-*`)** — the driver catalog has 36 protocol adapters; `docker-compose.yml` ships 22 by
   default (the 6 not included — `ble`/`iec104`/`lwm2m`/`sl651`/`zigbee`/`can` — can be started on demand). Southbound
   they
   connect to devices; northbound they're decoupled from the data center through RabbitMQ.

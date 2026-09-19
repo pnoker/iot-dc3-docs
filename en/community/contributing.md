@@ -106,6 +106,8 @@ subject has to be specific and readable. The format is fixed:
 - Add a scope for any change that isn't a tiny root-level one.
 - Skip weak subjects like `update`, `fix`, `misc`, `wip`, or `.` — they make release notes unreadable.
 
+The repo ships a `.husky/commit-msg` hook (type whitelist, optional scope, a 10–100 char lowercase imperative English description) that rejects non-conforming commits locally; merges, reverts and fixups pass through.
+
 Real examples:
 
 ```text

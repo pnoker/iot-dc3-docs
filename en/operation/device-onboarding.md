@@ -41,7 +41,7 @@ communication. The diagram maps common choices to a single driver module by prot
 
 :::
 
-The full list of all 28 drivers (industrial / IoT / database / metering / simulation) is
+The full list of all 36 drivers (industrial / IoT / database / metering / simulation) is
 in [Driver Authoring](../development/driver-authoring) and the module map. The sections below follow a real onboarding
 flow using `dc3-driver-virtual`.
 
@@ -273,5 +273,5 @@ driver module chosen in Step 0 and the different attribute set each driver decla
   and handle acknowledgements.
 - [Core Concepts](../introduction/concepts) — the driver/profile/device/point mental model and the three configuration
   layers (Param/Attribute/Config).
-- [Driver Authoring](../development/driver-authoring) — the list of 28 drivers, the SPI contract, and how to write a new
+- [Driver Authoring](../development/driver-authoring) — the list of 36 drivers, the SPI contract, and how to write a new
   protocol driver starting from `dc3-driver-virtual`.

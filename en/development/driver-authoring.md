@@ -441,7 +441,7 @@ the [API Documentation](./api-documentation) for details.
 
 - [Command Plane](../architecture/command-plane) — how read/write commands are dispatched, deduplicated, locked, and
   acknowledged, and how they connect to this page's `read()`/`write()`
-- [Module Map](../architecture/modules) — the full picture of the 28 driver modules and where the `dc3-common-driver`
+- [Module Map](../architecture/modules) — the full picture of the 36 driver modules and where the `dc3-common-driver`
   SDK sits in the dependency tree
 - [Domain Model](../architecture/domain-model) — the fields and boundaries of Profile / Point / Device and the three
   layers Param/Attribute/Config

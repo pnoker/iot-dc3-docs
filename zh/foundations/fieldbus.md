@@ -99,7 +99,7 @@ UA；要省带宽、事件驱动选订阅型；纯抄表选 DLMS；轻量、低�
 **。无论底层是 Modbus 寄存器、CIP 标签还是 OBIS 编码，落到平台都是同一个[位号 Point](../introduction/concepts/point)
 的[位号值 PointValue](../introduction/concepts/point-value)，上层的存储、查询、告警、AI 完全无需关心协议细节。
 
-DC3 共内置 **28 个驱动**，本章涉及的工业协议大多有对应驱动：
+DC3 共内置 **36 个驱动**，本章涉及的工业协议大多有对应驱动：
 
 - [Modbus TCP](../drivers/modbus-tcp) / [Modbus RTU](../drivers/modbus-rtu) — 以太网 / 串口 Modbus 主站
 - [OPC UA](../drivers/opc-ua) / [OPC DA](../drivers/opc-da) — OPC 统一架构客户端 / 经典数据访问
@@ -152,5 +152,5 @@ I/O。[EtherNet/IP](../drivers/ethernet-ip)、[IEC 104](../drivers/iec104)、[DL
 - [IoT 协议与无线网络](./iot-protocols) — 网络层的无线侧：MQTT、CoAP、LwM2M、NB-IoT
 - [传感与测量](./sensing) — 协议搬运的值从哪来：传感器、变送、量程与精度
 - [物联网技术总览](./) — 四层参考架构与本部分的阅读地图
-- [设备接入与驱动](../drivers/) — 28 个驱动如何把异构设备统一接进来
+- [设备接入与驱动](../drivers/) — 36 个驱动如何把异构设备统一接进来
 - [属性与配置](../introduction/concepts/attribute-config) — 协议参数如何成为驱动属性、由设备实例填值

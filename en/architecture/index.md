@@ -40,7 +40,7 @@ Legend colors: purple=Application · green=Platform · orange=Network · cyan=Pe
 |----------------------------|------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | **Application**            | Operations, alarms, analytics, AIoT, and third-party system integration            | Web console, public APIs, dc3 CLI, Agentic Center, MCP tools, and alarm analysis                                           |
 | **Platform**               | Device management, storage, rule computation, identity, and business orchestration | Gateway, Auth / Manager / Data / Agentic center services, PostgreSQL, TimescaleDB, domain model, and command state machine |
-| **Network**                | Fieldbus, IoT protocols, wireless / WAN, and message transport                     | 28 protocol drivers, RabbitMQ async message bus, gRPC facades, and southbound read/write command channels                  |
+| **Network**                | Fieldbus, IoT protocols, wireless / WAN, and message transport                     | 36 protocol drivers, RabbitMQ async message bus, gRPC facades, and southbound read/write command channels                  |
 | **Perception**             | Sensing, auto-ID, actuators, field devices, and data sources                       | Profile / Device / Point normalize physical equipment, measurement points, and raw signals into semantic platform data     |
 | **Cross-cutting Security** | Identity, authorization, tenant isolation, trusted transport, and call integrity   | JWT, RBAC, tenantId propagation, HMAC gateway signing, TLS / secret configuration, and audit logs                          |
 
@@ -57,7 +57,7 @@ a single entry point — the gateway `dc3-gateway` (HTTP `8000`), the only exter
 ports of the other center services are reachable only on the internal network. The gateway routes requests to the four
 center services, which don't call each other over HTTP but cooperate cross-process through gRPC facades.
 
-Southbound runs to a different rhythm. Field devices are connected by protocol drivers (`dc3-driver-*`, 28 in total),
+Southbound runs to a different rhythm. Field devices are connected by protocol drivers (`dc3-driver-*`, 36 in total),
 and drivers and the data center **never call each other directly**. They exchange messages asynchronously through
 RabbitMQ — point values flow northbound (upstream), commands flow southbound (downstream). All persistence lands in
 PostgreSQL, where time-series data (point value history) is stored in TimescaleDB hypertables.
@@ -201,4 +201,4 @@ acknowledged but the history query is still a beat behind."
 - [Command Plane](./command-plane) — dispatch of read/write commands, the lifecycle state machine, and acknowledgments
 - [Auth · Tenant · RBAC](./auth-rbac) — gateway signing, token issuance, permission resolution, and tenant propagation
 - [Domain Model](./domain-model) — the fields of Profile / Point / Device and the DO/BO/VO layering
-- [Module Map](./modules) — the Maven module structure, the 28 drivers, and their dependencies
+- [Module Map](./modules) — the Maven module structure, the 36 drivers, and their dependencies

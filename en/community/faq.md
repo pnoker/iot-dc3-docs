@@ -27,12 +27,11 @@ or network service provision does not require open-sourcing.
 ### Can I develop proprietary derivatives?
 
 If you only call DC3 APIs without modifying DC3 source code, your caller-side code can remain closed-source. Once you
-modify DC3 source code and provide it as a network service, AGPL-3.0 requires you to open-source your modifications.
+modify DC3 source code and provide it as a network service, AGPL-3.0 requires you to open-source your modifications; for closed-source integration or OEM distribution, an Enterprise commercial license (https://dc3.site/en/pricing/) is available.
 
 ### Is there a commercial license?
 
-There is currently no standalone commercial license. If your use case is compatible with AGPL-3.0, you may use it
-freely. For special requirements, contact the maintainers through community channels.
+Yes. The community edition is fully open source under AGPL-3.0; when AGPL does not fit (closed-source integration, OEM distribution), the Enterprise edition offers a commercial license. Plans and pricing: [dc3.site/en/pricing](https://dc3.site/en/pricing/).
 
 ---
 
@@ -40,18 +39,15 @@ freely. For special requirements, contact the maintainers through community chan
 
 ### Does IoT DC3 itself cost money?
 
-**No.** IoT DC3 is completely free and open-source. You may freely download, use, modify, and distribute it (subject to
-AGPL-3.0 terms).
+**The community edition is free**: every feature is open source (AGPL-3.0). The Pro edition subscribes by point-count tiers (official support, scale coverage); Enterprise adds commercial licensing and customization. Tiers define the scale the team officially supports, not feature unlocks. See [Pricing](https://dc3.site/en/pricing/).
 
 ### How does the project sustain itself?
 
-IoT DC3 is a personal open-source project, run as a community effort with no paid edition or commercial license. The
-core platform stays open-source.
+Through Pro subscriptions and Enterprise services. The community edition stays free and complete forever; Pro/Enterprise add official support, scale coverage, and commercial licensing per the [pricing page](https://dc3.site/en/pricing/).
 
 ### Do I need to pay anyone to use IoT DC3?
 
-No. No payment to anyone is required to use IoT DC3. However, you are responsible for your own infrastructure costs (
-servers, databases, etc.).
+Self-hosting the community edition costs nothing (you cover your own infrastructure). Official support, larger scale, or a commercial license come with the Pro/Enterprise subscriptions on the [pricing page](https://dc3.site/en/pricing/).
 
 ---
 
@@ -85,10 +81,10 @@ JSONB, arrays, and range types are used in several places as well.
 The platform includes **28 built-in driver modules**, covering:
 
 - **Industrial Bus / PLC**: Modbus TCP/RTU, OPC UA/DA, S7 (Siemens), MELSEC, FINS (Omron), EtherNet/IP
-- **SCADA / Power / Metering**: BACnet/IP, IEC 104, DLMS, SL651, SNMP
-- **IoT / Wireless**: MQTT, CoAP, LwM2M, HTTP, BLE, Zigbee, CAN
+- **SCADA / Power / Metering**: BACnet/IP, KNX, IEC 104, DNP3, IEC 61850, DLMS, DL/T645, M-Bus, SL651, SNMP
+- **IoT / Wireless**: MQTT, CoAP, LwM2M, HTTP, BLE, Zigbee, CAN, LoRaWAN, Kafka
 - **Serial / General Network**: Serial, TCP/UDP
-- **Database**: MySQL, PostgreSQL, Oracle, SQL Server
+- **Database**: MySQL, PostgreSQL, Oracle, SQL Server, Redis
 
 Selection tip: first identify the protocols your field devices support, then check
 the [Driver Capability Matrix](../drivers/matrix) to confirm the required read / write / subscribe capabilities are met.
@@ -195,5 +191,4 @@ improvements, code contributions, and discussions.
 
 ### Is commercial support available?
 
-The project currently operates as a community effort with no official commercial support. For enterprise-level support
-needs, contact the maintainers through community channels.
+Yes. The Pro and Enterprise editions are the official support channels (scale coverage included; Enterprise adds dedicated drivers and customization) — see [the pricing page](https://dc3.site/en/pricing/). The community edition is supported through GitHub issues and community channels.
