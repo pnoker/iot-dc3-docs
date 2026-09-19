@@ -85,6 +85,8 @@
   "operation/console-devices": "控制台 · 设备管理",
   "operation/console-entities": "控制台 · 位号与模板",
   "operation/console-identity": "控制台 · 用户与租户",
+  "operation/console-alarms": "控制台 · 告警",
+  "operation/console-mcp": "控制台 · MCP 连接",
   "operation/alarms": "告警与通知",
   "guide": "部署运维",
   "guide/usage": "部署模式与镜像源",

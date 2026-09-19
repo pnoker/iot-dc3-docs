@@ -193,5 +193,6 @@ names match the DO models and SQL; the concrete notification triggering and asyn
 
 ## Further reading
 
+- [Console · Alarms](./console-alarms) — viewing, rule-config, and channels in the UI
 - [Device Onboarding](./device-onboarding) — the prerequisite for alarms: get the device in and values flowing first
 - [Data Plane](../architecture/data-plane) — how device values are persisted, the data source for alarm rule evaluation

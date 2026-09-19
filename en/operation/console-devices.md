@@ -77,5 +77,6 @@ Every step can be replicated with curl — auth and request shapes are in the [A
 
 - [Device Onboarding](./device-onboarding) — the full path from picking a driver to seeing data
 - [Device concept](../introduction/concepts/device) — fields, state machine, API semantics
+- [Console · Points & Profiles](./console-entities) — defining what data a device carries
 - [Data & Commands](./data-commands) — reading values and issuing commands after onboarding
 - [Troubleshooting](../guide/troubleshooting) — locating an offline device or missing values

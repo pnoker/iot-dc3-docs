@@ -237,6 +237,7 @@ Tool invocation is HTTP end to end (internal WebClient) — there is **no** gRPC
 
 ## Further reading
 
+- [Console · MCP Connections](../operation/console-mcp) — managing clients, connections, and audit in the UI
 - [Agentic Center](./agentic) — the platform's built-in conversation and tool invocation; see what actually executes
   behind an MCP tool
 - [Auth · Tenancy · RBAC](../architecture/auth-rbac) — the principal model, HMAC signing, and permission resolution, end

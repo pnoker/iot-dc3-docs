@@ -77,5 +77,6 @@ title: 控制台 · 设备管理
 
 - [设备接入流程](./device-onboarding) — 从选驱动到出数据的完整语境
 - [设备概念](../introduction/concepts/device) — 字段、状态机与 API 语义
+- [控制台 · 位号与模板](./console-entities) — 定义设备的数据能力
 - [数据与命令](./data-commands) — 设备接入后怎么查值、下命令
 - [故障排查](../guide/troubleshooting) — 设备不在线、采不到值的定位路径

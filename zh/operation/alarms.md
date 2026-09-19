@@ -184,5 +184,6 @@ curl -X POST 'http://localhost:8000/api/v3/data/dashboard/alert/confirm?source=d
 
 ## 延伸阅读
 
+- [控制台 · 告警](./console-alarms) — 界面上看告警、配规则、通渠道
 - [设备接入](./device-onboarding) — 告警的前提：先把设备接进来、有值在流转
 - [数据平面](../architecture/data-plane) — 设备值如何落库，告警规则评估的数据来源

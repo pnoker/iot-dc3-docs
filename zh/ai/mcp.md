@@ -208,6 +208,7 @@ PENDING/CONSUMED、`expire_time`），TTL 由 `dc3.mcp.confirm-ttl`（默认 `PT
 
 ## 延伸阅读
 
+- [控制台 · MCP 连接](../operation/console-mcp) — 界面上管客户端、连接与审计
 - [Agentic 中心](./agentic) — 平台内置的对话与工具调用，理解 MCP 工具背后执行的是什么
 - [鉴权 · 租户 · RBAC](../architecture/auth-rbac) — principal 模型、HMAC 签名与权限求解的完整链路
 - [CLI 使用指南](../automation/cli) — 不接 AI，用 `dc3` CLI 直接驱动平台
