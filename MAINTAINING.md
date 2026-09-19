@@ -72,8 +72,8 @@ node scripts/scan-facts.mjs --upstream D:/path/iot-dc3   # 指定上游仓库（
 
 ## 6. 已知待补缺口（按读者价值排序）
 
-1. 控制台手册——前端 40+ 设置页面，目前只有"设备管理"一篇（operation/console-devices）
-2. MQ 全景拓扑页——RabbitConstant 约 20 组交换机/队列，文档只覆盖 value/point_command 两族
+1. 控制台手册——前端 40+ 设置页面，已有 设备/位号模板/用户租户 三篇（operation/console-*）；下一批：告警视图（settings/alarm）、MCP 连接与审计、分组/标签
+2. ~~MQ 全景拓扑页~~ 已完成（architecture/mq-topology，2026-09-20）
 3. 身份与租户运营（auth 中心 17 个 controller）
 4. 数据中心 6 个业务域（Analytics/Dashboard 确认/事件历史/通知消息等）
 5. Manager 侧 Group/Label/Topic（MQTT 主题管理）

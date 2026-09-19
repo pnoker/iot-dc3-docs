@@ -93,7 +93,7 @@ const PILLARS: ReadonlyArray<Pillar> = [
             {key: 'group.services-collab', items: [['architecture/services'], ['architecture/facade-modes']]},
             {
                 key: 'group.pipelines-model',
-                items: [['architecture/data-plane'], ['architecture/command-plane'], ['architecture/auth-rbac'], ['architecture/domain-model']]
+                items: [['architecture/data-plane'], ['architecture/command-plane'], ['architecture/mq-topology'], ['architecture/auth-rbac'], ['architecture/domain-model']]
             },
             {key: 'group.modules', items: [['architecture/modules'], ['modules']]},
             {key: 'group.appendix', items: [['introduction/glossary'], ['introduction/license']]}
@@ -168,7 +168,7 @@ const PILLARS: ReadonlyArray<Pillar> = [
             },
             {key: 'group.frontend', items: [['frontend'], ['frontend/test-debugging']]},
             {key: 'group.automation', items: [['automation'], ['automation/cli']]},
-            {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/console-devices'], ['operation/alarms']]}
+            {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/console-devices'], ['operation/console-entities'], ['operation/console-identity'], ['operation/alarms']]}
         ]
     }
 ]

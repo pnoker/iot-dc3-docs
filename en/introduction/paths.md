@@ -35,7 +35,7 @@ You onboard devices or run operations — connecting devices, reading their data
 3. [Device Onboarding](../operation/device-onboarding) — connect devices speaking a real protocol (pick the driver via the [Drivers overview](../drivers/) and the [capability matrix](../drivers/matrix))
 4. [Data and Commands](../operation/data-commands) — collection, history queries, and read/write commands
 5. [Alarms and Notifications](../operation/alarms) — set up rules and notification channels
-6. Day-to-day in the UI: start with [Console · Device Management](../operation/console-devices) (more console pages are on the way)
+6. Day-to-day in the UI: [Console · Device Management](../operation/console-devices), [Points & Profiles](../operation/console-entities), and [Users & Tenants](../operation/console-identity)
 
 ## I need to take it to production
 

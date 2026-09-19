@@ -33,7 +33,7 @@ import PathsDecisionDiagram from '../../.vitepress/theme/components/PathsDecisio
 3. [设备接入](../operation/device-onboarding) — 接入真实协议设备（选型先看[驱动总览](../drivers/)与[能力矩阵](../drivers/matrix)）
 4. [数据与命令](../operation/data-commands) — 采集、历史查询、读写命令
 5. [告警与通知](../operation/alarms) — 配置规则与通知渠道
-6. 日常在界面上操作：[控制台 · 设备管理](../operation/console-devices) 起步（更多控制台页面陆续补齐）
+6. 日常在界面上操作：[控制台 · 设备管理](../operation/console-devices)、[位号与模板](../operation/console-entities)、[用户与租户](../operation/console-identity)
 
 ## 我要把它部署到生产
 
