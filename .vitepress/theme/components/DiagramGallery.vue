@@ -578,8 +578,12 @@ const copy = computed(() => props.lang === 'en' ? {
 }
 
 /* The diagram wrapper must fill the lightbox width — without an explicit
-   width the flex child shrinks to content and the SVG renders tiny. */
-.dg-zoom-body :deep(.dc3-diagram) {
+   width the flex child shrinks to content and the SVG renders tiny.
+   The three benchmark diagrams use their own root classes (.dc3-arch,
+   .dc3-arch-diagram) instead of .dc3-diagram, so all three are listed. */
+.dg-zoom-body :deep(.dc3-diagram),
+.dg-zoom-body :deep(.dc3-arch),
+.dg-zoom-body :deep(.dc3-arch-diagram) {
   width: 100%;
   max-width: none;
   overflow-x: visible;
