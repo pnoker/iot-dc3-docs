@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: 120;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   overflow: auto;
   padding: clamp(24px, 4vw, 56px);
@@ -135,6 +135,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   width: min(96vw, 1440px);
+  margin: auto;
   cursor: default;
   animation: dc3-frame-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
