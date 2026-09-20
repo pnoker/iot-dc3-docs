@@ -1114,6 +1114,21 @@ body.dc3-modal-open {
     overflow-x: auto;
 }
 
+/* Benchmark diagrams use their own root classes (.dc3-arch in
+   TopologyDiagram, .dc3-arch-diagram in LayeredDiagram) — they define
+   their own color variables but need the same card chrome as
+   .dc3-diagram. Their inline borders were removed earlier as
+   "duplicates", but there was no outer .dc3-diagram wrapper. */
+.dc3-arch,
+.dc3-arch-diagram {
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 12px;
+    background: var(--vp-c-bg-soft);
+    padding: 16px;
+    margin: 24px 0;
+    overflow-x: auto;
+}
+
 .dark .dc3-diagram {
     --dc3-grid: #1e293b;
     --dc3-text2: #94a3b8;
