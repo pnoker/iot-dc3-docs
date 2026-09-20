@@ -7,143 +7,302 @@ import {computed} from 'vue'
 import DiagramFrame from './DiagramFrame.vue'
 
 const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
+
 const DICT = {
   zh: {
-    aria: '对话与工具调用时序',
-    user: '用户',
-    chat: 'ChatClient dc3-center-agentic',
-    tool: '内置工具 @Tool',
-    backend: '数据中心 dc3-center-data',
-    m1: '提问（查温度并把风机关掉）',
-    m2: 'getLatestPointValue()',
-    m3: '读位号最新值（租户隔离）',
-    m4: 'PointValueBO',
-    m5: '返回工具结果',
-    m6: '拟调用 writePointValue（写命令）',
-    note1: '写工具不直接执行，生成待确认 Action',
-    m7: 'pendingConfirmation + actionId',
-    m8: 'POST /action/confirm',
-    m9: '执行写命令',
-    m10: 'submitWrite (facade gRPC)',
-    m11: '命令受理结果',
-    m12: '返回执行结果',
-    m13: '自然语言回答（已读值 + 已下发）'
+    aria: '一次 AI 辅助操作的完整时序：客户端经网关调 chat/completions，智能中心加载历史后与 LLM 多轮工具调用——读类工具直接执行；写类工具生成待确认 Action 返回 actionId，用户确认后才经 PointCommandFacade 下发命令并回答',
+    pClient: '客户端 Client',
+    pClientSub: 'curl · Web · 上游系统',
+    pGw: 'dc3-gateway',
+    pGwSub: ':8000 · 路由 + 鉴权过滤',
+    pAg: 'dc3-center-agentic',
+    pAgSub: 'ChatClient · Spring AI',
+    pLlm: 'LLM 提供方',
+    pLlmSub: 'DB 优先 · env 兜底',
+    pTool: '内置工具 @Tool',
+    pToolSub: '10 个 · 租户隔离',
+    pData: 'dc3-center-data',
+    pDataSub: '命令平面 :8500',
+    ph1: '① 对话入口 · 加载历史',
+    ph2: '② 读工具 · 直接执行',
+    ph3: '③ 写工具 · 两阶段确认（AI 提议 · 人拍板）',
+    ph4: '④ 命令下发 · 回答',
+    askChat: 'POST /api/v3/agentic/chat/completions',
+    fwdChat: '转发 /chat/completions（StripPrefix=2）',
+    memN1: 'MessageChatMemoryRepository',
+    memN2: '读 dc3_message 历史 · 窗口 30',
+    sendPrompt: 'prompt + 10 个 @Tool schema',
+    callReadTool: 'tool_call · getLatestPointValue(pointId)',
+    execReadTool: '执行 · requireTenantId（租户隔离）',
+    queryLatest: '查位号元数据 + 最新值',
+    valueBo: 'PointValueBO · 86.4 ℃',
+    readToolResult: '工具结果（值 · 采集时间）',
+    feedBack: '观测结果喂回 · 继续推理',
+    callWriteTool: 'tool_call · writePointValue（写）',
+    writeN1: '写工具从不直接执行',
+    writeN2: 'ActionService.createWritePointValueAction',
+    actN1: 'Action · PENDING',
+    actN2: 'actionId(UUID) · TTL 10 分钟',
+    pendingReturn: 'pendingConfirmation=true + actionId',
+    pendingRelay: '透传待确认动作',
+    confirmCall: 'POST /action/confirm（action_id）',
+    confirmRelay: '用户拍板 · 放行',
+    execWrite: '执行写命令',
+    submitWrite: 'PointCommandFacade.submitWrite · gRPC',
+    acceptedTtl: '受理（TTL 10s · 失败不回显值）',
+    execResult: '执行结果',
+    answerRelay: '自然语言回答',
+    answerDeliver: 'SSE 流式 / JSON 一次性',
+    legClient: '客户端', legService: '平台服务', legLlm: '外部 LLM',
+    legTool: '内置工具', legDb: '会话存储', legAction: '待确认 Action',
+    legSolid: '请求', legDash: '响应 / 回执'
   },
   en: {
-    aria: 'Chat & tool-call sequence',
-    user: 'User',
-    chat: 'ChatClient dc3-center-agentic',
-    tool: 'Built-in @Tool',
-    backend: 'Data Center dc3-center-data',
-    m1: 'ask (read temp and turn off fan)',
-    m2: 'getLatestPointValue()',
-    m3: 'read latest value (tenant-scoped)',
-    m4: 'PointValueBO',
-    m5: 'tool result',
-    m6: 'call writePointValue (write cmd)',
-    note1: 'write tool does not execute directly; creates a pending Action',
-    m7: 'pendingConfirmation + actionId',
-    m8: 'POST /action/confirm',
-    m9: 'execute write command',
-    m10: 'submitWrite (facade gRPC)',
-    m11: 'command accepted',
-    m12: 'execution result',
-    m13: 'natural-language answer (read + commanded)'
+    aria: 'Full sequence of one AI-assisted operation: the client calls chat/completions through the gateway, the agentic center loads history and runs tool-call rounds with the LLM — read tools execute directly; the write tool creates a pending Action and returns an actionId, and only after the user confirms is the command dispatched via PointCommandFacade and the answer returned',
+    pClient: 'Client',
+    pClientSub: 'curl · Web · upstream',
+    pGw: 'dc3-gateway',
+    pGwSub: ':8000 · routing + auth filter',
+    pAg: 'dc3-center-agentic',
+    pAgSub: 'ChatClient · Spring AI',
+    pLlm: 'LLM Provider',
+    pLlmSub: 'DB first · env fallback',
+    pTool: 'Built-in @Tool',
+    pToolSub: '10 tools · tenant-scoped',
+    pData: 'dc3-center-data',
+    pDataSub: 'command plane :8500',
+    ph1: '① chat entry · load history',
+    ph2: '② read tools · execute directly',
+    ph3: '③ write tool · 2-phase confirm (human decides)',
+    ph4: '④ command dispatch · answer',
+    askChat: 'POST /api/v3/agentic/chat/completions',
+    fwdChat: 'forward /chat/completions (StripPrefix=2)',
+    memN1: 'MessageChatMemoryRepository',
+    memN2: 'read dc3_message history · window 30',
+    sendPrompt: 'prompt + 10 @Tool schemas',
+    callReadTool: 'tool_call · getLatestPointValue(pointId)',
+    execReadTool: 'execute · requireTenantId (tenant-scoped)',
+    queryLatest: 'lookup point metadata + latest value',
+    valueBo: 'PointValueBO · 86.4 ℃',
+    readToolResult: 'tool result (value · sampled at)',
+    feedBack: 'feed observation · keep reasoning',
+    callWriteTool: 'tool_call · writePointValue (write)',
+    writeN1: 'the write tool never executes directly',
+    writeN2: 'ActionService.createWritePointValueAction',
+    actN1: 'Action · PENDING',
+    actN2: 'actionId (UUID) · TTL 10 min',
+    pendingReturn: 'pendingConfirmation=true + actionId',
+    pendingRelay: 'relay pending action',
+    confirmCall: 'POST /action/confirm (action_id)',
+    confirmRelay: 'human approved · go',
+    execWrite: 'execute write command',
+    submitWrite: 'PointCommandFacade.submitWrite · gRPC',
+    acceptedTtl: 'accepted (TTL 10s · no echo on failure)',
+    execResult: 'execution result',
+    answerRelay: 'natural-language answer',
+    answerDeliver: 'SSE stream / single JSON',
+    legClient: 'client', legService: 'platform service', legLlm: 'external LLM',
+    legTool: 'built-in tools', legDb: 'chat storage', legAction: 'pending Action',
+    legSolid: 'request', legDash: 'response / receipt'
   }
 } as const
 const s = computed(() => DICT[props.lang] ?? DICT.zh)
-const PX: Record<string, number> = {user: 120, chat: 400, tool: 680, backend: 960}
+
+const PX: Record<string, number> = {client: 100, gw: 300, agentic: 520, llm: 750, tool: 980, data: 1190}
+const PARTS = ['client', 'gw', 'agentic', 'llm', 'tool', 'data'] as const
+const PT: Record<string, string> = {
+  client: 'pClient', gw: 'pGw', agentic: 'pAg', llm: 'pLlm', tool: 'pTool', data: 'pData'
+}
+const PS: Record<string, string> = {
+  client: 'pClientSub', gw: 'pGwSub', agentic: 'pAgSub', llm: 'pLlmSub', tool: 'pToolSub', data: 'pDataSub'
+}
+const PFILL = [
+  'var(--dc3-fe-fill)', 'var(--dc3-be-fill)', 'var(--dc3-be-fill)',
+  'var(--dc3-ext-fill)', 'var(--dc3-amber-fill)', 'var(--dc3-be-fill)'
+]
+const PSTROKE = [
+  'var(--dc3-fe-stroke)', 'var(--dc3-be-stroke)', 'var(--dc3-be-stroke)',
+  'var(--dc3-ext-stroke)', 'var(--dc3-amber-stroke)', 'var(--dc3-be-stroke)'
+]
 </script>
 <template>
   <DiagramFrame>
     <div class="dc3-diagram">
-      <svg :aria-label="s.aria" role="img" viewBox="0 0 1080 640">
+      <svg :aria-label="s.aria" role="img" viewBox="0 0 1300 800">
         <defs>
           <marker id="agsq-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0,10 3.5,0 7"/>
           </marker>
+          <marker id="agsq-ah-rose" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+            <polygon fill="var(--dc3-rose-stroke)" points="0 0,10 3.5,0 7"/>
+          </marker>
+          <pattern id="agsq-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
+          </pattern>
         </defs>
-        <line v-for="p in ['user','chat','tool','backend']" :key="'l'+p" :x1="PX[p]" :x2="PX[p]" stroke="var(--dc3-divider)" stroke-dasharray="4,4"
-              stroke-width="1" y1="70" y2="610"/>
-        <rect v-for="(p,i) in ['user','chat','tool','backend']" :key="'b'+p" :fill="['var(--dc3-ext-fill)','var(--dc3-fe-fill)','var(--dc3-amber-fill)','var(--dc3-be-fill)'][i]" :stroke="['var(--dc3-ext-stroke)','var(--dc3-fe-stroke)','var(--dc3-amber-stroke)','var(--dc3-be-stroke)'][i]" :x="PX[p]-110"
-              height="48" opacity="0.65"
-              rx="8"
-              stroke-width="1.5"
-              width="220" y="22"/>
-        <text v-for="p in ['user','chat','tool','backend']" :key="'t'+p" :x="PX[p]" class="d-name" fill="var(--dc3-box-name)"
-              font-size="10.5" font-weight="700" text-anchor="middle" y="51">{{ s[p] }}
-        </text>
-        <line :x1="PX.user" :x2="PX.chat" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5"
-              y1="100" y2="100"/>
-        <text :x="(PX.user+PX.chat)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="92">{{
-            s.m1
+
+        <rect fill="url(#agsq-grid)" height="100%" width="100%"/>
+
+        <!-- phase bands -->
+        <rect fill="var(--dc3-region-be)" height="118" width="1252" x="24" y="80"/>
+        <text fill="var(--dc3-be-stroke)" font-size="9" font-weight="600" text-anchor="middle" x="1085" y="96">{{
+            s.ph1
           }}
         </text>
-        <line :x1="PX.chat" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5"
-              y1="135" y2="135"/>
-        <text :x="(PX.chat+PX.tool)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="127">{{
-            s.m2
+        <rect fill="var(--dc3-region-be)" height="158" width="1252" x="24" y="198"/>
+        <text fill="var(--dc3-be-stroke)" font-size="9" font-weight="600" text-anchor="middle" x="1085" y="214">{{
+            s.ph2
           }}
         </text>
-        <line :x1="PX.tool" :x2="PX.backend" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5"
-              y1="170" y2="170"/>
-        <text :x="(PX.tool+PX.backend)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="162">
-          {{ s.m3 }}
-        </text>
-        <line :x1="PX.backend" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)"
-              stroke-dasharray="5,4" stroke-width="1.5" y1="200" y2="200"/>
-        <text :x="(PX.backend+PX.tool)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="192">
-          {{ s.m4 }}
-        </text>
-        <line :x1="PX.tool" :x2="PX.chat" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)"
-              stroke-dasharray="5,4" stroke-width="1.5" y1="230" y2="230"/>
-        <text :x="(PX.tool+PX.chat)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="222">{{
-            s.m5
+        <rect fill="var(--dc3-region-amber)" height="256" width="1252" x="24" y="356"/>
+        <text fill="var(--dc3-amber-stroke)" font-size="9" font-weight="600" text-anchor="middle" x="1085" y="372">{{
+            s.ph3
           }}
         </text>
-        <rect :x="PX.chat-120" fill="var(--dc3-amber-fill)" height="30" rx="4" stroke="var(--dc3-amber-stroke)" stroke-width="1"
-              width="240" y="250"/>
-        <text :x="PX.chat" fill="var(--dc3-box-name)" font-size="8.5" text-anchor="middle" y="270">{{ s.note1 }}</text>
-        <line :x1="PX.chat" :x2="PX.user" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)"
-              stroke-dasharray="5,4" stroke-width="1.5" y1="300" y2="300"/>
-        <text :x="(PX.chat+PX.user)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="292">{{
-            s.m7
+        <rect fill="var(--dc3-region-be)" height="148" width="1252" x="24" y="612"/>
+        <text fill="var(--dc3-be-stroke)" font-size="9" font-weight="600" text-anchor="middle" x="1085" y="628">{{
+            s.ph4
           }}
         </text>
-        <line :x1="PX.user" :x2="PX.chat" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5"
-              y1="335" y2="335"/>
-        <text :x="(PX.user+PX.chat)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="327">{{
-            s.m8
+
+        <!-- lifelines -->
+        <line v-for="p in PARTS" :key="'l' + p" :x1="PX[p]" :x2="PX[p]" stroke="var(--dc3-divider)"
+              stroke-dasharray="4,4" stroke-width="1" y1="66" y2="760"/>
+
+        <!-- ① chat entry -->
+        <line :x1="PX.client" :x2="PX.gw" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="104" y2="104"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="200" y="96">{{ s.askChat }}</text>
+        <line :x1="PX.gw" :x2="PX.agentic" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="128" y2="128"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="410" y="120">{{ s.fwdChat }}</text>
+        <rect fill="var(--dc3-db-fill)" height="46" rx="4" stroke="var(--dc3-db-stroke)" stroke-width="1" width="170"
+              x="435" y="146"/>
+        <text fill="var(--dc3-db-text)" font-size="8" font-weight="600" text-anchor="middle" x="520" y="166">{{
+            s.memN1
           }}
         </text>
-        <line :x1="PX.chat" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5"
-              y1="370" y2="370"/>
-        <text :x="(PX.chat+PX.tool)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="362">{{
-            s.m9
+        <text fill="var(--dc3-text2)" font-size="8" text-anchor="middle" x="520" y="182">{{ s.memN2 }}</text>
+
+        <!-- ② read tool round -->
+        <line :x1="PX.agentic" :x2="PX.llm" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="220" y2="220"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="635" y="212">{{ s.sendPrompt }}
+        </text>
+        <line :x1="PX.llm" :x2="PX.agentic" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="246" y2="246"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="635" y="238">{{ s.callReadTool }}
+        </text>
+        <line :x1="PX.agentic" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="272" y2="272"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" x="780" y="264">{{ s.execReadTool }}</text>
+        <line :x1="PX.tool" :x2="PX.data" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="298" y2="298"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="1085" y="290">{{ s.queryLatest }}
+        </text>
+        <line :x1="PX.data" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="324" y2="324"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="1085" y="316">{{ s.valueBo }}</text>
+        <line :x1="PX.tool" :x2="PX.agentic" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="346" y2="346"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" x="780" y="338">{{ s.readToolResult }}</text>
+
+        <!-- ③ write tool: two-phase confirm -->
+        <line :x1="PX.agentic" :x2="PX.llm" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="380" y2="380"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="635" y="372">{{ s.feedBack }}</text>
+        <line :x1="PX.llm" :x2="PX.agentic" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="406" y2="406"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="635" y="398">{{ s.callWriteTool }}
+        </text>
+        <rect fill="var(--dc3-amber-fill)" height="44" rx="4" stroke="var(--dc3-amber-stroke)" stroke-width="1"
+              width="210" x="415" y="420"/>
+        <text fill="var(--dc3-box-name)" font-size="8.5" font-weight="600" text-anchor="middle" x="520" y="438">{{
+            s.writeN1
           }}
         </text>
-        <line :x1="PX.tool" :x2="PX.backend" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5"
-              y1="405" y2="405"/>
-        <text :x="(PX.tool+PX.backend)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="397">
-          {{ s.m10 }}
-        </text>
-        <line :x1="PX.backend" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)"
-              stroke-dasharray="5,4" stroke-width="1.5" y1="435" y2="435"/>
-        <text :x="(PX.backend+PX.tool)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="427">
-          {{ s.m11 }}
-        </text>
-        <line :x1="PX.tool" :x2="PX.chat" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)"
-              stroke-dasharray="5,4" stroke-width="1.5" y1="465" y2="465"/>
-        <text :x="(PX.tool+PX.chat)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="457">{{
-            s.m12
+        <text fill="var(--dc3-text2)" font-size="7.5" text-anchor="middle" x="520" y="454">{{ s.writeN2 }}</text>
+        <rect fill="var(--dc3-rose-fill)" height="40" rx="4" stroke="var(--dc3-rose-stroke)" stroke-width="1" width="190"
+              x="425" y="470"/>
+        <text fill="var(--dc3-box-name)" font-size="8.5" font-weight="600" text-anchor="middle" x="520" y="488">{{
+            s.actN1
           }}
         </text>
-        <path :d="`M${PX.chat},500 Q${(PX.chat+PX.user)/2},545 ${PX.user},510`" fill="none" marker-end="url(#agsq-ah)"
-              stroke="var(--dc3-arrow)" stroke-dasharray="5,4" stroke-width="1.5"/>
-        <text :x="(PX.chat+PX.user)/2" fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" y="540">{{
-            s.m13
-          }}
+        <text fill="var(--dc3-text2)" font-size="7.5" text-anchor="middle" x="520" y="504">{{ s.actN2 }}</text>
+        <line :x1="PX.agentic" :x2="PX.gw" marker-end="url(#agsq-ah-rose)" stroke="var(--dc3-rose-stroke)"
+              stroke-dasharray="5,4" stroke-width="1" y1="534" y2="534"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="8" text-anchor="middle" x="410" y="526">{{ s.pendingReturn }}
         </text>
+        <line :x1="PX.gw" :x2="PX.client" marker-end="url(#agsq-ah-rose)" stroke="var(--dc3-rose-stroke)"
+              stroke-dasharray="5,4" stroke-width="1" y1="556" y2="556"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="8" text-anchor="middle" x="200" y="548">{{ s.pendingRelay }}
+        </text>
+        <line :x1="PX.client" :x2="PX.gw" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="582" y2="582"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="200" y="574">{{ s.confirmCall }}
+        </text>
+        <line :x1="PX.gw" :x2="PX.agentic" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="604" y2="604"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="410" y="596">{{ s.confirmRelay }}
+        </text>
+
+        <!-- ④ command dispatch + answer -->
+        <line :x1="PX.agentic" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="636" y2="636"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" x="780" y="628">{{ s.execWrite }}</text>
+        <line :x1="PX.tool" :x2="PX.data" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2"
+              y1="660" y2="660"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="1085" y="652">{{ s.submitWrite }}
+        </text>
+        <line :x1="PX.data" :x2="PX.tool" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="684" y2="684"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="1085" y="676">{{ s.acceptedTtl }}
+        </text>
+        <line :x1="PX.tool" :x2="PX.agentic" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="708" y2="708"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" x="780" y="700">{{ s.execResult }}</text>
+        <line :x1="PX.agentic" :x2="PX.gw" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="732" y2="732"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="410" y="724">{{ s.answerRelay }}
+        </text>
+        <line :x1="PX.gw" :x2="PX.client" marker-end="url(#agsq-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4"
+              stroke-width="1" y1="754" y2="754"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8.5" text-anchor="middle" x="200" y="746">{{ s.answerDeliver }}
+        </text>
+
+        <!-- participants (on top of lifelines) -->
+        <rect v-for="(p, i) in PARTS" :key="'b' + p" :fill="PFILL[i]" :stroke="PSTROKE[i]" :x="PX[p] - 100"
+              height="46" rx="8" stroke-width="1.2" width="200" y="20"/>
+        <text v-for="p in PARTS" :key="'t' + p" :x="PX[p]" fill="var(--dc3-box-name)" font-size="10" font-weight="600"
+              text-anchor="middle" y="40">{{ s[PT[p]] }}
+        </text>
+        <text v-for="p in PARTS" :key="'st' + p" :x="PX[p]" fill="var(--dc3-text2)" font-size="8" text-anchor="middle"
+              y="56">{{ s[PS[p]] }}
+        </text>
+
+        <!-- legend -->
+        <rect fill="var(--dc3-fe-fill)" height="11" rx="2" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="16"
+              x="60" y="776"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="82" y="785">{{ s.legClient }}</text>
+        <rect fill="var(--dc3-be-fill)" height="11" rx="2" stroke="var(--dc3-be-stroke)" stroke-width="1" width="16"
+              x="170" y="776"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="192" y="785">{{ s.legService }}</text>
+        <rect fill="var(--dc3-ext-fill)" height="11" rx="2" stroke="var(--dc3-ext-stroke)" stroke-width="1" width="16"
+              x="300" y="776"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="322" y="785">{{ s.legLlm }}</text>
+        <rect fill="var(--dc3-amber-fill)" height="11" rx="2" stroke="var(--dc3-amber-stroke)" stroke-width="1"
+              width="16" x="430" y="776"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="452" y="785">{{ s.legTool }}</text>
+        <rect fill="var(--dc3-db-fill)" height="11" rx="2" stroke="var(--dc3-db-stroke)" stroke-width="1" width="16"
+              x="560" y="776"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="582" y="785">{{ s.legDb }}</text>
+        <rect fill="var(--dc3-rose-fill)" height="11" rx="2" stroke="var(--dc3-rose-stroke)" stroke-width="1" width="16"
+              x="690" y="776"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="712" y="785">{{ s.legAction }}</text>
+        <line stroke="var(--dc3-arrow)" stroke-width="1.2" x1="840" x2="864" y1="782" y2="782"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="870" y="785">{{ s.legSolid }}</text>
+        <line stroke="var(--dc3-arrow)" stroke-dasharray="5,4" stroke-width="1" x1="950" x2="974" y1="782" y2="782"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="980" y="785">{{ s.legDash }}</text>
       </svg>
     </div>
   </DiagramFrame>
