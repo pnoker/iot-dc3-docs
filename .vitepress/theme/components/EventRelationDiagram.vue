@@ -22,22 +22,36 @@ const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 
 const DICT = {
   zh: {
-    aria: '事件 Event 在体系中的位置',
-    device: '设备 Device', deviceSub: '上报方',
-    profile: '模板 Profile', profileSub: '定义者',
-    event: '事件 Event', eventSub1: '上报型能力', eventSub2: '故障 / 状态',
-    param: '事件参数', paramSub: 'EventParam',
-    hist: 'dc3_event_history', alarm: 'dc3_entity_alarm',
-    defines: '定义', has: '含', report: '上报实例', hit: '命中规则'
+    profileTitle: '模板 PROFILE · dc3_profile',
+    eventTitle: '事件 EVENT · dc3_event',
+    paramTitle: '事件参数 EVENT_PARAM',
+    histTitle: '事件流水 EVENT_HISTORY',
+    alarmTitle: '实体告警 ENTITY_ALARM',
+    lblOwns: '1:N 事件定义挂模板',
+    lblParams: '1:N 出参声明',
+    lblInst: '定义 → 实例 1:N · 驱动上报',
+    lblAlarm: '命中规则才有',
+    typeCard: '类型 eventTypeFlag: info 信息 · alert 告警 · fault 故障 · lifecycle 生命周期',
+    levelCard: '级别 eventLevelFlag: 0 LOW · 1 MEDIUM · 2 HIGH · 3 CRITICAL',
+    legPk: 'PK 主键', legFk: 'FK 外键', legUk: 'UK 唯一键',
+    legOneN: '1:N 一对多', legAlarm: '告警派生（虚线）', legChip: '枚举注记',
+    aria: '事件实体关系图：事件定义通过 profileId 挂在模板下并声明携带的输出参数；某台设备某时刻真的报了一次成为事件流水记录；原始流水每次上报都记，只有命中告警规则才派生出运行态告警；类型分信息告警故障生命周期四档、级别分四档'
   },
   en: {
-    aria: 'Where Event sits in the model',
-    device: 'Device', deviceSub: 'reporter',
-    profile: 'Profile', profileSub: 'defines it',
-    event: 'Event', eventSub1: 'report capability', eventSub2: 'fault / status',
-    param: 'Event Param', paramSub: 'EventParam',
-    hist: 'dc3_event_history', alarm: 'dc3_entity_alarm',
-    defines: 'defines', has: 'has', report: 'reports instance', hit: 'matches rule'
+    profileTitle: 'PROFILE · dc3_profile',
+    eventTitle: 'EVENT · dc3_event',
+    paramTitle: 'EVENT_PARAM · dc3_event_param',
+    histTitle: 'EVENT_HISTORY · dc3_event_history',
+    alarmTitle: 'ENTITY_ALARM · dc3_entity_alarm',
+    lblOwns: '1:N event defs on profile',
+    lblParams: '1:N output params',
+    lblInst: 'definition → instance 1:N via driver',
+    lblAlarm: 'only on rule hit',
+    typeCard: 'eventTypeFlag: info · alert · fault · lifecycle',
+    levelCard: 'eventLevelFlag: 0 LOW · 1 MEDIUM · 2 HIGH · 3 CRITICAL',
+    legPk: 'PK primary key', legFk: 'FK foreign key', legUk: 'UK unique key',
+    legOneN: '1:N one-to-many', legAlarm: 'alarm derivation (dashed)', legChip: 'enum note',
+    aria: 'Event entity-relationship diagram: event definitions attach to a profile via profileId and declare their output params; a real report from a device becomes an event history record; raw history stores every report while only rule hits derive runtime alarms; four type tiers and four level tiers exist'
   }
 } as const
 
@@ -46,85 +60,141 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
 
 <template>
   <DiagramFrame>
-    <div class="dc3-diagram">
-      <svg :aria-label="s.aria" role="img" viewBox="0 0 1040 440">
+    <div class="dc3-diagram dc3-er">
+      <svg :aria-label="s.aria" role="img" viewBox="0 0 1240 660">
         <defs>
-          <marker id="er-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+          <marker id="evr-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0, 10 3.5, 0 7"/>
           </marker>
-          <filter id="er-glow" height="180%" width="180%" x="-40%" y="-40%">
-            <feGaussianBlur stdDeviation="7"/>
-          </filter>
+          <marker id="evr-ah-rose" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+            <polygon fill="var(--dc3-rose-stroke)" points="0 0, 10 3.5, 0 7"/>
+          </marker>
+          <pattern id="evr-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
+          </pattern>
         </defs>
 
-        <line marker-end="url(#er-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="200" x2="330" y1="215"
-              y2="205"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="265" y="200">{{ s.defines }}</text>
-        <line marker-end="url(#er-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="530" x2="660" y1="165" y2="85"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="610" y="118">{{ s.has }}</text>
-        <path d="M190,74 Q430,28 670,205" fill="none" marker-end="url(#er-ah)" stroke="var(--dc3-arrow)"
-              stroke-width="1.5"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="430" y="42">{{ s.report }}</text>
-        <line marker-end="url(#er-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="755" x2="755" y1="285"
-              y2="340"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="838" y="316">{{ s.hit }}</text>
+        <rect fill="url(#evr-grid)" height="100%" width="100%"/>
 
-        <rect fill="var(--vp-c-bg)" height="58" rx="8" width="150" x="40" y="45"/>
-        <rect fill="var(--dc3-ext-fill)" height="58" rx="8" stroke="var(--dc3-ext-stroke)" stroke-width="1.5"
-              width="150" x="40" y="45"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="115" y="70">{{
-            s.device
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="115" y="87">{{ s.deviceSub }}</text>
+        <!-- connectors -->
+        <line marker-end="url(#evr-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="590" x2="590" y1="150" y2="226"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="598" y="192">{{ s.lblOwns }}</text>
+        <path d="M 470 285 H 380 V 275 H 294" fill="none" marker-end="url(#evr-ah)" stroke="var(--dc3-arrow)"
+              stroke-width="1"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="382" y="267">{{ s.lblParams }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="458" y="279">1</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="298" y="269">N</text>
+        <path d="M 540 365 V 420 H 205 V 456" fill="none" marker-end="url(#evr-ah)" stroke="var(--dc3-arrow)"
+              stroke-width="1"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="372" y="412">{{ s.lblInst }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="548" y="392">1</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="213" y="450">N</text>
+        <line marker-end="url(#evr-ah-rose)" stroke="var(--dc3-rose-stroke)" stroke-dasharray="4,4" stroke-width="0.8"
+              x1="350" x2="466" y1="530" y2="530"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="8" text-anchor="middle" x="408" y="520">{{ s.lblAlarm }}</text>
 
-        <rect fill="var(--vp-c-bg)" height="68" rx="8" width="160" x="40" y="180"/>
-        <rect fill="var(--dc3-be-fill)" height="68" rx="8" stroke="var(--dc3-be-stroke)" stroke-width="1.5" width="160"
-              x="40" y="180"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" text-anchor="middle" x="120" y="210">{{
-            s.profile
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="120" y="228">{{ s.profileSub }}</text>
+        <!-- PROFILE entity -->
+        <rect fill="var(--dc3-be-fill)" height="90" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="240"
+              x="470" y="60"/>
+        <rect fill="var(--dc3-be-stroke)" height="22" rx="6" width="240" x="470" y="60"/>
+        <text fill="var(--dc3-be-fill)" font-size="10" font-weight="600" x="480" y="75">{{ s.profileTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="92">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="702" y="92">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="107">profileName · profileCode</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="122">version</text>
 
-        <rect fill="var(--dc3-fe-stroke)" filter="url(#er-glow)" height="115" opacity="0.22" rx="14" width="220" x="320"
-              y="145"/>
-        <rect fill="var(--vp-c-bg)" height="95" rx="10" width="200" x="330" y="155"/>
-        <rect fill="var(--dc3-fe-fill)" height="95" rx="10" stroke="var(--dc3-fe-stroke)" stroke-width="2.5" width="200"
-              x="330" y="155"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="16" font-weight="700" text-anchor="middle" x="430"
-              y="190">{{ s.event }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="430" y="212">{{ s.eventSub1 }}</text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="430" y="228">{{ s.eventSub2 }}</text>
+        <!-- EVENT entity -->
+        <rect fill="var(--dc3-be-fill)" height="135" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1.2" width="290"
+              x="470" y="230"/>
+        <rect fill="var(--dc3-be-stroke)" height="22" rx="6" width="290" x="470" y="230"/>
+        <text fill="var(--dc3-be-fill)" font-size="10" font-weight="600" x="480" y="245">{{ s.eventTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="262">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="752" y="262">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="277">eventName · eventCode</text>
+        <text fill="var(--dc3-db-stroke)" font-size="7.5" text-anchor="end" x="752" y="277">UK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="292">eventTypeFlag（四档）</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="307">eventLevelFlag（四档）</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="322">eventExt (JSON)</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="337">profileId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="752" y="337">FK</text>
 
-        <rect fill="var(--vp-c-bg)" height="60" rx="8" width="190" x="660" y="55"/>
-        <rect fill="var(--dc3-fe-fill)" height="60" rx="8" stroke="var(--dc3-fe-stroke)" stroke-width="1.5" width="190"
-              x="660" y="55"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="755" y="82">{{
-            s.param
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="755" y="99">{{ s.paramSub }}</text>
+        <!-- EVENT_PARAM entity -->
+        <rect fill="var(--dc3-be-fill)" height="90" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="230"
+              x="60" y="230"/>
+        <rect fill="var(--dc3-be-stroke)" height="22" rx="6" width="230" x="60" y="230"/>
+        <text fill="var(--dc3-be-fill)" font-size="10" font-weight="600" x="70" y="245">{{ s.paramTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="262">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="282" y="262">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="277">paramName · paramCode</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="292">paramTypeFlag（复用 PointTypeEnum）</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="307">eventId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="282" y="307">FK</text>
 
-        <path d="M670,175 a80,15 0 0 0 180,0 v95 a80,15 0 0 1 -180,0 z" fill="var(--vp-c-bg)"/>
-        <path d="M670,175 a80,15 0 0 0 180,0 v95 a80,15 0 0 1 -180,0 z" fill="var(--dc3-db-fill)"
-              stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <ellipse cx="760" cy="175" fill="none" rx="80" ry="15" stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="11" text-anchor="middle" x="760" y="225">{{
-            s.hist
-          }}
-        </text>
+        <!-- EVENT_HISTORY entity -->
+        <rect fill="var(--dc3-db-fill)" height="150" rx="6" stroke="var(--dc3-db-stroke)" stroke-width="1" width="290"
+              x="60" y="460"/>
+        <rect fill="var(--dc3-db-stroke)" height="22" rx="6" width="290" x="60" y="460"/>
+        <text fill="var(--dc3-db-fill)" font-size="10" font-weight="600" x="70" y="475">{{ s.histTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="492">recordId (UUID)</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="342" y="492">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="507">deviceId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="342" y="507">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="522">eventId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="342" y="522">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="537">eventCode · type · level</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="552">paramValues · message</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="567">occurTime</text>
 
-        <path d="M670,340 a85,15 0 0 0 170,0 v60 a85,15 0 0 1 -170,0 z" fill="var(--vp-c-bg)"/>
-        <path d="M670,340 a85,15 0 0 0 170,0 v60 a85,15 0 0 1 -170,0 z" fill="var(--dc3-rose-fill)"
-              stroke="var(--dc3-rose-stroke)" stroke-width="1.5"/>
-        <ellipse cx="755" cy="340" fill="none" rx="85" ry="15" stroke="var(--dc3-rose-stroke)" stroke-width="1.5"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="11" text-anchor="middle" x="755" y="378">{{
-            s.alarm
-          }}
-        </text>
+        <!-- ENTITY_ALARM entity -->
+        <rect fill="var(--dc3-rose-fill)" height="90" rx="6" stroke="var(--dc3-rose-stroke)" stroke-width="1" width="250"
+              x="470" y="460"/>
+        <rect fill="var(--dc3-rose-stroke)" height="22" rx="6" width="250" x="470" y="460"/>
+        <text fill="var(--dc3-rose-fill)" font-size="10" font-weight="600" x="480" y="475">{{ s.alarmTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="492">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="712" y="492">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="507">entity_type · entity_id</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="712" y="507">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="522">alarm_status · alarm_level</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="537">由规则引擎生成/更新</text>
+
+        <!-- enum chips -->
+        <rect fill="var(--dc3-region-amber)" height="40" rx="6" stroke="var(--dc3-amber-stroke)" stroke-dasharray="4,3"
+              stroke-width="1" width="340" x="850" y="230"/>
+        <text fill="var(--dc3-amber-stroke)" font-size="8.5" x="862" y="246">{{ s.typeCard }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="862" y="262">DOOR_FORCED · SENSOR_FAULT …</text>
+        <rect fill="var(--dc3-region-amber)" height="40" rx="6" stroke="var(--dc3-amber-stroke)" stroke-dasharray="4,3"
+              stroke-width="1" width="340" x="850" y="290"/>
+        <text fill="var(--dc3-amber-stroke)" font-size="8.5" x="862" y="306">{{ s.levelCard }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="862" y="322">CRITICAL 命中规则即生成告警</text>
+
+        <!-- legend -->
+        <text fill="var(--dc3-rose-stroke)" font-size="8" font-weight="600" x="60" y="644">PK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="78" y="644">{{ s.legPk }}</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="8" font-weight="600" x="160" y="644">FK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="178" y="644">{{ s.legFk }}</text>
+        <text fill="var(--dc3-db-stroke)" font-size="8" font-weight="600" x="260" y="644">UK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="278" y="644">{{ s.legUk }}</text>
+        <line stroke="var(--dc3-arrow)" stroke-width="1" x1="360" x2="380" y1="641" y2="641"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="386" y="644">{{ s.legOneN }}</text>
+        <line stroke="var(--dc3-rose-stroke)" stroke-dasharray="4,3" stroke-width="0.8" x1="510" x2="530" y1="641"
+              y2="641"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="536" y="644">{{ s.legAlarm }}</text>
+        <rect fill="var(--dc3-region-amber)" height="11" rx="2" stroke="var(--dc3-amber-stroke)" stroke-dasharray="3,2"
+              stroke-width="1" width="16" x="680" y="634"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="702" y="644">{{ s.legChip }}</text>
       </svg>
     </div>
   </DiagramFrame>
 </template>
+
+<style>
+/* ER diagrams share a monospace field font; each Relation component re-declares this class */
+.dc3-er svg text {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+
+.dc3-er svg text[font-size='10'],
+.dc3-er svg text[font-size='10.5'] {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+}
+</style>

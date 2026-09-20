@@ -22,28 +22,38 @@ const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 
 const DICT = {
   zh: {
-    aria: '设备 Device 在体系中的位置',
-    profile: '模板 Profile', profileSub: '能力模型',
-    driver: '驱动 Driver', driverSub: '通信通道',
-    tenant: '租户 Tenant', tenantSub: '数据隔离',
-    device: '设备 Device', deviceSub1: '现场设备的平台镜像', deviceSub2: '绑定 Profile + Driver',
-    point: '位号 Point', pointSub: '采集 / 写入',
-    pv: '位号值 PointValue',
-    event: '事件 Event', eventSub: '主动上报',
-    e1: '能力模型', e2: '通信通道', e3: '隔离',
-    e4: 'profileId 取得', e5: '运行时产生', e6: '主动上报'
+    profileTitle: '模板 PROFILE · dc3_profile',
+    driverTitle: '驱动 DRIVER · dc3_driver',
+    deviceTitle: '设备 DEVICE · dc3_device',
+    pvTitle: '位号值 POINT_VALUE · dc3_point_value',
+    ehTitle: '事件流水 EVENT_HISTORY',
+    esTitle: '实体状态 ENTITY_STATE',
+    esType: 'entity_type_flag = 6 (设备)',
+    lblProfile: 'profileId · 一模板多设备',
+    lblDriver: 'driverId · 一驱动多设备',
+    lblPv: 'device_id + point_id · 1:N',
+    lblEh: 'deviceId · 1:N',
+    lblEs: '运行态租约 1:1 · 不在 dc3_device',
+    legPk: 'PK 主键', legFk: 'FK 外键', legOneN: '1:N 一对多',
+    legOneOne: '1:1 租约（虚线）', legMeta: '配置元数据', legRun: '运行态数据',
+    aria: '设备实体关系图：设备通过 profileId 绑定恰好一个模板、通过 driverId 绑定一个驱动，两者都是一对多的被复用方；运行期设备与位号共同定位位号值、与事件定义共同定位事件流水；在线状态是 dc3_entity_state 表里的独立租约而非设备表字段'
   },
   en: {
-    aria: 'Where Device sits in the model',
-    profile: 'Profile', profileSub: 'capability model',
-    driver: 'Driver', driverSub: 'comm channel',
-    tenant: 'Tenant', tenantSub: 'data isolation',
-    device: 'Device', deviceSub1: 'platform mirror of a device', deviceSub2: 'binds Profile + Driver',
-    point: 'Point', pointSub: 'sample / write',
-    pv: 'PointValue',
-    event: 'Event', eventSub: 'reported',
-    e1: 'capability model', e2: 'comm channel', e3: 'isolates',
-    e4: 'via profileId', e5: 'produces', e6: 'reports'
+    profileTitle: 'PROFILE · dc3_profile',
+    driverTitle: 'DRIVER · dc3_driver',
+    deviceTitle: 'DEVICE · dc3_device',
+    pvTitle: 'POINT_VALUE · dc3_point_value',
+    ehTitle: 'EVENT_HISTORY · dc3_event_history',
+    esTitle: 'ENTITY_STATE · dc3_entity_state',
+    esType: 'entity_type_flag = 6 (device)',
+    lblProfile: 'profileId · one profile, many devices',
+    lblDriver: 'driverId · one driver, many devices',
+    lblPv: 'device_id + point_id · 1:N',
+    lblEh: 'deviceId · 1:N',
+    lblEs: 'runtime lease 1:1 · not on dc3_device',
+    legPk: 'PK primary key', legFk: 'FK foreign key', legOneN: '1:N one-to-many',
+    legOneOne: '1:1 lease (dashed)', legMeta: 'config metadata', legRun: 'runtime data',
+    aria: 'Device entity-relationship diagram: a device binds exactly one profile via profileId and one driver via driverId, both reused one-to-many; at runtime device plus point locates point values and device plus event definition locates event history; online state is a separate lease in dc3_entity_state, not a device-table column'
   }
 } as const
 
@@ -52,104 +62,154 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
 
 <template>
   <DiagramFrame>
-    <div class="dc3-diagram">
-      <svg :aria-label="s.aria" role="img" viewBox="0 0 1100 460">
+    <div class="dc3-diagram dc3-er">
+      <svg :aria-label="s.aria" role="img" viewBox="0 0 1240 640">
         <defs>
-          <marker id="dr-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+          <marker id="drd-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0, 10 3.5, 0 7"/>
           </marker>
-          <filter id="dr-glow" height="180%" width="180%" x="-40%" y="-40%">
-            <feGaussianBlur stdDeviation="7"/>
-          </filter>
+          <marker id="drd-ah-rose" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+            <polygon fill="var(--dc3-rose-stroke)" points="0 0, 10 3.5, 0 7"/>
+          </marker>
+          <pattern id="drd-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
+          </pattern>
         </defs>
 
-        <!-- edges -->
-        <line marker-end="url(#dr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="210" x2="400" y1="90" y2="195"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="300" y="132">{{ s.e1 }}</text>
-        <line marker-end="url(#dr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="210" x2="400" y1="230"
-              y2="230"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="305" y="222">{{ s.e2 }}</text>
-        <line marker-end="url(#dr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="210" x2="400" y1="370"
-              y2="265"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="300" y="328">{{ s.e3 }}</text>
-        <line marker-end="url(#dr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="620" x2="760" y1="200"
-              y2="110"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="700" y="142">{{ s.e4 }}</text>
-        <line marker-end="url(#dr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="620" x2="760" y1="235"
-              y2="235"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="690" y="227">{{ s.e5 }}</text>
-        <line marker-end="url(#dr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="620" x2="760" y1="265"
-              y2="360"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="700" y="328">{{ s.e6 }}</text>
+        <rect fill="url(#drd-grid)" height="100%" width="100%"/>
 
-        <!-- profile / driver / tenant -->
-        <rect fill="var(--vp-c-bg)" height="62" rx="8" width="170" x="40" y="60"/>
-        <rect fill="var(--dc3-be-fill)" height="62" rx="8" stroke="var(--dc3-be-stroke)" stroke-width="1.5" width="170"
-              x="40" y="60"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" text-anchor="middle" x="125" y="88">{{
-            s.profile
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="125" y="105">{{ s.profileSub }}</text>
+        <!-- connectors -->
+        <path d="M 290 160 H 400 V 325 H 486" fill="none" marker-end="url(#drd-ah)" stroke="var(--dc3-arrow)"
+              stroke-width="1"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="388" y="150">{{ s.lblProfile }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="296" y="152">1</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="462" y="316">N</text>
+        <path d="M 950 160 H 850 V 325 H 764" fill="none" marker-end="url(#drd-ah)" stroke="var(--dc3-arrow)"
+              stroke-width="1"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="900" y="150">{{ s.lblDriver }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="934" y="152">1</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="770" y="316">N</text>
+        <path d="M 560 400 V 430 H 200 V 456" fill="none" marker-end="url(#drd-ah)" stroke="var(--dc3-arrow)"
+              stroke-width="1"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="368" y="424">{{ s.lblPv }}</text>
+        <line marker-end="url(#drd-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="625" x2="625" y1="400" y2="456"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="633" y="432">{{ s.lblEh }}</text>
+        <path d="M 690 400 V 430 H 1025 V 456" fill="none" marker-end="url(#drd-ah-rose)"
+              stroke="var(--dc3-rose-stroke)" stroke-dasharray="4,4" stroke-width="0.8"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="8" text-anchor="middle" x="858" y="424">{{ s.lblEs }}</text>
 
-        <rect fill="var(--vp-c-bg)" height="62" rx="8" width="170" x="40" y="200"/>
-        <rect fill="var(--dc3-bus-fill)" height="62" rx="8" stroke="var(--dc3-bus-stroke)" stroke-width="1.5"
-              width="170" x="40" y="200"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" text-anchor="middle" x="125" y="228">{{
-            s.driver
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="125" y="245">{{ s.driverSub }}</text>
+        <!-- PROFILE entity -->
+        <rect fill="var(--dc3-be-fill)" height="120" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="230"
+              x="60" y="80"/>
+        <rect fill="var(--dc3-be-stroke)" height="22" rx="6" width="230" x="60" y="80"/>
+        <text fill="var(--dc3-be-fill)" font-size="10" font-weight="600" x="70" y="95">{{ s.profileTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="112">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="282" y="112">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="127">profileName</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="142">profileCode</text>
+        <text fill="var(--dc3-db-stroke)" font-size="7.5" text-anchor="end" x="282" y="142">UK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="157">version · enableFlag</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="172">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="282" y="172">FK</text>
 
-        <rect fill="var(--vp-c-bg)" height="62" rx="8" width="170" x="40" y="340"/>
-        <rect fill="var(--dc3-rose-fill)" height="62" rx="8" stroke="var(--dc3-rose-stroke)" stroke-width="1.5"
-              width="170" x="40" y="340"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" text-anchor="middle" x="125" y="368">{{
-            s.tenant
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="125" y="385">{{ s.tenantSub }}</text>
+        <!-- DRIVER entity -->
+        <rect fill="var(--dc3-amber-fill)" height="120" rx="6" stroke="var(--dc3-amber-stroke)" stroke-width="1"
+              width="250" x="950" y="80"/>
+        <rect fill="var(--dc3-amber-stroke)" height="22" rx="6" width="250" x="950" y="80"/>
+        <text fill="var(--dc3-amber-fill)" font-size="10" font-weight="600" x="960" y="95">{{ s.driverTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="960" y="112">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="1232" y="112">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="960" y="127">driverName · driverCode</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="960" y="142">serviceName · serviceHost</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="960" y="157">driverTypeFlag · enableFlag</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="960" y="172">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="1232" y="172">FK</text>
 
-        <!-- device HERO -->
-        <rect fill="var(--dc3-ext-stroke)" filter="url(#dr-glow)" height="110" opacity="0.22" rx="14" width="230" x="390"
-              y="150"/>
-        <rect fill="var(--vp-c-bg)" height="90" rx="10" width="210" x="400" y="160"/>
-        <rect fill="var(--dc3-ext-fill)" height="90" rx="10" stroke="var(--dc3-ext-stroke)" stroke-width="2.5"
-              width="210" x="400" y="160"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="16" font-weight="700" text-anchor="middle" x="505"
-              y="194">{{ s.device }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="505" y="214">{{ s.deviceSub1 }}</text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="505" y="230">{{ s.deviceSub2 }}</text>
+        <!-- DEVICE entity -->
+        <rect fill="var(--dc3-fe-fill)" height="150" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="270"
+              x="490" y="250"/>
+        <rect fill="var(--dc3-fe-stroke)" height="22" rx="6" width="270" x="490" y="250"/>
+        <text fill="var(--dc3-fe-fill)" font-size="10" font-weight="600" x="500" y="265">{{ s.deviceTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="282">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="750" y="282">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="297">deviceName · deviceCode</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="312">profileId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="750" y="312">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="327">driverId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="750" y="327">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="342">deviceExt (JSON)</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="357">enableFlag</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="372">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="750" y="372">FK</text>
 
-        <!-- point / pointvalue / event -->
-        <rect fill="var(--vp-c-bg)" height="60" rx="8" width="180" x="760" y="80"/>
-        <rect fill="var(--dc3-fe-fill)" height="60" rx="8" stroke="var(--dc3-fe-stroke)" stroke-width="1.5" width="180"
-              x="760" y="80"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="850" y="106">{{
-            s.point
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="850" y="123">{{ s.pointSub }}</text>
+        <!-- POINT_VALUE entity -->
+        <rect fill="var(--dc3-db-fill)" height="120" rx="6" stroke="var(--dc3-db-stroke)" stroke-width="1" width="280"
+              x="60" y="460"/>
+        <rect fill="var(--dc3-db-stroke)" height="22" rx="6" width="280" x="60" y="460"/>
+        <text fill="var(--dc3-db-fill)" font-size="10" font-weight="600" x="70" y="475">{{ s.pvTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="492">deviceId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="332" y="492">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="507">pointId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="332" y="507">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="522">rawValue · calValue · numValue</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="537">createTime (时间戳)</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="552">append-only 历史流水</text>
 
-        <path d="M760,195 a90,16 0 0 0 180,0 v80 a90,16 0 0 1 -180,0 z" fill="var(--vp-c-bg)"/>
-        <path d="M760,195 a90,16 0 0 0 180,0 v80 a90,16 0 0 1 -180,0 z" fill="var(--dc3-db-fill)"
-              stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <ellipse cx="850" cy="195" fill="none" rx="90" ry="16" stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="850" y="240">{{
-            s.pv
-          }}
-        </text>
+        <!-- EVENT_HISTORY entity -->
+        <rect fill="var(--dc3-db-fill)" height="120" rx="6" stroke="var(--dc3-db-stroke)" stroke-width="1" width="270"
+              x="470" y="460"/>
+        <rect fill="var(--dc3-db-stroke)" height="22" rx="6" width="270" x="470" y="460"/>
+        <text fill="var(--dc3-db-fill)" font-size="10" font-weight="600" x="480" y="475">{{ s.ehTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="492">recordId (UUID)</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="732" y="492">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="507">deviceId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="732" y="507">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="522">eventId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="732" y="522">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="537">eventCode · paramValues</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="552">occurTime</text>
 
-        <rect fill="var(--vp-c-bg)" height="60" rx="8" width="180" x="760" y="330"/>
-        <rect fill="var(--dc3-fe-fill)" height="60" rx="8" stroke="var(--dc3-fe-stroke)" stroke-width="1.5" width="180"
-              x="760" y="330"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="850" y="356">{{
-            s.event
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="850" y="373">{{ s.eventSub }}</text>
+        <!-- ENTITY_STATE entity -->
+        <rect fill="var(--dc3-rose-fill)" height="120" rx="6" stroke="var(--dc3-rose-stroke)" stroke-width="1"
+              width="270" x="890" y="460"/>
+        <rect fill="var(--dc3-rose-stroke)" height="22" rx="6" width="270" x="890" y="460"/>
+        <text fill="var(--dc3-rose-fill)" font-size="10" font-weight="600" x="900" y="475">{{ s.esTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="900" y="492">entity_id</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="1152" y="492">FK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="900" y="507">{{ s.esType }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="900" y="522">state 0 online · 1 offline</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="900" y="537">expire_time (租约)</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="900" y="552">lease_version</text>
+
+        <!-- legend -->
+        <text fill="var(--dc3-rose-stroke)" font-size="8" font-weight="600" x="60" y="612">PK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="78" y="612">{{ s.legPk }}</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="8" font-weight="600" x="160" y="612">FK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="178" y="612">{{ s.legFk }}</text>
+        <line stroke="var(--dc3-arrow)" stroke-width="1" x1="260" x2="280" y1="609" y2="609"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="286" y="612">{{ s.legOneN }}</text>
+        <line stroke="var(--dc3-rose-stroke)" stroke-dasharray="4,3" stroke-width="0.8" x1="410" x2="430" y1="609"
+              y2="609"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="436" y="612">{{ s.legOneOne }}</text>
+        <rect fill="var(--dc3-be-fill)" height="11" rx="2" stroke="var(--dc3-be-stroke)" stroke-width="1" width="16"
+              x="610" y="603"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="632" y="612">{{ s.legMeta }}</text>
+        <rect fill="var(--dc3-db-fill)" height="11" rx="2" stroke="var(--dc3-db-stroke)" stroke-width="1" width="16"
+              x="750" y="603"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="772" y="612">{{ s.legRun }}</text>
       </svg>
     </div>
   </DiagramFrame>
 </template>
+
+<style>
+/* ER diagrams share a monospace field font; each Relation component re-declares this class */
+.dc3-er svg text {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+
+.dc3-er svg text[font-size='10'],
+.dc3-er svg text[font-size='10.5'] {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+}
+</style>

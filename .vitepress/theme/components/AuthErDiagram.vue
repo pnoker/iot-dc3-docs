@@ -125,15 +125,15 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
     <div class="dc3-diagram">
       <svg :aria-label="s.aria" role="img" viewBox="0 0 1400 768">
         <defs>
-          <marker id="aer-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+          <marker id="auth-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0, 10 3.5, 0 7"/>
           </marker>
-          <pattern id="aer-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+          <pattern id="auth-grid" height="40" patternUnits="userSpaceOnUse" width="40">
             <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
           </pattern>
         </defs>
 
-        <rect fill="url(#aer-grid)" height="100%" width="100%"/>
+        <rect fill="url(#auth-grid)" height="100%" width="100%"/>
 
         <!-- regions -->
         <rect fill="var(--dc3-region-be)" height="210" rx="12" stroke="var(--dc3-rose-stroke)" stroke-dasharray="6,3"
@@ -146,26 +146,26 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
         <!-- relations -->
         <line stroke="var(--dc3-arrow)" stroke-width="1" x1="280" x2="308" y1="480" y2="480"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="294" y="472">{{ s.c1 }}</text>
-        <path d="M600,264 L600,350 L440,350 L440,408" fill="none" marker-end="url(#aer-ah)"
+        <path d="M600,264 L600,350 L440,350 L440,408" fill="none" marker-end="url(#auth-ah)"
               stroke="var(--dc3-arrow)" stroke-width="1"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="520" y="344">{{ s.c4 }}</text>
-        <line marker-end="url(#aer-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="680" x2="680" y1="264"
+        <line marker-end="url(#auth-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="680" x2="680" y1="264"
               y2="406"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" x="690" y="340">{{ s.c4 }}</text>
-        <line marker-end="url(#aer-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="772" x2="858" y1="150" y2="150"/>
+        <line marker-end="url(#auth-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="772" x2="858" y1="150" y2="150"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="815" y="140">{{ s.c2 }}</text>
         <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="815" y="168">{{ s.c3 }}</text>
         <line stroke="var(--dc3-arrow)" stroke-dasharray="4,4" stroke-width="1" x1="180" x2="180" y1="200" y2="228"/>
         <text fill="var(--dc3-text2)" font-size="8" x="190" y="218">{{ s.c2 }}</text>
-        <path d="M302,295 L400,295 L400,220 L506,220" fill="none" marker-end="url(#aer-ah)"
+        <path d="M302,295 L400,295 L400,220 L506,220" fill="none" marker-end="url(#auth-ah)"
               stroke="var(--dc3-arrow)" stroke-dasharray="4,4" stroke-width="1"/>
         <text fill="var(--dc3-text2)" font-size="8" text-anchor="middle" x="351" y="289">{{ s.c5 }}</text>
-        <line marker-end="url(#aer-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="852" x2="878" y1="490" y2="490"/>
+        <line marker-end="url(#auth-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="852" x2="878" y1="490" y2="490"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="865" y="482">{{ s.c6 }}</text>
-        <line marker-end="url(#aer-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="975" x2="975" y1="552"
+        <line marker-end="url(#auth-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="975" x2="975" y1="552"
               y2="598"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" x="985" y="580">{{ s.c7 }}</text>
-        <line marker-end="url(#aer-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="1122" x2="1138" y1="665"
+        <line marker-end="url(#auth-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="1122" x2="1138" y1="665"
               y2="665"/>
         <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="1130" y="657">{{ s.c8 }}</text>
 
@@ -318,7 +318,7 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
         <rect fill="var(--dc3-ext-fill)" height="11" rx="2" stroke="var(--dc3-ext-stroke)" stroke-dasharray="4,3"
               stroke-width="1" width="16" x="590" y="744"/>
         <text fill="var(--dc3-text2)" font-size="9" x="612" y="753">{{ s.legFuture }}</text>
-        <line marker-end="url(#aer-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="770" x2="798" y1="750"
+        <line marker-end="url(#auth-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="770" x2="798" y1="750"
               y2="750"/>
         <text fill="var(--dc3-text2)" font-size="9" x="804" y="753">{{ s.legRel }}</text>
       </svg>

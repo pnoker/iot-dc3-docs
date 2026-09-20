@@ -9,14 +9,100 @@ import DiagramFrame from './DiagramFrame.vue'
 const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 const DICT = {
   zh: {
-    aria: 'Oracle 驱动读写', drv: 'dc3-driver-oracle', drvSub: 'JDBC · SID / ServiceName',
-    db: 'Oracle 库', dbSub: '业务表 / 历史表', pv: '位号值 PointValue',
-    e1: 'readQuery (SELECT)', e2: 'writeQuery (UPDATE/INSERT, ?)', e3: '结果第一行第一列'
+    aria: 'Oracle 驱动的请求-响应模型：采集调度按 cron 触发驱动经 JDBC 以 SID 或 ServiceName 两种方式连库查询，取结果第一行第一列作为位号值；写命令把值绑定进 UPDATE/INSERT 的 ? 占位符执行',
+    modelNote: '请求-响应模型 · 驱动主动查询 · 库不会推送',
+    platRegion: '平台侧 Platform · SQL 客户端',
+    srcRegion: '数据源侧 · Oracle (金融/电力核心系统 / 历史归档)',
+    schedName: '采集调度 Scheduler',
+    schedSub: 'cron 0/30 * * * * ?',
+    schedArrow: 'cron 触发',
+    drvName: 'dc3-driver-oracle',
+    drvSub: 'JDBC 客户端 · DRIVER_CLIENT',
+    drvB1: '· ojdbc11 (oracle.jdbc.OracleDriver)',
+    drvB2: '· HikariCP 连接池按设备缓存 · 最大 5 连接',
+    drvB3: '· 连接超时 = queryTimeout(30s) × 1000',
+    wrName: '写命令 Write',
+    wrSub: '命令参数绑定进 ? 占位符 (PreparedStatement 预编译)',
+    wrB: '受影响行数 > 0 才算成功',
+    hsName: '健康检查 Health',
+    hsSub: 'conn.isValid(5) · cron 0/15 · 租约 45s',
+    q1: 'SELECT 查询 ▶',
+    q1Sub: 'readQuery (位号属性)',
+    q2: '◀ ResultSet 结果集',
+    q2Sub: '取第一行第一列 rs.getObject(1)',
+    qw: 'UPDATE / INSERT ▶',
+    qwSub: '? = 写入值 · 无 SQL 注入',
+    dbName: 'Oracle 库',
+    dbSub: '实例标识：SID 或 Service Name 二选一',
+    trName: 'TCP 1521 · TNS 监听',
+    trSub2: 'host + port + connectionType → JDBC URL',
+    forkSid: 'connectionType=SID (默认 ORCL)',
+    forkSn: 'connectionType=ServiceName',
+    sidName: 'SID 连接',
+    sidSub: 'jdbc:oracle:thin:@host:1521:ORCL',
+    snName: 'ServiceName 连接',
+    snSub: 'jdbc:oracle:thin:@//host:1521/svc',
+    exName: '示例 SQL (位号属性)',
+    exR: 'read:   SELECT temperature FROM sensor WHERE id = 1',
+    exW: 'write:  UPDATE sensor SET temperature = ? WHERE id = 1',
+    exN: '空结果集 → null · 多行只取第一行',
+    cap: '能力：读 ✓ / 写 ✓ / 订阅 — (请求-响应，库不推送)',
+    pvName: '位号值 PointValue',
+    pvArrow: '查询值上送',
+    legPlat: '平台 / 驱动',
+    legDb: '数据源',
+    legQuery: '读查询流',
+    legWrite: '写命令流',
+    legProto: '协议 / 连接方式',
+    legData: '输出'
   },
   en: {
-    aria: 'Oracle driver read/write', drv: 'dc3-driver-oracle', drvSub: 'JDBC · SID / ServiceName',
-    db: 'Oracle DB', dbSub: 'business / history tables', pv: 'PointValue',
-    e1: 'readQuery (SELECT)', e2: 'writeQuery (UPDATE/INSERT, ?)', e3: 'first row, first column'
+    aria: 'Oracle driver request/response model: the scheduler triggers the driver per cron to query the database over JDBC using either SID or ServiceName addressing; the first row and first column of the result becomes the point value; writes bind the value into the ? placeholder of an UPDATE/INSERT',
+    modelNote: 'request/response · the driver queries · the database never pushes',
+    platRegion: 'Platform · SQL client',
+    srcRegion: 'Data source · Oracle (finance/power core systems / archive)',
+    schedName: 'Read Scheduler',
+    schedSub: 'cron 0/30 * * * * ?',
+    schedArrow: 'cron trigger',
+    drvName: 'dc3-driver-oracle',
+    drvSub: 'JDBC client · DRIVER_CLIENT',
+    drvB1: '· ojdbc11 (oracle.jdbc.OracleDriver)',
+    drvB2: '· HikariCP pool cached per device · max 5 conns',
+    drvB3: '· connect timeout = queryTimeout(30s) × 1000',
+    wrName: 'Write command',
+    wrSub: 'command value bound into ? (PreparedStatement)',
+    wrB: 'affected rows > 0 counts as success',
+    hsName: 'Health check',
+    hsSub: 'conn.isValid(5) · cron 0/15 · lease 45s',
+    q1: 'SELECT query ▶',
+    q1Sub: 'readQuery (point attribute)',
+    q2: '◀ ResultSet',
+    q2Sub: 'first row, first column rs.getObject(1)',
+    qw: 'UPDATE / INSERT ▶',
+    qwSub: '? = value · injection-safe',
+    dbName: 'Oracle database',
+    dbSub: 'instance addressing: SID or Service Name, pick one',
+    trName: 'TCP 1521 · TNS listener',
+    trSub2: 'host + port + connectionType → JDBC URL',
+    forkSid: 'connectionType=SID (default ORCL)',
+    forkSn: 'connectionType=ServiceName',
+    sidName: 'SID connection',
+    sidSub: 'jdbc:oracle:thin:@host:1521:ORCL',
+    snName: 'ServiceName connection',
+    snSub: 'jdbc:oracle:thin:@//host:1521/svc',
+    exName: 'Example SQL (point attributes)',
+    exR: 'read:   SELECT temperature FROM sensor WHERE id = 1',
+    exW: 'write:  UPDATE sensor SET temperature = ? WHERE id = 1',
+    exN: 'empty set → null · multi-row takes first',
+    cap: 'Capability: read ✓ / write ✓ / subscribe — (request/response, no push)',
+    pvName: 'PointValue',
+    pvArrow: 'query value uplink',
+    legPlat: 'platform / driver',
+    legDb: 'data source',
+    legQuery: 'read query flow',
+    legWrite: 'write command flow',
+    legProto: 'protocol / addressing',
+    legData: 'output'
   }
 } as const
 const s = computed(() => DICT[props.lang] ?? DICT.zh)
@@ -24,44 +110,170 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
 <template>
   <DiagramFrame>
     <div class="dc3-diagram">
-      <svg :aria-label="s.aria" role="img" viewBox="0 0 1040 300">
+      <svg :aria-label="s.aria" role="img" viewBox="0 0 1300 640">
         <defs>
-          <marker id="or-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+          <marker id="ora-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0,10 3.5,0 7"/>
           </marker>
+          <marker id="ora-ah-rose" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+            <polygon fill="var(--dc3-rose-stroke)" points="0 0,10 3.5,0 7"/>
+          </marker>
+          <pattern id="ora-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
+          </pattern>
         </defs>
-        <line marker-end="url(#or-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="260" x2="400" y1="130"
-              y2="130"/>
-        <text fill="var(--dc3-arrow-label)" font-size="10" text-anchor="middle" x="330" y="122">{{ s.e1 }}</text>
-        <line marker-end="url(#or-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="5,4" stroke-width="1.5" x1="260"
-              x2="400" y1="170" y2="180"/>
-        <text fill="var(--dc3-arrow-label)" font-size="10" text-anchor="middle" x="330" y="192">{{ s.e2 }}</text>
-        <line marker-end="url(#or-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="600" x2="760" y1="150"
-              y2="150"/>
-        <text fill="var(--dc3-arrow-label)" font-size="10" text-anchor="middle" x="680" y="142">{{ s.e3 }}</text>
-        <rect fill="var(--vp-c-bg)" height="90" rx="10" width="220" x="40" y="105"/>
-        <rect fill="var(--dc3-bus-fill)" height="90" rx="10" stroke="var(--dc3-bus-stroke)" stroke-width="2" width="220"
-              x="40" y="105"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" font-weight="700" text-anchor="middle" x="150"
-              y="142">{{ s.drv }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="150" y="164">{{ s.drvSub }}</text>
-        <path d="M400,100 a100,16 0 0 0 200,0 v100 a100,16 0 0 1 -200,0 z" fill="var(--vp-c-bg)"/>
-        <path d="M400,100 a100,16 0 0 0 200,0 v100 a100,16 0 0 1 -200,0 z" fill="var(--dc3-db-fill)"
-              stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <ellipse cx="500" cy="100" fill="none" rx="100" ry="16" stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" text-anchor="middle" x="500" y="152">{{
-            s.db
+        <rect fill="url(#ora-grid)" height="100%" width="100%"/>
+
+        <text fill="var(--dc3-text2)" font-size="10" font-weight="600" text-anchor="middle" x="650" y="26">{{
+            s.modelNote
           }}
         </text>
-        <text fill="var(--dc3-db-text)" font-size="9.5" text-anchor="middle" x="500" y="170">{{ s.dbSub }}</text>
-        <rect fill="var(--vp-c-bg)" height="60" rx="8" width="200" x="760" y="120"/>
-        <rect fill="var(--dc3-fe-fill)" height="60" rx="8" stroke="var(--dc3-fe-stroke)" stroke-width="1.5" width="200"
-              x="760" y="120"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="860" y="156">{{
-            s.pv
+
+        <!-- regions -->
+        <rect fill="var(--dc3-region-be)" height="520" rx="12" stroke="var(--dc3-be-stroke)" stroke-dasharray="6,3"
+              stroke-width="1" width="400" x="40" y="50"/>
+        <text fill="var(--dc3-be-stroke)" font-size="10" font-weight="600" x="52" y="68">{{ s.platRegion }}</text>
+        <rect fill="var(--dc3-region-amber)" height="520" rx="12" stroke="var(--dc3-amber-stroke)" stroke-dasharray="6,3"
+              stroke-width="1" width="640" x="620" y="50"/>
+        <text fill="var(--dc3-amber-stroke)" font-size="10" font-weight="600" x="632" y="68">{{ s.srcRegion }}</text>
+
+        <!-- arrows -->
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="240" x2="240" y1="152"
+              y2="192"/>
+        <text fill="var(--dc3-arrow-label)" font-size="9" x="250" y="176">{{ s.schedArrow }}</text>
+
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2" x1="408" x2="612" y1="230"
+              y2="230"/>
+        <text fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" x="510" y="218">{{ s.q1 }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="7.5" text-anchor="middle" x="510" y="248">{{ s.q1Sub }}</text>
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2" x1="612" x2="408" y1="280"
+              y2="280"/>
+        <text fill="var(--dc3-arrow-label)" font-size="9" text-anchor="middle" x="510" y="306">{{ s.q2 }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="7.5" text-anchor="middle" x="510" y="270">{{ s.q2Sub }}</text>
+        <line marker-end="url(#ora-ah-rose)" stroke="var(--dc3-rose-stroke)" stroke-dasharray="4,4" stroke-width="1"
+              x1="408" x2="612" y1="382" y2="382"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="9" text-anchor="middle" x="510" y="370">{{ s.qw }}</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="middle" x="510" y="400">{{ s.qwSub }}</text>
+
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="240" x2="240" y1="500"
+              y2="530"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="250" y="520">{{ s.pvArrow }}</text>
+
+        <!-- connection-type fork (drawn before the boxes) -->
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="860" x2="795" y1="246"
+              y2="316"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="710" y="288">{{ s.forkSid }}</text>
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="1020" x2="1085" y1="246"
+              y2="316"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="1120" y="288">{{ s.forkSn }}</text>
+
+        <!-- platform nodes -->
+        <rect fill="var(--dc3-fe-fill)" height="56" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="320"
+              x="80" y="96"/>
+        <text fill="var(--dc3-box-name)" font-size="12" font-weight="600" text-anchor="middle" x="240" y="120">{{
+            s.schedName
           }}
         </text>
+        <text fill="var(--dc3-text2)" font-size="9" text-anchor="middle" x="240" y="140">{{ s.schedSub }}</text>
+
+        <rect fill="var(--dc3-be-fill)" height="110" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="320"
+              x="80" y="196"/>
+        <text fill="var(--dc3-box-name)" font-size="12" font-weight="600" text-anchor="middle" x="240" y="222">{{
+            s.drvName
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="9" text-anchor="middle" x="240" y="240">{{ s.drvSub }}</text>
+        <text fill="var(--dc3-be-text)" font-size="8.5" x="96" y="264">{{ s.drvB1 }}</text>
+        <text fill="var(--dc3-be-text)" font-size="8.5" x="96" y="282">{{ s.drvB2 }}</text>
+        <text fill="var(--dc3-be-text)" font-size="8.5" x="96" y="300">{{ s.drvB3 }}</text>
+
+        <rect fill="var(--dc3-amber-fill)" height="64" rx="6" stroke="var(--dc3-amber-stroke)" stroke-width="1"
+              width="320" x="80" y="350"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="240" y="374">{{
+            s.wrName
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="240" y="392">{{ s.wrSub }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="240" y="408">{{ s.wrB }}</text>
+
+        <rect fill="var(--dc3-fe-fill)" height="56" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="320"
+              x="80" y="440"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="240" y="464">{{
+            s.hsName
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="240" y="482">{{ s.hsSub }}</text>
+
+        <rect fill="var(--dc3-fe-fill)" height="32" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="320"
+              x="80" y="534"/>
+        <text fill="var(--dc3-box-name)" font-size="10.5" font-weight="600" text-anchor="middle" x="240" y="554">{{
+            s.pvName
+          }}
+        </text>
+
+        <!-- source nodes -->
+        <rect fill="var(--dc3-db-fill)" height="56" rx="6" stroke="var(--dc3-db-stroke)" stroke-width="1" width="560"
+              x="660" y="96"/>
+        <text fill="var(--dc3-box-name)" font-size="12" font-weight="600" text-anchor="middle" x="940" y="120">{{
+            s.dbName
+          }}
+        </text>
+        <text fill="var(--dc3-db-text)" font-size="9" text-anchor="middle" x="940" y="140">{{ s.dbSub }}</text>
+
+        <rect fill="var(--dc3-bus-fill)" height="56" rx="6" stroke="var(--dc3-bus-stroke)" stroke-width="1" width="560"
+              x="660" y="190"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="940" y="214">{{
+            s.trName
+          }}
+        </text>
+        <text fill="var(--dc3-bus-text)" font-size="8.5" text-anchor="middle" x="940" y="232">{{ s.trSub2 }}</text>
+
+        <rect fill="var(--dc3-fe-fill)" height="64" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="270"
+              x="660" y="320"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="795" y="344">{{
+            s.sidName
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="795" y="366">{{ s.sidSub }}</text>
+        <rect fill="var(--dc3-fe-fill)" height="64" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="270"
+              x="950" y="320"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="1085" y="344">{{
+            s.snName
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="1085" y="366">{{ s.snSub }}</text>
+
+        <rect fill="var(--dc3-fe-fill)" height="100" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="560"
+              x="660" y="410"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="940" y="434">{{
+            s.exName
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="9" x="680" y="458">{{ s.exR }}</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="680" y="476">{{ s.exW }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="680" y="496">{{ s.exN }}</text>
+
+        <text fill="var(--dc3-text2)" font-size="9" text-anchor="middle" x="940" y="540">{{ s.cap }}</text>
+
+        <!-- legend -->
+        <rect fill="var(--dc3-be-fill)" height="11" rx="2" stroke="var(--dc3-be-stroke)" stroke-width="1" width="16"
+              x="60" y="606"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="82" y="615">{{ s.legPlat }}</text>
+        <rect fill="var(--dc3-db-fill)" height="11" rx="2" stroke="var(--dc3-db-stroke)" stroke-width="1" width="16"
+              x="190" y="606"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="212" y="615">{{ s.legDb }}</text>
+        <line marker-end="url(#ora-ah)" stroke="var(--dc3-arrow)" stroke-width="1.2" x1="330" x2="380" y1="610"
+              y2="610"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="388" y="615">{{ s.legQuery }}</text>
+        <line marker-end="url(#ora-ah-rose)" stroke="var(--dc3-rose-stroke)" stroke-dasharray="4,4"
+              stroke-width="1" x1="520" x2="570" y1="610" y2="610"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="578" y="615">{{ s.legWrite }}</text>
+        <rect fill="var(--dc3-bus-fill)" height="11" rx="2" stroke="var(--dc3-bus-stroke)" stroke-width="1" width="16"
+              x="730" y="606"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="752" y="615">{{ s.legProto }}</text>
+        <rect fill="var(--dc3-fe-fill)" height="11" rx="2" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="16"
+              x="890" y="606"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="912" y="615">{{ s.legData }}</text>
       </svg>
     </div>
   </DiagramFrame>

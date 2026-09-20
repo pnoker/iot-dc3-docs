@@ -22,22 +22,52 @@ const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 
 const DICT = {
   zh: {
-    aria: '租户与成员、角色',
-    tenant: '租户 Tenant', tenantSub: 'tenant_id',
-    owned: '设备 / 位号 / 数据',
-    tm: '租户成员 TenantMembership',
-    principal: '主体 Principal', principalSub: 'USER / SERVICE_ACCOUNT / SYSTEM',
-    role: '角色 Role → 资源码',
-    e1: '拥有', e2: '经成员关系', e3: 'N:1', e4: '租户内绑定'
+    tenantTitle: '租户 TENANT · dc3_tenant',
+    principalTitle: '主体 PRINCIPAL',
+    memberTitle: '租户成员 TENANT_MEMBERSHIP',
+    memberUk: 'UK (tenant_id, principal_id)',
+    ownedRegion: 'TenantOwned 业务实体 · 每行带 tenantId',
+    miniDevice: 'DEVICE', miniProfile: 'PROFILE',
+    miniPv: 'POINT_VALUE', miniCmd: 'COMMAND',
+    miniMore: '+ POINT / EVENT / EVENT_HISTORY / DRIVER / 属性配置 …',
+    lblMember: 'principalId · 一人可属多租户',
+    lblOwn: 'tenantId · 1:N 拥有',
+    lblRbac: '入租户后由 RBAC 授权',
+    lblMulti: '一人多租户成员',
+    rbacTitle: '角色与租户正交',
+    rbacL1: 'dc3_role_principal_bind 决定能做哪些操作',
+    rbacL2: '租户管"能碰哪条数据" · 角色管"能做哪类操作"',
+    multiTitle: '多租户成员',
+    multiL1: 'alice 可同时属 default 与 acme（各一行成员关系）',
+    multiL2: 'SERVICE_ACCOUNT 按设计只属一个租户',
+    defaultNote: 'tenantCode = default 的租户即系统管理员租户',
+    legPk: 'PK 主键', legFk: 'FK 外键', legUk: 'UK 唯一键',
+    legOneN: '1:N 拥有', legMany: 'N:M 成员', legDash: '授权 / 注记（虚线）',
+    aria: '租户实体关系图：主体经租户成员表加入租户，唯一键建在租户加主体上，因此一人可属多个租户；一切实现 TenantOwned 的业务实体都归租户拥有并被隔离；进入租户后再由 RBAC 绑定表决定能做哪些操作，角色与租户正交'
   },
   en: {
-    aria: 'Tenant, membership, and roles',
-    tenant: 'Tenant', tenantSub: 'tenant_id',
-    owned: 'Device / Point / Data',
-    tm: 'TenantMembership',
-    principal: 'Principal', principalSub: 'USER / SERVICE_ACCOUNT / SYSTEM',
-    role: 'Role → resource code',
-    e1: 'owns', e2: 'via membership', e3: 'N:1', e4: 'bound within tenant'
+    tenantTitle: 'TENANT · dc3_tenant',
+    principalTitle: 'PRINCIPAL',
+    memberTitle: 'TENANT_MEMBERSHIP · dc3_tenant_membership',
+    memberUk: 'UK (tenant_id, principal_id)',
+    ownedRegion: 'TenantOwned business entities · every row carries tenantId',
+    miniDevice: 'DEVICE', miniProfile: 'PROFILE',
+    miniPv: 'POINT_VALUE', miniCmd: 'COMMAND',
+    miniMore: '+ POINT / EVENT / EVENT_HISTORY / DRIVER / attr configs …',
+    lblMember: 'principalId · a user may join many tenants',
+    lblOwn: 'tenantId · 1:N ownership',
+    lblRbac: 'RBAC grants after joining',
+    lblMulti: 'multi-tenant membership',
+    rbacTitle: 'role ⊥ tenant',
+    rbacL1: 'dc3_role_principal_bind decides allowed operations',
+    rbacL2: 'tenant bounds data · role bounds operations',
+    multiTitle: 'multi-tenant membership',
+    multiL1: 'alice can join both default and acme (one row each)',
+    multiL2: 'SERVICE_ACCOUNT belongs to exactly one tenant',
+    defaultNote: 'the tenant with tenantCode = default is the admin tenant',
+    legPk: 'PK primary key', legFk: 'FK foreign key', legUk: 'UK unique key',
+    legOneN: '1:N ownership', legMany: 'N:M membership', legDash: 'grant / note (dashed)',
+    aria: 'Tenant entity-relationship diagram: principals join tenants through the membership table whose unique key is tenant plus principal, so one principal may belong to several tenants; every TenantOwned business entity is owned and isolated by tenant; after joining, the RBAC bind table decides allowed operations — role and tenant are orthogonal'
   }
 } as const
 
@@ -46,72 +76,158 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
 
 <template>
   <DiagramFrame>
-    <div class="dc3-diagram">
-      <svg :aria-label="s.aria" role="img" viewBox="0 0 1080 360">
+    <div class="dc3-diagram dc3-er">
+      <svg :aria-label="s.aria" role="img" viewBox="0 0 1300 680">
         <defs>
-          <marker id="tr-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+          <marker id="tnt-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0, 10 3.5, 0 7"/>
           </marker>
-          <filter id="tr-glow" height="180%" width="180%" x="-40%" y="-40%">
-            <feGaussianBlur stdDeviation="7"/>
-          </filter>
+          <pattern id="tnt-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
+          </pattern>
         </defs>
 
-        <line marker-end="url(#tr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="210" x2="310" y1="170" y2="90"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="265" y="120">{{ s.e1 }}</text>
-        <line marker-end="url(#tr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="210" x2="310" y1="215"
-              y2="265"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="265" y="248">{{ s.e2 }}</text>
-        <line marker-end="url(#tr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="530" x2="600" y1="280"
-              y2="280"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="565" y="272">{{ s.e3 }}</text>
-        <line marker-end="url(#tr-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="800" x2="880" y1="280"
-              y2="280"/>
-        <text fill="var(--dc3-arrow-label)" font-size="11" text-anchor="middle" x="840" y="272">{{ s.e4 }}</text>
+        <rect fill="url(#tnt-grid)" height="100%" width="100%"/>
 
-        <rect fill="var(--dc3-rose-stroke)" filter="url(#tr-glow)" height="110" opacity="0.2" rx="14" width="180" x="30"
-              y="125"/>
-        <rect fill="var(--vp-c-bg)" height="90" rx="10" width="160" x="40" y="135"/>
-        <rect fill="var(--dc3-rose-fill)" height="90" rx="10" stroke="var(--dc3-rose-stroke)" stroke-width="2.5"
-              width="160" x="40" y="135"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="15" font-weight="700" text-anchor="middle" x="120"
-              y="172">{{ s.tenant }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="120" y="196">{{ s.tenantSub }}</text>
+        <!-- owned entities region -->
+        <rect fill="var(--dc3-region-be)" height="300" rx="12" stroke="var(--dc3-rose-stroke)" stroke-dasharray="6,3"
+              stroke-width="1" width="370" x="890" y="66"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="9" font-weight="600" x="902" y="84">{{ s.ownedRegion }}</text>
 
-        <rect fill="var(--vp-c-bg)" height="60" rx="8" width="210" x="310" y="60"/>
-        <rect fill="var(--dc3-fe-fill)" height="60" rx="8" stroke="var(--dc3-fe-stroke)" stroke-width="1.5" width="210"
-              x="310" y="60"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="415" y="87">{{
-            s.owned
-          }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="415" y="105">{{ s.tenantSub }}</text>
+        <!-- connectors -->
+        <line marker-end="url(#tnt-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="310" x2="466" y1="280" y2="280"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="388" y="270">{{ s.lblMember }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="318" y="274">N</text>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="450" y="274">M</text>
+        <line marker-end="url(#tnt-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="630" x2="630" y1="175" y2="246"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="638" y="215">{{ s.lblOwn }}</text>
+        <line marker-end="url(#tnt-ah)" stroke="var(--dc3-rose-stroke)" stroke-width="1" x1="770" x2="886" y1="120"
+              y2="120"/>
+        <text fill="var(--dc3-rose-stroke)" font-size="8" text-anchor="middle" x="828" y="110">{{ s.lblOwn }}</text>
+        <line marker-end="url(#tnt-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="4,4" stroke-width="0.8" x1="185"
+              x2="185" y1="315" y2="466"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="193" y="400">{{ s.lblRbac }}</text>
+        <line marker-end="url(#tnt-ah)" stroke="var(--dc3-arrow)" stroke-dasharray="4,4" stroke-width="0.8" x1="560"
+              x2="560" y1="355" y2="466"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="568" y="420">{{ s.lblMulti }}</text>
 
-        <rect fill="var(--vp-c-bg)" height="60" rx="8" width="220" x="310" y="250"/>
-        <rect fill="var(--dc3-amber-fill)" height="60" rx="8" stroke="var(--dc3-amber-stroke)" stroke-width="1.5"
-              width="220" x="310" y="250"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12.5" text-anchor="middle" x="420" y="285">{{
-            s.tm
-          }}
-        </text>
+        <!-- TENANT entity -->
+        <rect fill="var(--dc3-rose-fill)" height="105" rx="6" stroke="var(--dc3-rose-stroke)" stroke-width="1"
+              width="280" x="490" y="70"/>
+        <rect fill="var(--dc3-rose-stroke)" height="22" rx="6" width="280" x="490" y="70"/>
+        <text fill="var(--dc3-rose-fill)" font-size="10" font-weight="600" x="500" y="85">{{ s.tenantTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="102">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="762" y="102">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="117">tenantName</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="132">tenantCode</text>
+        <text fill="var(--dc3-db-stroke)" font-size="7.5" text-anchor="end" x="762" y="132">UK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="500" y="147">tenantExt · enableFlag</text>
+        <text fill="var(--dc3-text2)" font-size="7.5" x="500" y="166">{{ s.defaultNote }}</text>
 
-        <rect fill="var(--vp-c-bg)" height="70" rx="8" width="200" x="600" y="245"/>
-        <rect fill="var(--dc3-be-fill)" height="70" rx="8" stroke="var(--dc3-be-stroke)" stroke-width="1.5" width="200"
-              x="600" y="245"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="13" text-anchor="middle" x="700" y="272">
-          {{ s.principal }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="9" text-anchor="middle" x="700" y="294">{{ s.principalSub }}</text>
+        <!-- PRINCIPAL entity -->
+        <rect fill="var(--dc3-fe-fill)" height="105" rx="6" stroke="var(--dc3-fe-stroke)" stroke-width="1" width="250"
+              x="60" y="210"/>
+        <rect fill="var(--dc3-fe-stroke)" height="22" rx="6" width="250" x="60" y="210"/>
+        <text fill="var(--dc3-fe-fill)" font-size="10" font-weight="600" x="70" y="225">{{ s.principalTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="242">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7.5" text-anchor="end" x="302" y="242">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="257">principalType: USER /</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="272">SERVICE_ACCOUNT / SYSTEM</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="287">name · salt · password</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="70" y="302">enableFlag</text>
 
-        <rect fill="var(--vp-c-bg)" height="70" rx="8" width="180" x="880" y="245"/>
-        <rect fill="var(--dc3-db-fill)" height="70" rx="8" stroke="var(--dc3-db-stroke)" stroke-width="1.5" width="180"
-              x="880" y="245"/>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="12" text-anchor="middle" x="970" y="285">{{
-            s.role
-          }}
-        </text>
+        <!-- TENANT_MEMBERSHIP entity -->
+        <rect fill="var(--dc3-be-fill)" height="105" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="320"
+              x="470" y="250"/>
+        <rect fill="var(--dc3-be-stroke)" height="22" rx="6" width="320" x="470" y="250"/>
+        <text fill="var(--dc3-be-fill)" font-size="10" font-weight="600" x="480" y="265">{{ s.memberTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="282">tenantId · principalId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7.5" text-anchor="end" x="782" y="282">FK</text>
+        <text fill="var(--dc3-db-stroke)" font-size="7.5" text-anchor="end" x="782" y="297">UK</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="297">{{ s.memberUk }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="312">principalType</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="327">membershipStatus:</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="480" y="342">ACTIVE / SUSPENDED / INVITED · joinedTime</text>
+
+        <!-- owned minis -->
+        <rect fill="var(--dc3-be-fill)" height="70" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="164"
+              x="906" y="100"/>
+        <rect fill="var(--dc3-be-stroke)" height="18" rx="6" width="164" x="906" y="100"/>
+        <text fill="var(--dc3-be-fill)" font-size="9" font-weight="600" x="914" y="113">{{ s.miniDevice }}</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="914" y="132">id</text>
+        <text fill="var(--dc3-rose-stroke)" font-size="7" text-anchor="end" x="1062" y="132">PK</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="914" y="146">deviceName</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="914" y="160">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7" text-anchor="end" x="1062" y="160">FK</text>
+        <rect fill="var(--dc3-be-fill)" height="70" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="164"
+              x="1084" y="100"/>
+        <rect fill="var(--dc3-be-stroke)" height="18" rx="6" width="164" x="1084" y="100"/>
+        <text fill="var(--dc3-be-fill)" font-size="9" font-weight="600" x="1092" y="113">{{ s.miniProfile }}</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="1092" y="132">id · profileCode</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="1092" y="146">profileShareFlag</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="1092" y="160">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7" text-anchor="end" x="1240" y="160">FK</text>
+        <rect fill="var(--dc3-db-fill)" height="70" rx="6" stroke="var(--dc3-db-stroke)" stroke-width="1" width="164"
+              x="906" y="190"/>
+        <rect fill="var(--dc3-db-stroke)" height="18" rx="6" width="164" x="906" y="190"/>
+        <text fill="var(--dc3-db-fill)" font-size="9" font-weight="600" x="914" y="203">{{ s.miniPv }}</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="914" y="222">deviceId · pointId</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="914" y="236">rawValue · calValue</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="914" y="250">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7" text-anchor="end" x="1062" y="250">FK</text>
+        <rect fill="var(--dc3-be-fill)" height="70" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="164"
+              x="1084" y="190"/>
+        <rect fill="var(--dc3-be-stroke)" height="18" rx="6" width="164" x="1084" y="190"/>
+        <text fill="var(--dc3-be-fill)" font-size="9" font-weight="600" x="1092" y="203">{{ s.miniCmd }}</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="1092" y="222">id · commandCode</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="1092" y="236">callTypeFlag · timeout</text>
+        <text fill="var(--dc3-text2)" font-size="8" x="1092" y="250">tenantId</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="7" text-anchor="end" x="1240" y="250">FK</text>
+        <rect fill="none" height="44" rx="6" stroke="var(--dc3-be-stroke)" stroke-dasharray="5,3" stroke-width="1"
+              width="342" x="906" y="276"/>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="918" y="294">{{ s.miniMore }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="918" y="310">getTenantId() → 隔离的施加对象</text>
+
+        <!-- RBAC card -->
+        <rect fill="none" height="76" rx="6" stroke="var(--dc3-be-stroke)" stroke-dasharray="5,3" stroke-width="1"
+              width="350" x="60" y="470"/>
+        <text fill="var(--dc3-be-stroke)" font-size="9" font-weight="600" x="72" y="490">{{ s.rbacTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="72" y="510">{{ s.rbacL1 }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="72" y="528">{{ s.rbacL2 }}</text>
+
+        <!-- multi-tenant card -->
+        <rect fill="none" height="70" rx="6" stroke="var(--dc3-be-stroke)" stroke-dasharray="5,3" stroke-width="1"
+              width="360" x="470" y="470"/>
+        <text fill="var(--dc3-be-stroke)" font-size="9" font-weight="600" x="482" y="490">{{ s.multiTitle }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="482" y="510">{{ s.multiL1 }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" x="482" y="528">{{ s.multiL2 }}</text>
+
+        <!-- legend -->
+        <text fill="var(--dc3-rose-stroke)" font-size="8" font-weight="600" x="60" y="644">PK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="78" y="644">{{ s.legPk }}</text>
+        <text fill="var(--dc3-amber-stroke)" font-size="8" font-weight="600" x="160" y="644">FK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="178" y="644">{{ s.legFk }}</text>
+        <text fill="var(--dc3-db-stroke)" font-size="8" font-weight="600" x="260" y="644">UK</text>
+        <text fill="var(--dc3-text2)" font-size="9" x="278" y="644">{{ s.legUk }}</text>
+        <line stroke="var(--dc3-rose-stroke)" stroke-width="1" x1="360" x2="380" y1="641" y2="641"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="386" y="644">{{ s.legOneN }}</text>
+        <line stroke="var(--dc3-arrow)" stroke-width="1" x1="500" x2="520" y1="641" y2="641"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="526" y="644">{{ s.legMany }}</text>
+        <line stroke="var(--dc3-arrow)" stroke-dasharray="4,3" stroke-width="0.8" x1="640" x2="660" y1="641" y2="641"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="666" y="644">{{ s.legDash }}</text>
       </svg>
     </div>
   </DiagramFrame>
 </template>
+
+<style>
+/* ER diagrams share a monospace field font; each Relation component re-declares this class */
+.dc3-er svg text {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+
+.dc3-er svg text[font-size='10'],
+.dc3-er svg text[font-size='10.5'] {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+}
+</style>

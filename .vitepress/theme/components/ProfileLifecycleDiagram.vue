@@ -22,18 +22,50 @@ const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 
 const DICT = {
   zh: {
-    aria: '模板的生命周期',
-    t1: '建模', d1a: '建 Profile', d1b: '加 Point / Command / Event',
-    t2: '复用', d2a: '多个 Device', d2b: '绑定同一 profileId',
-    t3: '运行', d3a: '设备按模板', d3b: '采集 / 下令 / 上报',
-    t4: '演进', d4a: '改能力', d4b: 'version 递增'
+    stDraft: '草稿 DRAFT', stDraftSub: 'POST /profile/add',
+    stModel: '建模 MODELING', stModelSub: '补位号 / 指令 / 事件',
+    stReady: '就绪 READY', stReadySub: '可被设备绑定 1:N',
+    stServe: '运行 SERVING', stServeSub: '设备按模板采集与调用',
+    stChange: '变更 CHANGE', stChangeSub: '新增 / 修改能力',
+    stDisable: '停用 DISABLED', stDisableSub: '不参与采集',
+    stDelete: '已删除 DELETED', stDeleteSub: 'POST /profile/delete',
+    chipRun: '运行态产出', chipRunSub: '位号值 · 指令调用 · 事件上报',
+    lblCreate: '创建',
+    lblModel: '进入建模',
+    lblReady: '[能力齐] 设 profileShareFlag',
+    lblBindDev: '[设备绑定 profileId]',
+    lblChange: '改位号 / 指令 / 事件',
+    lblVersion: 'version + 1 · 复用它的设备同步生效',
+    lblDisable: 'enableFlag = disable',
+    lblEnable: 'enableFlag = enable',
+    lblDelete: 'delete · 终态',
+    lblProduce: '持续产出',
+    legInit: '初始', legState: '状态（圆角矩形）', legFinal: '终态（双框）',
+    legGuard: '守卫条件 [ ]', legToggle: '启停开关', legFlow: '运行态产出（虚线）',
+    aria: '模板生命周期状态机：创建后进入建模，补齐位号指令事件并设定共享范围后进入就绪；设备绑定 profileId 后进入运行并持续产出位号值、指令调用与事件流水；能力变更递增版本后回到就绪；停用与删除为配置态出口'
   },
   en: {
-    aria: 'Profile lifecycle',
-    t1: 'Model', d1a: 'Create Profile', d1b: 'add Point / Command / Event',
-    t2: 'Reuse', d2a: 'Many Devices', d2b: 'bind one profileId',
-    t3: 'Run', d3a: 'Per template', d3b: 'sample / command / report',
-    t4: 'Evolve', d4a: 'Change capabilities', d4b: 'bump version'
+    stDraft: 'DRAFT', stDraftSub: 'POST /profile/add',
+    stModel: 'MODELING', stModelSub: 'add points / commands / events',
+    stReady: 'READY', stReadySub: 'bindable by devices 1:N',
+    stServe: 'SERVING', stServeSub: 'devices collect & invoke by profile',
+    stChange: 'CHANGE', stChangeSub: 'add / modify capabilities',
+    stDisable: 'DISABLED', stDisableSub: 'out of collection',
+    stDelete: 'DELETED', stDeleteSub: 'POST /profile/delete',
+    chipRun: 'Runtime output', chipRunSub: 'point values · command calls · events',
+    lblCreate: 'create',
+    lblModel: 'start modeling',
+    lblReady: '[capabilities complete] set shareFlag',
+    lblBindDev: '[device binds profileId]',
+    lblChange: 'edit points / commands / events',
+    lblVersion: 'version + 1 · reusing devices follow',
+    lblDisable: 'enableFlag = disable',
+    lblEnable: 'enableFlag = enable',
+    lblDelete: 'delete · final',
+    lblProduce: 'keeps producing',
+    legInit: 'initial', legState: 'state (rounded)', legFinal: 'final (double border)',
+    legGuard: 'guard [ ]', legToggle: 'enable toggle', legFlow: 'runtime output (dashed)',
+    aria: 'Profile lifecycle state machine: after creation it enters modeling, completes points/commands/events and share scope to become ready; device binding moves it to serving where point values, command calls and event history flow out; capability changes bump the version and return it to ready; disable and delete are configuration-state exits'
   }
 } as const
 
@@ -43,66 +75,136 @@ const s = computed(() => DICT[props.lang] ?? DICT.zh)
 <template>
   <DiagramFrame>
     <div class="dc3-diagram">
-      <svg :aria-label="s.aria" role="img" viewBox="0 0 1000 220">
+      <svg :aria-label="s.aria" role="img" viewBox="0 0 1240 580">
         <defs>
-          <marker id="pld-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
+          <marker id="plc-ah" markerHeight="7" markerWidth="10" orient="auto" refX="9" refY="3.5">
             <polygon fill="var(--dc3-arrow)" points="0 0, 10 3.5, 0 7"/>
           </marker>
+          <pattern id="plc-grid" height="40" patternUnits="userSpaceOnUse" width="40">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--dc3-grid)" stroke-width="0.5"/>
+          </pattern>
         </defs>
 
-        <!-- arrows -->
-        <line marker-end="url(#pld-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="240" x2="273" y1="125"
-              y2="125"/>
-        <line marker-end="url(#pld-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="485" x2="518" y1="125"
-              y2="125"/>
-        <line marker-end="url(#pld-ah)" stroke="var(--dc3-arrow)" stroke-width="1.5" x1="730" x2="763" y1="125"
-              y2="125"/>
+        <rect fill="url(#plc-grid)" height="100%" width="100%"/>
 
-        <!-- stage 1 建模 (cyan) -->
-        <rect fill="var(--dc3-fe-fill)" height="110" rx="10" stroke="var(--dc3-fe-stroke)" stroke-width="1.5"
-              width="210" x="30" y="70"/>
-        <circle cx="56" cy="96" fill="none" r="13" stroke="var(--dc3-fe-stroke)" stroke-width="1.5"/>
-        <text fill="var(--dc3-fe-stroke)" font-size="13" font-weight="700" text-anchor="middle" x="56" y="101">1</text>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="14.5" font-weight="600" text-anchor="middle" x="146"
-              y="101">{{ s.t1 }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="135" y="133">{{ s.d1a }}</text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="135" y="151">{{ s.d1b }}</text>
+        <!-- transitions (drawn before state nodes) -->
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="66" x2="86" y1="202" y2="202"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" x="46" y="190">{{ s.lblCreate }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="250" x2="306" y1="202" y2="202"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="278" y="192">{{ s.lblModel }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="490" x2="546" y1="202" y2="202"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="518" y="192">{{ s.lblReady }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="720" x2="776" y1="202" y2="202"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="748" y="192">{{ s.lblBindDev }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="940" x2="996" y1="202" y2="202"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="968" y="192">{{ s.lblChange }}</text>
+        <path d="M 1100 170 V 110 H 635 V 166" fill="none" marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)"
+              stroke-width="1"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="868" y="102">{{ s.lblVersion }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-amber-stroke)" stroke-width="1" x1="605" x2="605" y1="234"
+              y2="376"/>
+        <text fill="var(--dc3-amber-stroke)" font-size="8" x="613" y="300">{{ s.lblDisable }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-amber-stroke)" stroke-width="1" x1="675" x2="675" y1="378"
+              y2="238"/>
+        <text fill="var(--dc3-amber-stroke)" font-size="8" x="683" y="330">{{ s.lblEnable }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-arrow)" stroke-width="1" x1="720" x2="996" y1="408" y2="408"/>
+        <text fill="var(--dc3-arrow-label)" font-size="8" text-anchor="middle" x="858" y="398">{{ s.lblDelete }}</text>
+        <line marker-end="url(#plc-ah)" stroke="var(--dc3-db-stroke)" stroke-dasharray="4,4" stroke-width="0.8" x1="860"
+              x2="860" y1="234" y2="296"/>
+        <text fill="var(--dc3-db-text)" font-size="8" x="868" y="270">{{ s.lblProduce }}</text>
 
-        <!-- stage 2 复用 (emerald) -->
-        <rect fill="var(--dc3-be-fill)" height="110" rx="10" stroke="var(--dc3-be-stroke)" stroke-width="1.5"
-              width="210" x="275" y="70"/>
-        <circle cx="301" cy="96" fill="none" r="13" stroke="var(--dc3-be-stroke)" stroke-width="1.5"/>
-        <text fill="var(--dc3-be-stroke)" font-size="13" font-weight="700" text-anchor="middle" x="301" y="101">2</text>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="14.5" font-weight="600" text-anchor="middle" x="391"
-              y="101">{{ s.t2 }}
-        </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="380" y="133">{{ s.d2a }}</text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="380" y="151">{{ s.d2b }}</text>
+        <!-- initial pseudo node -->
+        <circle cx="61" cy="202" fill="var(--dc3-text2)" r="5"/>
 
-        <!-- stage 3 运行 (amber) -->
-        <rect fill="var(--dc3-amber-fill)" height="110" rx="10" stroke="var(--dc3-amber-stroke)" stroke-width="1.5"
-              width="210" x="520" y="70"/>
-        <circle cx="546" cy="96" fill="none" r="13" stroke="var(--dc3-amber-stroke)" stroke-width="1.5"/>
-        <text fill="var(--dc3-amber-stroke)" font-size="13" font-weight="700" text-anchor="middle" x="546" y="101">3
+        <!-- state nodes -->
+        <rect fill="var(--dc3-be-fill)" height="64" rx="14" stroke="var(--dc3-be-stroke)" stroke-width="1" width="160"
+              x="90" y="170"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="170" y="196">{{
+            s.stDraft
+          }}
         </text>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="14.5" font-weight="600" text-anchor="middle" x="636"
-              y="101">{{ s.t3 }}
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="170" y="214">{{ s.stDraftSub }}</text>
+        <rect fill="var(--dc3-be-fill)" height="64" rx="14" stroke="var(--dc3-be-stroke)" stroke-width="1" width="180"
+              x="310" y="170"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="400" y="196">{{
+            s.stModel
+          }}
         </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="625" y="133">{{ s.d3a }}</text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="625" y="151">{{ s.d3b }}</text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="400" y="214">{{ s.stModelSub }}</text>
+        <rect fill="var(--dc3-be-fill)" height="64" rx="14" stroke="var(--dc3-be-stroke)" stroke-width="1" width="170"
+              x="550" y="170"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="635" y="196">{{
+            s.stReady
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="635" y="214">{{ s.stReadySub }}</text>
+        <rect fill="var(--dc3-be-fill)" height="64" rx="14" stroke="var(--dc3-be-stroke)" stroke-width="1" width="160"
+              x="780" y="170"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="860" y="196">{{
+            s.stServe
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="860" y="214">{{ s.stServeSub }}</text>
+        <rect fill="var(--dc3-be-fill)" height="64" rx="14" stroke="var(--dc3-be-stroke)" stroke-width="1" width="180"
+              x="1000" y="170"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="1090" y="196">{{
+            s.stChange
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="1090" y="214">{{ s.stChangeSub }}</text>
 
-        <!-- stage 4 演进 (violet) -->
-        <rect fill="var(--dc3-db-fill)" height="110" rx="10" stroke="var(--dc3-db-stroke)" stroke-width="1.5"
-              width="210" x="765" y="70"/>
-        <circle cx="791" cy="96" fill="none" r="13" stroke="var(--dc3-db-stroke)" stroke-width="1.5"/>
-        <text fill="var(--dc3-db-stroke)" font-size="13" font-weight="700" text-anchor="middle" x="791" y="101">4</text>
-        <text class="d-name" fill="var(--dc3-box-name)" font-size="14.5" font-weight="600" text-anchor="middle" x="881"
-              y="101">{{ s.t4 }}
+        <!-- runtime output chip -->
+        <rect fill="var(--dc3-db-fill)" height="56" rx="6" stroke="var(--dc3-db-stroke)" stroke-width="1" width="180"
+              x="770" y="298"/>
+        <text fill="var(--dc3-box-name)" font-size="10" font-weight="600" text-anchor="middle" x="860" y="320">{{
+            s.chipRun
+          }}
         </text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="870" y="133">{{ s.d4a }}</text>
-        <text fill="var(--dc3-text2)" font-size="10" text-anchor="middle" x="870" y="151">{{ s.d4b }}</text>
+        <text fill="var(--dc3-db-text)" font-size="8.5" text-anchor="middle" x="860" y="338">{{ s.chipRunSub }}</text>
+
+        <!-- DISABLED state -->
+        <rect fill="var(--dc3-amber-fill)" height="56" rx="14" stroke="var(--dc3-amber-stroke)" stroke-width="1"
+              width="170" x="550" y="378"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="635" y="400">{{
+            s.stDisable
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="635" y="418">{{ s.stDisableSub }}</text>
+
+        <!-- DELETED final state (double border) -->
+        <rect fill="var(--dc3-ext-fill)" height="56" rx="14" stroke="var(--dc3-ext-stroke)" stroke-width="1" width="170"
+              x="996" y="380"/>
+        <rect fill="none" height="46" rx="10" stroke="var(--dc3-ext-stroke)" stroke-width="1" width="160" x="1001"
+              y="385"/>
+        <text fill="var(--dc3-box-name)" font-size="11" font-weight="600" text-anchor="middle" x="1081" y="402">{{
+            s.stDelete
+          }}
+        </text>
+        <text fill="var(--dc3-text2)" font-size="8.5" text-anchor="middle" x="1081" y="420">{{ s.stDeleteSub }}</text>
+
+        <!-- legend -->
+        <circle cx="56" cy="512" fill="var(--dc3-text2)" r="5"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="68" y="515">{{ s.legInit }}</text>
+        <rect fill="var(--dc3-be-fill)" height="12" rx="6" stroke="var(--dc3-be-stroke)" stroke-width="1" width="18"
+              x="130" y="506"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="154" y="515">{{ s.legState }}</text>
+        <rect fill="none" height="12" rx="6" stroke="var(--dc3-ext-stroke)" stroke-width="1" width="18" x="290"
+              y="506"/>
+        <rect fill="none" height="8" rx="4" stroke="var(--dc3-ext-stroke)" stroke-width="0.8" width="12" x="293"
+              y="508"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="314" y="515">{{ s.legFinal }}</text>
+        <text fill="var(--dc3-arrow-label)" font-size="9" x="440" y="515">[{{ s.legGuard }}]</text>
+        <rect fill="var(--dc3-amber-fill)" height="11" rx="2" stroke="var(--dc3-amber-stroke)" stroke-width="1"
+              width="16" x="580" y="506"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="602" y="515">{{ s.legToggle }}</text>
+        <line stroke="var(--dc3-db-stroke)" stroke-dasharray="4,3" stroke-width="0.8" x1="730" x2="750" y1="511"
+              y2="511"/>
+        <text fill="var(--dc3-text2)" font-size="9" x="756" y="515">{{ s.legFlow }}</text>
       </svg>
     </div>
   </DiagramFrame>
 </template>
+
+<style scoped>
+/* palette + card chrome come from the site-level .dc3-diagram wrapper */
+</style>
