@@ -577,13 +577,19 @@ const copy = computed(() => props.lang === 'en' ? {
   padding: 18px;
 }
 
+/* The diagram wrapper must fill the lightbox width — without an explicit
+   width the flex child shrinks to content and the SVG renders tiny. */
 .dg-zoom-body :deep(.dc3-diagram) {
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  overflow-x: visible;
+  padding: 12px;
 }
 
 .dg-zoom-body :deep(svg) {
-  max-width: 100%;
+  width: 100%;
   height: auto;
+  max-width: none;
 }
 
 .dg-zoom-foot {
