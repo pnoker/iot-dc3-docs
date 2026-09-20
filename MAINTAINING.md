@@ -26,6 +26,8 @@
 | `assertLocaleParity` | locales/zh.json 与 en.json 键集必须一致 |
 | `assertMarkdownHygiene` | 断行切断的 `**粗体**`（渲染出裸星号）与单行 `::: info … :::` 容器（闭合必须独占一行） |
 
+图表组件的视觉与语义规范见 `.vitepress/theme/DIAGRAM_SPEC.md`——新增或修改图表前必读。
+
 新增守卫的模式：在 sidebar-check.mts 加 `assertXxx()`，config.mts 的 assert 链里调用。写完必须做**负向测试**（注入一个缺陷确认 fail，再还原）。
 
 ## 3. 事实扫描（scripts/scan-facts.mjs）
@@ -72,9 +74,8 @@ node scripts/scan-facts.mjs --upstream D:/path/iot-dc3   # 指定上游仓库（
 
 ## 6. 已知待补缺口（按读者价值排序）
 
-1. 控制台手册——前端 40+ 设置页面，已有 设备/位号模板/用户租户/分组标签身份安全/告警/MCP连接 六篇（operation/console-*），覆盖最高频页面；余量：模型提供方管理（settings 下的 model/event/command 字典类）、仪表盘定制
-2. ~~MQ 全景拓扑页~~ 已完成（architecture/mq-topology，2026-09-20）
-3. 身份与租户运营（auth 中心 17 个 controller）
-4. 数据中心 6 个业务域（Analytics/Dashboard 确认/事件历史/通知消息等）
-5. Manager 侧 Group/Label/Topic（MQTT 主题管理）
-6. ~~8 个紧凑型驱动页升级~~ 已完成（2026-09-20，全部补齐 故障排查 + 落地 两节，属性表对齐 yml）
+1. 控制台手册余量——已有 6 篇（设备/位号模板/用户租户/分组标签/告警/MCP），覆盖最高频页面；余量：模型提供方管理、仪表盘定制、字典/事件/指令定义
+2. ~~MQ 全景拓扑页~~ 已完成（architecture/mq-topology）
+3. 数据中心业务域——Analytics（聚合分析）、EventHistory（事件历史查询）、MessageController（通知消息）无系统说明
+4. ~~8 个紧凑型驱动页升级~~ 已完成
+5. ~~全站 109 张图表重绘~~ 已完成（2026-09-20，DIAGRAM_SPEC.md 规范 + 四批并行重绘，总量 29,801 行）
