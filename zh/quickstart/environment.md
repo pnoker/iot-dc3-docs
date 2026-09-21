@@ -72,7 +72,7 @@ podman compose -f dc3/docker-compose-dev.yml config --quiet   # 仅校验配置�
 根 `.env` 的变量用于 compose 文件插值，例如镜像与发布端口：
 
 ```yaml
-image: ${DC3_IMAGE_REGISTRY:-pnoker}/dc3-gateway:${DC3_IMAGE_TAG:-2026.6}
+image: ${DC3_IMAGE_REGISTRY:-pnoker}/dc3-gateway:${DC3_IMAGE_TAG:-2026.9}
 ports:
   - "${DC3_BIND_HOST:-127.0.0.1}:${DC3_GATEWAY_PORT:-8000}:8000"
 ```
@@ -247,7 +247,7 @@ MQTT 与位号值各有一组"数量阈值 + 间隔"参数，由 Quartz 定时�
 |----------------------|-------------|--------------------------------------------------|
 | `REGISTRY`           | `auto`      | Makefile 镜像源选择器（仅接受 `auto`/`global`/`cn`，其它值会报错） |
 | `DC3_IMAGE_REGISTRY` | `pnoker`    | 镜像命名空间                                           |
-| `DC3_IMAGE_TAG`      | `2026.6`    | 所有服务/依赖镜像标签                                      |
+| `DC3_IMAGE_TAG`      | `2026.9`    | 所有服务/依赖镜像标签                                      |
 | `DC3_BIND_HOST`      | `127.0.0.1` | 发布端口绑定地址（`0.0.0.0` 对外）                           |
 
 ### 可观测性（Compose only / Runtime）
@@ -377,7 +377,7 @@ MQTT 与位号值各有一组"数量阈值 + 间隔"参数，由 Quartz 定时�
 | `POINT_BATCH_INTERVAL` | `5`                     | Runtime      |
 | `REGISTRY`             | `auto`                  | Compose only |
 | `DC3_IMAGE_REGISTRY`   | `pnoker`                | Compose only |
-| `DC3_IMAGE_TAG`        | `2026.6`                | Compose only |
+| `DC3_IMAGE_TAG`        | `2026.9`                | Compose only |
 | `DC3_LOG_MAX_SIZE`     | `10M`                   | Compose only |
 | `DC3_LOG_MAX_FILE`     | `20`                    | Compose only |
 | `DC3_BIND_HOST`        | `127.0.0.1`             | Compose only |

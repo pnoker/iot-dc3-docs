@@ -117,10 +117,12 @@ make reset STACK=db CONFIRM_RESET_VOLUMES=true
 | `global`   | `pnoker`（Docker Hub）                            | 海外/通用网络           |
 | `cn`       | `registry.cn-beijing.aliyuncs.com/dc3`（阿里云）     | 中国大陆，拉取更快         |
 
-传入其它值会直接报错 `Unsupported REGISTRY`。镜像版本由 `DC3_IMAGE_TAG`（默认 `2026.6`）统一控制——除 `dc3-web`（只有 `latest` 与完整版本号 tag，无系列 tag）外，服务与依赖镜像共用同一个 tag，生产建议钉死具体版本而非 `latest`。
+传入其它值会直接报错 `Unsupported REGISTRY`。镜像版本由 `DC3_IMAGE_TAG`（默认 `2026.9`）统一控制——除 `dc3-web`（只有 `latest` 与完整版本号 tag，无系列 tag）外，服务与依赖镜像共用同一个 tag，生产建议钉死具体版本而非 `latest`。
 
-::: warning 默认 tag 可能尚未发布
-Docker Hub 上的当前版本线是 `2026.5`（最新 `2026.5.22`），默认的 `2026.6` 尚未发布。直接用默认值起 app 栈会拉取失败——起栈前先把根目录 `.env` 的 `DC3_IMAGE_TAG` 改成已发布版本（如 `2026.5.22`）。
+自 `2026.9` 起，`dc3-center-*` 与 `dc3-gateway` 另有 GraalVM native 镜像线（同一镜像名，tag 加 `-native` 后缀，如 `dc3-center-auth:2026.9-native`），启动毫秒级、内存占用更低；驱动服务仍在 JVM 镜像线上运行。
+
+::: tip 钉死版本再上生产
+Docker Hub 上的当前版本线是 `2026.9`（最新 `2026.9.22`），与 compose 默认值一致，开箱即可起栈。生产环境仍建议把根目录 `.env` 的 `DC3_IMAGE_TAG` 钉死到具体补丁版本（如 `2026.9.22`）而非跟随默认系列 tag。
 :::
 
 ::: code-group
@@ -137,8 +139,8 @@ make up STACK=app REGISTRY=cn
 
 :::
 
-举例：在 `cn` 下，网关镜像解析为 `registry.cn-beijing.aliyuncs.com/dc3/dc3-gateway:2026.6`；在 `global` 下则是
-`pnoker/dc3-gateway:2026.6`。完整镜像清单见末节折叠的命令参考。
+举例：在 `cn` 下，网关镜像解析为 `registry.cn-beijing.aliyuncs.com/dc3/dc3-gateway:2026.9`；在 `global` 下则是
+`pnoker/dc3-gateway:2026.9`。完整镜像清单见末节折叠的命令参考。
 
 ::: warning Makefile 用 REGISTRY，Compose 用 DC3_IMAGE_REGISTRY
 两个名字别混。`REGISTRY=auto|global|cn` 是 `make` 的选择器，它负责把对应的 `DC3_IMAGE_REGISTRY` 命名空间注入 Compose；直接跑

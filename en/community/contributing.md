@@ -182,7 +182,7 @@ By default it reads the current version from `pom.xml`, compares `HEAD` against 
 tag, and updates `dc3/doc/CHANGE.md`. You can override the range or version when needed:
 
 ```bash
-make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.5.22
+make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.9.22
 ```
 
 ::: info Changelog-Only Commits

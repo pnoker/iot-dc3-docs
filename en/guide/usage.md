@@ -134,13 +134,13 @@ namespace Compose actually reads:
 | `global`         | `pnoker` (Docker Hub)                                                                     | Overseas / general networks                    |
 | `cn`             | `registry.cn-beijing.aliyuncs.com/dc3` (Aliyun)                                           | Mainland China, faster pulls                   |
 
-Any other value fails with `Unsupported REGISTRY`. The image version is controlled by `DC3_IMAGE_TAG` (default `2026.6`) — apart from `dc3-web` (which only has `latest` and full-version tags, no series tag), services and dependency images share the same tag. In production, pin a specific version rather than
+Any other value fails with `Unsupported REGISTRY`. The image version is controlled by `DC3_IMAGE_TAG` (default `2026.9`) — apart from `dc3-web` (which only has `latest` and full-version tags, no series tag), services and dependency images share the same tag. In production, pin a specific version rather than
 `latest`.
 
-::: warning The default tag may not be published yet
-The current image line on Docker Hub is `2026.5` (latest `2026.5.22`); the default `2026.6` has not shipped yet. Bringing
-up the `app` stack with the default fails to pull — set `DC3_IMAGE_TAG` to a released version (e.g. `2026.5.22`) in the
-root `.env` first.
+::: tip Pin a version before production
+The current image line on Docker Hub is `2026.9` (latest `2026.9.22`), matching the compose default — the `app` stack
+comes up out of the box. For production, still pin `DC3_IMAGE_TAG` to an exact patch version (e.g. `2026.9.22`) in the
+root `.env` instead of riding the series tag.
 :::
 
 ::: code-group
@@ -157,8 +157,8 @@ make up STACK=app REGISTRY=cn
 
 :::
 
-For example, under `cn` the gateway image resolves to `registry.cn-beijing.aliyuncs.com/dc3/dc3-gateway:2026.6`; under
-`global` it's `pnoker/dc3-gateway:2026.6`. The collapsed command reference in the final section lists the full image
+For example, under `cn` the gateway image resolves to `registry.cn-beijing.aliyuncs.com/dc3/dc3-gateway:2026.9`; under
+`global` it's `pnoker/dc3-gateway:2026.9`. The collapsed command reference in the final section lists the full image
 set.
 
 ::: warning Makefile uses REGISTRY, Compose uses DC3_IMAGE_REGISTRY

@@ -159,7 +159,7 @@ make changelog
 默认它读取 `pom.xml` 里的当前版本，对比 `HEAD` 与最近可达的 `dc3.release.*` tag，更新 `dc3/doc/CHANGE.md`。需要时可覆盖范围或版本：
 
 ```bash
-make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.5.22
+make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.9.22
 ```
 
 ::: info 变更日志专用提交

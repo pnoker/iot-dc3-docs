@@ -76,7 +76,7 @@ podman compose -f dc3/docker-compose-dev.yml config --quiet
 Variables in the root `.env` interpolate the compose files, for example images and published ports:
 
 ```yaml
-image: ${DC3_IMAGE_REGISTRY:-pnoker}/dc3-gateway:${DC3_IMAGE_TAG:-2026.6}
+image: ${DC3_IMAGE_REGISTRY:-pnoker}/dc3-gateway:${DC3_IMAGE_TAG:-2026.9}
 ports:
   - "${DC3_BIND_HOST:-127.0.0.1}:${DC3_GATEWAY_PORT:-8000}:8000"
 ```
@@ -265,7 +265,7 @@ Compose interpolation reads `DC3_IMAGE_REGISTRY` — each governs its own segmen
 |----------------------|-------------|--------------------------------------------------------------------------------------------|
 | `REGISTRY`           | `auto`      | Makefile image-source selector (accepts only `auto`/`global`/`cn`; other values error out) |
 | `DC3_IMAGE_REGISTRY` | `pnoker`    | Image namespace                                                                            |
-| `DC3_IMAGE_TAG`      | `2026.6`    | Image tag for all services and dependencies                                                |
+| `DC3_IMAGE_TAG`      | `2026.9`    | Image tag for all services and dependencies                                                |
 | `DC3_BIND_HOST`      | `127.0.0.1` | Published-port bind address (`0.0.0.0` for external access)                                |
 
 ### Observability (Compose only / Runtime)
@@ -396,7 +396,7 @@ below.
 | `POINT_BATCH_INTERVAL` | `5`                     | Runtime      |
 | `REGISTRY`             | `auto`                  | Compose only |
 | `DC3_IMAGE_REGISTRY`   | `pnoker`                | Compose only |
-| `DC3_IMAGE_TAG`        | `2026.6`                | Compose only |
+| `DC3_IMAGE_TAG`        | `2026.9`                | Compose only |
 | `DC3_LOG_MAX_SIZE`     | `10M`                   | Compose only |
 | `DC3_LOG_MAX_FILE`     | `20`                    | Compose only |
 | `DC3_BIND_HOST`        | `127.0.0.1`             | Compose only |
