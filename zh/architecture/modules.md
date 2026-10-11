@@ -41,20 +41,19 @@ IoT DC3 的代码按"部署单元 + 共享契约 + 协议驱动"三类组织。�
 
 ## 部署单元：网关、四中心与驱动
 
-会被打包成进程跑起来的模块如下。端口与对外暴露策略以 compose 为准：只有网关的 HTTP `8000` 对外，其余中心的 HTTP/gRPC
-端口都是集群内部端口。
+会被打包成进程跑起来的模块如下。端口与对外暴露策略以 compose 为准：网关 `8000` 是**逻辑上**唯一的 API 聚合入口，但 app 栈并不把它发布到宿主机（外部经 Web 前端 `8080` 反代触达，只有 dev 栈才直发 `8000`，见[服务与拓扑](./services)）；其余中心的 HTTP/gRPC 端口都是集群内部端口。
 
-| 部署单元                 | 角色                                     | HTTP   | gRPC   | 对外  |
-|----------------------|----------------------------------------|--------|--------|-----|
-| `dc3-gateway`        | 唯一对外 HTTP 入口、认证透传、MCP 资源服务器            | `8000` | —      | 是   |
+| 部署单元                 | 角色                                        | HTTP   | gRPC   | 对外  |
+|----------------------|-----------------------------------------|--------|--------|-----|
+| `dc3-gateway`        | 逻辑唯一 API 聚合入口、认证透传、MCP 资源服务器             | `8000` | —      | 视栈  |
 | `dc3-center-auth`    | 认证 / 租户 / RBAC / OAuth 2.1             | `8300` | `9300` | 否   |
 | `dc3-center-manager` | 驱动 / 模板 / 设备 / 位号等元数据管理                | `8400` | `9400` | 否   |
 | `dc3-center-data`    | 位号值落库、命令分发与回执、告警                       | `8500` | `9500` | 否   |
 | `dc3-center-agentic` | LLM 会话、工具调用、记忆                         | `8600` | —      | 否   |
-| `dc3-center-single`  | auth + manager + data 合并的单体（本地 facade） | `8100` | `9100` | 视部署 |
+| `dc3-center-single`  | auth + manager + data + agentic 四中心合一的单体（本地 facade） | `8100` | `9100` | 视部署 |
 | `dc3-driver-*`       | 协议适配（36 个独立进程）                         | 各自     | —      | 仅个别 |
 
-`dc3-center-single` 把三个中心合进一个进程，用 `local` facade 在进程内直连，适合本地开发或资源受限的小规模部署；它和四中心分布式版本共享同一套
+`dc3-center-single` 把**四个**中心合进一个进程（`pom.xml` 同时依赖 `dc3-common-auth` / `dc3-common-manager` / `dc3-common-data` / `dc3-common-agentic`），用 `local` facade 在进程内直连，适合本地开发或资源受限的小规模部署；它和四中心分布式版本共享同一套
 `dc3-common-*` 领域库，区别只在 facade 实现和打包方式。
 
 ::: info 智能中心没有 gRPC 端口
@@ -80,8 +79,10 @@ gRPC 反向调用。
 | 模块                                            | 职责                            | 何时生效                          |
 |-----------------------------------------------|-------------------------------|-------------------------------|
 | `dc3-common-facade-api`                       | 定义跨服务调用的 Java 接口（业务代码只依赖它）    | 始终                            |
-| `dc3-common-facade-grpc`                      | 接口的 gRPC 实现，底层走 `dc3-api-*` 桩 | `dc3.facade.mode=grpc`（分布式默认） |
-| `dc3-common-facade-local-{auth,manager,data}` | 接口的进程内直连实现                    | `dc3.facade.mode=local`（单体）   |
+| `dc3-common-facade-grpc`                      | 接口的 gRPC 实现，底层走 `dc3-api-*` 桩 | `dc3.facade.{auth,manager,data}.mode=grpc`（缺省即 grpc，分布式默认） |
+| `dc3-common-facade-local-{auth,manager,data}` | 接口的进程内直连实现                    | 同名开关 `=local`（单体）           |
+
+开关是**按目标中心分开**的三个属性 `dc3.facade.auth.mode` / `dc3.facade.manager.mode` / `dc3.facade.data.mode`，取值 `grpc`（缺省）、`local`、`disabled`（本进程就是该中心时置 `disabled`，不装配任何实现）。
 
 控制器和 service 永远只 `@Autowired` `dc3-common-facade-api` 里的接口，永不直接绑定 gRPC
 桩或某个具体服务——这正是 [Facade 模式](./facade-modes) 能在不改业务代码的前提下切换部署拓扑的原因。
@@ -91,14 +92,17 @@ gRPC 反向调用。
 - 基础：`dc3-common-constant`（枚举、常量，如 `PointCommandTypeEnum`）、`dc3-common-model`（BO / VO / DTO，如
   `PointCommandDTO`）、`dc3-common-exception`、`dc3-common-public`（`R<T>` 响应封装）、`dc3-common-web`、`dc3-common-log`、
   `dc3-common-thread`。
-- 数据访问：`dc3-common-dal`（MyBatis-Plus 基础能力，数据访问与查询封装）、`dc3-common-postgres`（多 schema 数据源）、
-  `dc3-common-repository`（仓储抽象与位号值领域对象，如 `PointValueBO`）、`dc3-common-sql`。
-- 通信：`dc3-common-rabbitmq`（交换机 / 队列配置，如 `dc3.e.value`）、`dc3-common-mqtt`。
+- 数据访问：`dc3-db-*`（R2DBC 数据访问层——`dc3-db-core` 提供分页/游标基座，`dc3-db-runtime` 与各中心存储
+  `dc3-db-{auth,manager,data,agentic}`）；时序侧由 `dc3-tsdb-core` 定义 `TsdbStore` 端口，`dc3-db-data` 里的
+  `R2dbcTsdbStore` 以 TimescaleDB 实现之。
+- 通信：`dc3-mq`（broker 中立的消息层——`dc3-mq-core` 定义收发契约，`dc3-mq-{rabbitmq,kafka,pulsar,mqtt}` 是各 broker 适配，
+  RabbitMQ 适配里的 `RabbitNames` 持有 `dc3.e.value` 这类物理名）、`dc3-common-mqtt`（驱动直连外部 MQTT broker 用）。
 - 领域：`dc3-common-{auth,manager,data,driver,gateway,agentic}`，每个对应一个部署单元的业务逻辑。例如 `dc3-center-manager`
   这个进程几乎只是 `dc3-common-manager` 的运行外壳。
 
 ::: info 运行时缓存用 Caffeine，不是 Redis
-最新值缓存、Token 拒绝名单、权限缓存等都用进程内 Caffeine（如 `PointValueLocalCache`），不依赖独立的 Redis 基础设施。
+Token 拒绝名单、权限缓存等用进程内 Caffeine，不依赖独立的 Redis 基础设施。位号**最新值**不是缓存：它落在共享的
+`dc3_point_latest` 投影表里，与历史写入同事务更新，所有数据中心副本读写同一张表。
 :::
 
 ## 驱动按协议归类
@@ -123,9 +127,9 @@ gRPC 反向调用。
   端口，等外部系统把数据推进来——适合那些"设备/系统主动上报"而非"平台主动采集"的场景。
 
 ::: danger `dc3.driver.code` 是稳定注册标识，不可随意改
-每个驱动启动时用 `dc3.driver.code` 向管理中心注册；值/命令的 RabbitMQ routing key 则由驱动服务名 `dc3.driver.service`（
-`driverProperties.getService()`）拼接派生——code 与 service 是 `DriverProperties` 上两个独立字段。改 code 等于换了注册身份、改
-service 等于换了路由身份，都会让在途消息或注册信息找不到归属——除非配套迁移，否则不要改动已上线驱动的这两个值。
+每个驱动启动时用 `dc3.driver.code` 向管理中心注册；值/命令的 RabbitMQ routing key 由驱动服务名 `dc3.driver.service`（
+`driverProperties.getService()`，命令路由再拼节点名）派生，驱动的每实例队列名后缀则取 `dc3.driver.client`——code、service、client 是
+`DriverProperties` 上三个独立字段。改 code 等于换了注册身份、改 service/client 等于换了路由身份，都会让在途消息或注册信息找不到归属——除非配套迁移，否则不要改动已上线驱动的这些值。
 :::
 
 ## Driver SDK 的 SPI：一个聚合接口，七项契约
@@ -145,8 +149,8 @@ service 等于换了路由身份，都会让在途消息或注册信息找不到
 **——这是故意设计，防止把失败误判为成功。
 :::
 
-::: tip 健康状态 TTL 必须大于采集周期
-驱动上报健康状态带 TTL，这个 TTL 必须大于读调度周期（例如 30s cron 配 TTL ≥ 25s），否则设备会在两次心跳间被判离线而反复抖动。
+::: tip 健康状态 TTL 必须大于心跳周期
+驱动上报健康状态带 TTL（租约时长），这个 TTL 必须大于设备健康检查的执行周期，否则设备会在两次心跳之间被判离线而反复抖动。SDK 默认：健康检查 cron 每 **15 秒**跑一次（`0/15 * * * * ?`）、租约 `timeout: 45` 秒——照这个比例配就不会抖。若把健康 cron 放慢到 30 秒，TTL 就必须大于 30 秒（建议 45 秒以上）；完整说明见[驱动开发](../development/driver-authoring)的健康章节。
 :::
 
 SDK 还内置了注册（`DriverRegisterService`，指数退避重试）、调度（`DriverScheduleService`，Quartz 驱动）、发送（

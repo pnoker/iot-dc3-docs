@@ -9,28 +9,26 @@ import ApiDocSequenceDiagram from '../../.vitepress/theme/components/ApiDocSeque
 
 # API 文档
 
-IoT DC3 的 REST 接口文档由代码注解自动生成，经网关聚合成一个统一的 Swagger
-UI。读完这页，你能在开发环境打开各中心的在线文档、用默认凭据走完"取盐 → 取 token → 带鉴权头调用"的登录流、看懂 CRUD
-路径约定，并理解每个接口上的 `x-dc3-ai` 风险元数据是怎么喂给 AI/MCP 工具的。
+IoT DC3 的 REST 接口文档由代码注解自动生成，每个中心服务各自暴露一份在线文档。读完这页，你能在开发环境打开各中心的在线文档、用默认凭据走完"取盐 → 取 token → 带鉴权头调用"的登录流、看懂
+CRUD 路径约定，并理解每个接口上的 `x-dc3-ai` 风险元数据是怎么喂给 AI/MCP 工具的。
 
 > 你在这里：准备调用或调试后端接口。要先把环境跑起来，看 [第一个设备](../quickstart/first-device)
 > ；要理解鉴权头背后的租户与权限，看 [鉴权·租户·RBAC](../architecture/auth-rbac)。
 
-## 文档从哪来：注解生成，网关聚合
+## 文档从哪来：注解生成，按中心自持
 
 平台不维护任何手写的 API 规格文件。每个接口的标题、参数、请求/响应模型，全部来自 Controller 上的 `springdoc-openapi` 注解（
 `@Tag`、`@Operation`、`@Parameter`、`@Schema`），运行时由各中心服务在 WebFlux 栈上生成自己的 OpenAPI JSON。
 
 四个业务中心——鉴权中心（Auth Center / `dc3-center-auth`）、管理中心（Manager Center / `dc3-center-manager`）、数据中心（Data
 Center / `dc3-center-data`）、智能中心（Agentic Center / `dc3-center-agentic`）——各自暴露一份文档。网关（Gateway /
-`dc3-gateway`）本身没有业务 Controller，它通过 `springdoc.swagger-ui.urls` 把这四份文档聚合到一个带服务下拉选择器的
-Swagger UI 里，对外只暴露一个入口。
+`dc3-gateway`）本身没有业务 Controller；它的配置里仍保留一个指向 `/v3/api-docs/{svc}` 的服务下拉选择器，但对应的网关聚合路由已被移除，该入口当前不可用（见下文警告）。
 
 <ApiDocFlowDiagram lang="zh" />
 
 分组靠两层配置完成：`dc3-common-web` 的 `SpringDocConfig` 提供全局元信息（标题、版本、联系人、许可证、安全方案），各业务模块在自己已扫描的包下声明
 `GroupedOpenApi` Bean，只扫描本模块 Controller。各中心服务的 `spring.webflux.base-path`（如 `/auth`、`/manager`）会加到文档路径前，例如
-`/auth/v3/api-docs`；网关聚合路径 `/v3/api-docs/{svc}` 抹平了这层差异，统一访问。
+`/auth/v3/api-docs`；访问文档时必须带上这层 base-path 直连各中心——网关不再提供抹平差异的聚合路径。
 
 ::: info dc3-center-single 模式
 `dc3-center-single` 把多个业务模块打进一个进程，所以它的 Swagger UI 里会同时出现多个分组——这是预期行为，不是配置重复。
@@ -38,24 +36,29 @@ Swagger UI 里，对外只暴露一个入口。
 
 ## 访问入口
 
-开发环境下，优先用网关聚合入口；调试单个中心时也可以直连它的 base-path 文档。
+开发环境下直连各中心的 Swagger UI（记得带 base-path 前缀）；导出或调试契约时同样走各中心的 `/{svc}/v3/api-docs`。
 
 | 目标               | URL                                             |
 |------------------|-------------------------------------------------|
-| 网关聚合 UI（推荐）      | `http://<gateway>:8000/swagger-ui.html`         |
-| 鉴权中心直连           | `http://<auth>:8300/auth/swagger-ui.html`       |
-| 管理中心直连           | `http://<manager>:8400/manager/swagger-ui.html` |
-| 数据中心直连           | `http://<data>:8500/data/swagger-ui.html`       |
-| 智能中心直连           | `http://<agentic>:8600/agentic/swagger-ui.html` |
+| 鉴权中心直连（推荐）       | `http://<auth>:8300/auth/swagger-ui.html`       |
+| 管理中心直连（推荐）       | `http://<manager>:8400/manager/swagger-ui.html` |
+| 数据中心直连（推荐）       | `http://<data>:8500/data/swagger-ui.html`       |
+| 智能中心直连（推荐）       | `http://<agentic>:8600/agentic/swagger-ui.html` |
 | 单中心 OpenAPI JSON | `http://<center>:<port>/<svc>/v3/api-docs`      |
+
+::: warning 网关聚合入口当前不可用
+`dc3-gateway` 的 `application.yml` 仍配置着指向 `/v3/api-docs/{svc}` 的聚合 Swagger UI（`http://<gateway>:8000/swagger-ui.html`），但
+`dc3-common/dc3-common-gateway` 的 `application-gateway.yml` 里对应的聚合代理路由已被移除（现存路由只有 OAuth 与 `/api/v3/**` 业务路由）。打开该 UI 后，服务下拉框的每一项都会报
+"Failed to load API definition"。在聚合路由恢复之前，请一律直连各中心。
+:::
 
 ## 登录与鉴权：取盐 → 取 token → 带 X-Auth-* 头
 
 除 `/api/v3/auth/token/**`（取盐、生成 token、改密）这类公开端点外，网关后的所有业务接口都要求携带三个鉴权头：`X-Auth-Tenant`、
 `X-Auth-Login`、`X-Auth-Token`。登录本身是一个两步握手：先用用户名+租户向服务端要一枚随机盐（建议 5 分钟内使用，服务端不强制过期），再把
-**明文密码**连同这枚盐一起提交换取 token（12 小时有效）。盐不参与密码哈希——它与服务端密钥
-`DC3_SECURITY_KEY` 拼接后，作为 JWT 的 HMAC-SHA256 签名密钥；密码本身以明文提交（依赖 HTTPS 保护传输），由后端
-`PasswordUtil.verify` 用 Argon2id（不可用时回退 BCrypt）校验。
+**明文密码**连同这枚盐一起提交换取 token（12 小时有效）。盐不参与密码哈希，也不参与 JWT 签名——token 的 HMAC-SHA256
+签名密钥只由服务端密钥 `DC3_SECURITY_KEY`（环境变量，回退 `dc3.security.key` 系统属性）派生，盐只是登录握手中要求回传的一次性随机串；密码本身以明文提交（依赖
+HTTPS 保护传输），由后端 `PasswordUtil.verify` 用 Argon2id（不可用时回退 BCrypt）校验。
 
 <ApiDocSequenceDiagram lang="zh" />
 
@@ -68,13 +71,13 @@ Swagger UI 里，对外只暴露一个入口。
 curl -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
-# → R<String>：data 即 salt（示例："f3a9c1..."），建议 5 分钟内使用
+# → 2026.10 镜像线（及 main）返回 JSON 对象 {"salt":"f3a9c1..."}（无 R 封装）；2026.9 及更早镜像线返回 text/plain 裸盐字符串。建议 5 分钟内使用
 
 # 2. 连同 salt 一起提交明文密码（依赖 HTTPS 保护传输）换 token
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"f3a9c1...","password":"<明文密码>"}'
-# → R<String>：data 即 access token（示例："eyJ..."），12 小时有效
+# → 2026.10 镜像线（及 main）返回 JSON 对象 {"token":"eyJ..."}（无 R 封装）；2026.9 及更早镜像线返回 text/plain 裸 token。两者都下发 httpOnly Cookie，12 小时有效
 
 # 3. 带鉴权头调用业务接口
 curl -X POST http://localhost:8000/api/v3/manager/device/list \
@@ -82,7 +85,7 @@ curl -X POST http://localhost:8000/api/v3/manager/device/list \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"f3a9c1...","token":"eyJ..."}' \
   -H 'Content-Type: application/json' \
-  -d '{"current":1,"size":10}'
+  -d '{"offset":0,"limit":10}'
 ```
 
 ```bash [dc3 CLI]
@@ -119,14 +122,17 @@ token、password、salt、api key 一律不入库到文档、提交记录或工�
 | 删除   | `delete(Long)` | `/delete`   | n/a       | `deleteXxx(...)` |
 
 ::: tip 保留动词的专用语义
-`select*` 只用于 `*ManagerImpl` 里的原生 MyBatis Mapper 调用；`remove*` 只用于 MyBatis-Plus 继承来的 Manager 方法。业务删除一律用
+`select*` 一族在代码库中并不存在——`dc3-db-*` 存储层（`R2dbc*Store`）的原生存取同样用 `get`/`list`/`insert`/`update`/`delete` 动词，Service/Controller/Facade 上也不会出现 `select*`。业务删除一律用
 `delete*`。`find*`/`query*`/`fetch*` 不作为主 CRUD 动词。
 :::
 
 举一个走管理中心的真实例子（黄金路径中"新增设备"一步）：接口是 `POST /api/v3/manager/device/add`，请求体是 `DeviceVO`，关键字段
-`deviceName`、`driverId`、`profileId`、`enableFlag`，成功返回成功码 `SuccessCode.ADD`（"Added successfully"）——`add` 不回传新建实体
-ID，后续若需要这个 id，得用 `device/list` 按名称查回。需要 `device:add` 权限。接口统一用 `R<T>` 响应封装，含 `ok`、`code`、
-`message`、`data` 四字段。
+`deviceName`、`driverId`、`profileId`、`enableFlag`（字符串 `"ENABLE"`），成功返回 `201 Created` 与新建实体的 `DeviceVO`（含 id）；对应的删除接口
+`DELETE /api/v3/manager/device/delete` 需要同时传 `id` 与乐观锁 `version` 两个查询参数。需要 `device:add`
+权限（`@PreAuthorize("@perm.can('device', 'add')")`）。接口直接返回业务对象或分页对象，没有统一信封；分页接口（如 `device/list`）的请求体是**扁平的**
+`offset`/`limit`（零基 offset，默认 `offset=0`、`limit=50`，上限 200），响应是 `OffsetPage`（`items`/`offset`/`limit`/`total`/`hasNext`）。注意：写成嵌套的
+`page` 对象会被静默忽略——全局 `fail-on-unknown-properties=false` 不报错，但分页落在默认值上。错误响应统一为 RFC 9457 problem
+details（`application/problem+json`）。
 
 ## x-dc3-ai：给 AI/MCP 工具的风险标注
 
@@ -163,16 +169,14 @@ MCP 工具暴露、过滤与确认机制见 [AI Agent / MCP 集成](../ai/mcp)�
 
 ## 导出 OpenAPI JSON
 
-需要离线契约快照、或喂给客户端代码生成器时，从运行中的开发/测试栈一键导出各中心的 OpenAPI JSON：
+需要离线契约快照、或喂给客户端代码生成器时，从运行中的开发/测试栈导出各中心的 OpenAPI JSON。注意：`make openapi`（`dc3/bin/export_openapi.sh`）默认经网关聚合路径
+`/v3/api-docs/{svc}` 拉取，而聚合路由已移除，四个服务会全部 404——在聚合路由恢复之前，直接逐中心导出：
 
 ```bash
-make openapi
-```
-
-可通过变量覆盖导出入口与输出目录：
-
-```bash
-make openapi OPENAPI_BASE=http://localhost:8000 OPENAPI_OUT=build/openapi
+curl -s http://localhost:8300/auth/v3/api-docs    -o openapi-auth.json
+curl -s http://localhost:8400/manager/v3/api-docs -o openapi-manager.json
+curl -s http://localhost:8500/data/v3/api-docs    -o openapi-data.json
+curl -s http://localhost:8600/agentic/v3/api-docs -o openapi-agentic.json
 ```
 
 ## 新增接口时的文档要求
@@ -184,8 +188,9 @@ make openapi OPENAPI_BASE=http://localhost:8000 OPENAPI_OUT=build/openapi
    `listXxx`）。
 3. 路径、查询、请求体参数加 `@Parameter`。
 4. 请求/响应 DTO 字段加 `@Schema(description = ...)`，必要时补 `example` 与 `requiredMode = REQUIRED`。
-5. 涉及 AI/MCP 可调用的接口，按真实风险补 `x-dc3-ai` 扩展。
-6. 新增业务模块时，补 `GroupedOpenApi` Bean、网关聚合配置和 Swagger UI 分组。
+5. 涉及 AI/MCP 可调用的接口，按真实风险补 `x-dc3-ai` 扩展；补完可本地跑 `make validate-annotations` 校验注解完整性（Controller/Manager/Data/Agentic/Auth
+   五个 AnnotationGateTest，与 CI 单测跑的是同一批门禁用例）。
+6. 新增业务模块时，补 `GroupedOpenApi` Bean（分组随各中心自己的 base-path 暴露，无需网关侧配置）。
 
 ::: warning 注解文字一律用英文
 注解里的 `summary`/`description` 属于用户可见代码文本，按工程规则用英文书写；同时不要在 `@Schema` 的 `example` 里放

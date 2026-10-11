@@ -135,15 +135,17 @@ DC3 faces the outside world through one entry only, the gateway `dc3-gateway`. L
 mirroring the anti-replay idea from communication security:
 
 1. `POST /api/v3/auth/token/salt`: send `tenant` and `name`, confirm the tenant exists, and get a random salt. The salt
-   is **stateless** — the server neither stores it nor enforces an expiry; it is only checked together with the next
-   login request. The "5 minutes" is merely a usage hint in the response text, honored client-side, not a
-   server-enforced timeout today.
-2. `POST /api/v3/auth/token/generate`: send `tenant`, `name`, `salt`, and the `password` hashed with the salt; on
-   success, get an access token, **valid for 12 hours**.
+   is **stateless** — the server neither stores it nor enforces an expiry; the client merely echoes it back in the next
+   login request, and the server does not verify it. The "5 minutes" is merely a usage hint in the response text,
+   honored client-side, not a server-enforced timeout today.
+2. `POST /api/v3/auth/token/generate`: send `tenant`, `name`, `salt`, and the `password` in cleartext (transport relies
+   on TLS; verification happens server-side); on success, get an access token, **valid for 12 hours**.
 
-The salt prevents a cleartext password or a fixed hash from being replayed on the wire. The minted JWT is **bound
-to `principal_id` + `tenant_id`** (not the username); on logout the identity goes onto a Caffeine denylist, so an old
-token, even with a valid signature, is rejected because it was issued before the logout point.
+The salt plays no cryptographic role here: it does not hash the password and does not key the JWT HMAC — the password's
+confidentiality in transit rests on TLS alone, and the two-step handshake is retained from the earlier protocol shape.
+The minted JWT is **bound to `principal_id` + `tenant_id`** (not the username); on logout the identity goes onto a
+Caffeine denylist, so an old token, even with a valid signature, is rejected because it was issued before the logout
+point.
 
 ### Platform Trust Propagation: Gateway Signing + HMAC Pass-through
 

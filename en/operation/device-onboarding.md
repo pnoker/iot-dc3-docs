@@ -9,10 +9,10 @@ import DeviceOnboardingFlowDiagram from '../../.vitepress/theme/components/Devic
 
 # Device Onboarding
 
-Onboarding a field device into IoT DC3 takes five steps: pick a driver by protocol, build a profile and its points,
-create a device bound to that profile and driver, fill in the concrete point attribute values, then enable it and
-confirm it's online with queryable data. This page walks the full flow with the built-in `dc3-driver-virtual`, then
-shows how the same steps apply to real protocols.
+Onboarding a field device into IoT DC3 takes six steps: pick a driver by protocol, build a profile and its points,
+create a device bound to that profile and driver, fill in the concrete point attribute values, fill in the concrete
+driver attribute values, then enable it and confirm it's online with queryable data. This page walks the full flow
+with the built-in `dc3-driver-virtual`, then shows how the same steps apply to real protocols.
 
 > You are here: you already understand the [Core Concepts](../introduction/concepts) (driver/profile/device/point, the
 > three configuration layers) and are onboarding your first device. For a faster copy-paste version,
@@ -93,13 +93,18 @@ If the driver doesn't appear in the driver list after a moment, check these comm
 | Duplicate driver code                            | Keep `dc3.driver.code` unique and stable                       |
 | RabbitMQ not ready                               | Wait for the health check to pass, then restart the driver     |
 
-## Steps 1–4: The Golden Path Onboarding
+## Steps 1–5: The Golden Path Onboarding
 
 The walkthrough uses the gateway HTTP API. All write endpoints go through the gateway on `:8000`, and protected
 endpoints require the auth headers `X-Auth-Tenant` / `X-Auth-Login` / `X-Auth-Token` (call
 `POST /api/v3/auth/token/salt` to get the salt, then `POST /api/v3/auth/token/generate` to get a token valid for 12
-hours; see the golden-path login flow for details). Below, `$TOKEN` is the access token from login; the IDs and names in
-the examples are sample values.
+hours; see the golden-path login flow for details). Note that the `X-Auth-Token` value must be a **JSON envelope**
+`{"salt":"...","token":"..."}` (both fields come from the login response) — a bare token gets a 401 from the gateway.
+Define it as a variable once; the examples below all reference it. The IDs and names in the examples are sample values.
+
+```bash
+H_TOKEN='X-Auth-Token: {"salt":"<salt from login>","token":"<token from login>"}'
+```
 
 ### 1. Create a Profile
 
@@ -108,11 +113,11 @@ class of devices has, and a device just reuses it.
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/profile/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"profileName":"virtual-motor","profileShareFlag":"TENANT","enableFlag":true}'
-# Response: R.ok(SuccessCode.ADD), i.e. "Added successfully"; add does not return the new entity id
-# When a later step needs profileId, call POST /api/v3/manager/profile/list and look it up by profileName
+  -d '{"profileName":"virtual-motor","profileShareFlag":"TENANT","enableFlag":"ENABLE"}'
+# Response: the new ProfileVO, with its id included (that id IS the profileId later steps need)
+# To double-check, call POST /api/v3/manager/profile/list and look it up by profileName
 ```
 
 `profileShareFlag` takes a `ProfileShareTypeEnum` value (`TENANT` / `DRIVER` / `USER`) that sets the profile's sharing
@@ -126,11 +131,12 @@ A point (Point) is a single data item. The key fields are the data type `pointTy
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/point/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"pointName":"temperature","pointTypeFlag":"DOUBLE","rwFlag":"READ_WRITE",
-       "profileId":"<profileId from the previous step>","valueDecimal":2,"unit":"celsius","enableFlag":true}'
-# Response: R.ok(SuccessCode.ADD); add does not return an id. When you need pointId, call /api/v3/manager/point/list and look it up by pointName
+       "profileId":"<profileId from the previous step>","valueDecimal":2,"unit":"celsius","enableFlag":"ENABLE"}'
+# Response: the new PointVO, with its id included (that id IS the pointId later steps need)
+# To double-check, call /api/v3/manager/point/list and look it up by pointName
 ```
 
 `pointTypeFlag` takes a `PointTypeEnum` value (`STRING` / `BYTE` / `SHORT` / `INT` / `LONG` / `FLOAT` / `DOUBLE` /
@@ -143,11 +149,12 @@ points) **and one driver** (which sets how it communicates).
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/device/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"deviceName":"motor-01","driverId":"<virtual driver id>",
-       "profileId":"<profileId>","enableFlag":true}'
-# Response: R.ok(SuccessCode.ADD); add does not return an id. When you need deviceId, call /api/v3/manager/device/list and look it up by deviceName
+       "profileId":"<profileId>","enableFlag":"ENABLE"}'
+# Response: HTTP 201 + the new DeviceVO, with its id included (that id IS the deviceId later steps need)
+# To double-check, call /api/v3/manager/device/list and look it up by deviceName
 ```
 
 Once the device is created, the driver picks up the change through a metadata event (`DriverMetadataListener.event(...)`
@@ -178,11 +185,11 @@ To write the instance value for a given attribute of a given point on a device, 
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/point_attribute_config/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"attributeId":"<point attribute id registered by the driver>","deviceId":"<deviceId>",
-       "pointId":"<pointId>","configValue":"40001","enableFlag":true}'
-# Response: R.ok(SuccessCode.ADD); add returns a uniform success code and does not return the new record id
+       "pointId":"<pointId>","configValue":"40001","enableFlag":"ENABLE"}'
+# Response: the new config entity (with its id included) — use it directly
 ```
 
 `attributeId` comes from the attribute list the driver registered; `configValue` is the value this device instance
@@ -198,7 +205,38 @@ device's capability; and whether the acquisition interval matches the device's p
 
 :::
 
-## Step 5: After Enabling, Confirm the Device Is Online and the Data Is Queryable
+### 5. Configure the Device's Driver Attributes (the device-level Config)
+
+Besides the point attributes, the attributes the driver declares **for itself** (`DriverAttribute`, e.g. the connection
+host/port) must also be filled in **per device** — this is the step that's easy to miss. Call
+`POST /api/v3/manager/driver_attribute_config/add`:
+
+```bash
+curl -X POST http://localhost:8000/api/v3/manager/driver_attribute_config/add \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"attributeId":"<driver attribute id registered by the driver>","deviceId":"<deviceId>",
+       "configValue":"localhost","enableFlag":"ENABLE"}'
+# Response: the new config entity (with its id included) — use it directly
+```
+
+The virtual driver registers two driver attributes, `host` / `port` (defaults `localhost` / `18600` — copying them
+verbatim is fine); a real protocol driver takes real connection parameters (e.g. the Modbus IP and port). The
+`attributeId` comes from the attribute list the driver registered; look it up per driver
+via `GET /api/v3/manager/driver_attribute/list_by_driver_id`. In the console this step is the driver-info form on the
+device edit page.
+
+::: warning Without driver attributes, the device is neither read nor reported online
+
+Both the driver's scheduled reads and its health reporting carry a **device-level driver-attribute gate**: the read job
+only schedules devices whose driver attribute config is non-empty, and the health job skips reporting entirely when
+that config is empty — the device stays offline forever. Creating a device (`device/add`) does **not** auto-generate
+any driver attribute config; you must make this call explicitly. Even though the virtual driver's host/port are
+placeholders, they still have to be filled in: the gate checks "is there a config", not what the value is.
+
+:::
+
+## Step 6: After Enabling, Confirm the Device Is Online and the Data Is Queryable
 
 The endpoint of onboarding is confirming the chain is connected. After enabling the device, wait one acquisition cycle,
 then check in this order: status, data, logs.
@@ -210,16 +248,16 @@ latest values through the gateway:
 
 ```bash [curl]
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"deviceId":"<deviceId>","current":1,"size":20}'
+  -d '{"deviceId":"<deviceId>","offset":0,"limit":20}'
 ```
 
 ```json [Response shape (sample values)]
 {
   "data": {
-    "current": 1, "size": 20, "total": 1,
-    "records": [
+    "offset": 0, "limit": 20, "total": 1, "hasNext": false,
+    "items": [
       {
         "deviceId": "...", "pointId": "...", "driverId": "...", "tenantId": "...",
         "rawValue": "23.71", "calValue": "23.71", "numValue": 23.71,
@@ -233,16 +271,20 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 
 :::
 
-`POST /api/v3/data/point_value/latest` returns a `Page<PointValueVO>`. Each record contains `deviceId` / `pointId` /
+`POST /api/v3/data/point_value/latest` returns an offset-paged `OffsetPage<PointValueVO>` (pagination is the flat
+`offset` / `limit` pair, default `limit=50`, max 200). Each record contains `deviceId` / `pointId` /
 `driverId` / `tenantId` / `rawValue` (raw value) / `calValue` (engineering value) / `numValue` (numeric projection,
 nullable) / `hasLatestValue` / `createTime` / `operateTime`, with times as local date-time. To page through historical
-values by time window, use `POST /api/v3/data/point_value/list`. The complete read/write command chain is
+values by time window, use `POST /api/v3/data/point_value/list` (cursor-paged: pass the response's `nextCursor` back
+as the next request's `cursor`). The complete read/write command chain is
 in [Data and Commands](./data-commands).
 
 **If there's no data, work backward along this chain.** Each hop maps onto the data-flow diagram above:
 
-1. **Driver status**: Is the driver online? Is the device health status `ONLINE`? The status TTL the driver reports **must be greater than the read cycle** — for a 30-second cron, the TTL should be at least 25 seconds, or the device
-   will keep dropping offline.
+1. **Driver status**: Is the driver online? Is the device health status `ONLINE`? The device state lease is renewed by
+   the health job on `dc3.driver.health.device.cron` (default `0/15`, i.e. a 15-second heartbeat), and the lease TTL
+   (`timeout`, default 45 seconds) **must be greater than the heartbeat interval** (the factory pattern is 3× the
+   heartbeat). A TTL shorter than the heartbeat marks the device offline between two reports.
 2. **Driver logs**: Are there protocol connection errors (can't reach host/port, register out of range, authentication
    failure)?
 3. **RabbitMQ**: Is the queue backed up or misbound? That would mean the driver sent the data but the Data Center didn't
@@ -250,19 +292,21 @@ in [Data and Commands](./data-commands).
 4. **Data Center**: Did it receive the point value messages for this device?
 5. **Tenant consistency**: Do the `tenantId` values of the device, profile, point, and attribute config all match?
    Cross-tenant access returns 404, not data.
-6. **Attribute config**: Is `configValue` missing, or in a format the driver doesn't expect (say, an illegal string in
-   an address field)?
+6. **Attribute config**: Check both levels — is the **driver attribute** config missing (missing means the device is
+   never read and never reports online; see the gate in Step 5)? And is a **point attribute**'s `configValue` missing,
+   or in a format the driver doesn't expect (say, an illegal string in an address field)?
 
-::: warning Device stuck offline? Check the status TTL first
+::: warning Device stuck offline? Check the driver attributes and the status TTL first
 
-The most common "enabled but no value queryable" cause is a status TTL set too small. The driver reports a heartbeat on
-the read cycle, and a TTL shorter than the cycle expires between two reports, marking the device offline. Set the TTL
-slightly larger than the read cycle.
+The two most common "enabled but no value queryable" causes: the driver attribute config was never filled in — the
+health job then skips the device entirely and it never reports online (see the gate above); or the status TTL is set
+too small — the lease renews on the heartbeat interval (default 15 seconds), and a TTL (default 45 seconds) shorter
+than that expires between two reports, marking the device offline. Keep the TTL at 2–3× the heartbeat interval.
 
 :::
 
-Once you've run the virtual driver end to end, apply the same five steps to a real protocol. The only changes are the
-driver module chosen in Step 0 and the different attribute set each driver declares in Step 4.
+Once you've run the virtual driver end to end, apply the same six steps to a real protocol. The only changes are the
+driver module chosen in Step 0 and the different point/driver attribute sets each driver declares in Steps 4 and 5.
 
 ## Further Reading
 

@@ -71,8 +71,9 @@ By design a `SERVICE_ACCOUNT` belongs to only one tenant.
 
 ## How Isolation Is Enforced
 
-Tenant isolation lands at the controller layer: after fetching, it compares the entity's `tenantId` against the caller's
-tenant, and cross-tenant access is reported as nonexistent or dropped.
+Tenant isolation lands at both the controller and repository layers: the controller compares each fetched entity's
+`tenantId` against the caller's tenant (cross-tenant access is reported as nonexistent or dropped), and repository
+ports mandate an explicit tenant scope.
 
 <TenantAuthDiagram lang="en" />
 
@@ -80,8 +81,9 @@ tenant, and cross-tenant access is reported as nonexistent or dropped.
   `tenantId` against the caller's tenant; on mismatch (or a missing entity) it throws `NotFoundException`, returning **404** to the outside.
 - **Controller layer (bulk)**: `BaseController.filterTenant()` keeps only entries belonging to the caller's tenant,
   dropping records of other tenants.
-- **Database-level auto-append of `WHERE tenant_id = ?`**: not currently enabled (`MybatisPlusConfig` only registers
-  `PaginationInnerInterceptor`); a uniform backstop of this kind is still planned.
+- **Repository-level mandatory tenant scope**: data access goes through R2DBC repository ports whose calls must carry an
+  explicit `TenantScope(tenantId)` (a missing or invalid one throws immediately); there is no implicit "rewrite SQL to
+  append the tenant predicate" backstop—tenant conditions are explicit in the repository queries.
 
 ::: warning Cross-tenant access returns 404, not 403
 This deliberately reports "does not exist" rather than "no permission"—to avoid leaking "whether a cross-tenant resource
@@ -109,7 +111,7 @@ Non-administrators can operate only on the tenant they belong to:
 | Method | Path                  | Description                                            |
 |--------|-----------------------|--------------------------------------------------------|
 | POST   | `/tenant/add`         | Add a tenant (only the `default` tenant administrator) |
-| POST   | `/tenant/delete`      | Delete a tenant                                        |
+| DELETE | `/tenant/delete`      | Delete a tenant                                        |
 | POST   | `/tenant/update`      | Update a tenant                                        |
 | GET    | `/tenant/get_by_id`   | Query by ID                                            |
 | GET    | `/tenant/get_by_code` | Query by code                                          |

@@ -42,7 +42,7 @@ RabbitMQ 消息洪峰。拆开之后，每一类单元可以单独扩容、单�
 ## 谁监听哪个端口
 
 每个单元同时可能暴露一个 HTTP 端口（对外或对内的 REST 入口）和一个 gRPC 端口（中心之间 facade 调用）。**关键约束：网关是唯一的对外
-API 聚合入口，但它的 HTTP `8000` 在 app 栈里并不发布到宿主机**——`docker-compose.yml` 只把 Web 前端 `8080/8443` 与
+API 聚合入口，但它的 HTTP `8000` 在 app 栈里并不发布到宿主机**——`docker-compose.yml` 只把 Web 前端 `8080`（HTTP）与
 listening-virtual 驱动的设备入站口映射到宿主机，外部请求经 Web 前端的 nginx 反代到容器内的 `dc3-gateway:8000`。网关 `8000`
 与其余中心的 HTTP 端口一样只在容器网络内可达；只有在 dev 栈（`docker-compose-dev.yml`）里网关 `8000`
 才发布到宿主机（同时各中心端口也一并发布）。生产环境不应把后端端口映射到宿主机。
@@ -59,7 +59,7 @@ HTTP `8600`。single 单体则独占 HTTP `8100` / gRPC `9100`（`DC3_SINGLE_POR
 
 | 单元                            | HTTP            | gRPC   | app 栈对宿主机发布                               | 环境变量（发布端口）                                   |
 |-------------------------------|-----------------|--------|-------------------------------------------|----------------------------------------------|
-| Web 前端 `dc3-web`              | `8080` / `8443` | —      | **是（app 栈唯一 HTTP 入口，nginx 反代到网关）**        | `DC3_WEB_HTTP_PORT` / `DC3_WEB_HTTPS_PORT`   |
+| Web 前端 `dc3-web`              | `8080`          | —      | **是（app 栈唯一 HTTP 入口，nginx 反代到网关）**        | `DC3_WEB_HTTP_PORT`                          |
 | 网关 `dc3-gateway`              | `8000`          | —      | 否（仅容器网络内可达；dev 栈才用 `DC3_GATEWAY_PORT` 发布） | `DC3_GATEWAY_PORT`                           |
 | 鉴权中心 `dc3-center-auth`        | `8300`          | `9300` | 否                                         | `DC3_AUTH_PORT` / `DC3_AUTH_GRPC_PORT`       |
 | 管理中心 `dc3-center-manager`     | `8400`          | `9400` | 否                                         | `DC3_MANAGER_PORT` / `DC3_MANAGER_GRPC_PORT` |
@@ -69,10 +69,10 @@ HTTP `8600`。single 单体则独占 HTTP `8100` / gRPC `9100`（`DC3_SINGLE_POR
 
 ::: warning 后端 HTTP 端口在 app 栈里都不发布到宿主机
 在 `docker-compose.yml`（app 栈）里，网关与 auth/manager/data/agentic 都**没有** `ports:` 映射——它们只在 `dc3net`
-容器网络内可达。被映射到宿主机的只有 Web 前端 `8080/8443`（`DC3_WEB_HTTP_PORT` / `DC3_WEB_HTTPS_PORT`）和 listening-virtual
+容器网络内可达。被映射到宿主机的只有 Web 前端 `8080`（`DC3_WEB_HTTP_PORT`）和 listening-virtual
 驱动的设备入站口 TCP `6270` / UDP `6271`（`DC3_LISTENING_VIRTUAL_TCP_PORT` / `..._UDP_PORT`）。因此在 app 栈下，从外部访问业务
-API 要走 Web 前端 `8080`，由其 nginx 反代到容器内的 `dc3-gateway:8000`；宿主机无法直连 `8000`。只有 dev 栈（
-`docker-compose-dev.yml`）才把网关 `8000`（及各中心端口）发布到宿主机，可直连。
+API 要走 Web 前端 `8080`，由其 nginx 反代到容器内的 `dc3-gateway:8000`；宿主机无法直连 `8000`。HTTPS 终止已从 `dc3-web`
+镜像移除（nginx 仅监听 80），需要 TLS 时在反代/负载均衡层做。只有 dev 栈（`docker-compose-dev.yml`）才把网关 `8000`（及各中心端口）发布到宿主机，可直连。
 :::
 
 ## 以什么顺序启动
@@ -155,14 +155,14 @@ HTTP `8100` / gRPC `9100`。分布式与单体之间只是部署拓扑差异，�
 
 ## 约束与边界
 
-- **网关是唯一的对外 API 聚合入口，但宿主机入口因栈而异**。在 app 栈（`docker-compose.yml`）里只有 Web 前端 `8080/8443` 与
+- **网关是唯一的对外 API 聚合入口，但宿主机入口因栈而异**。在 app 栈（`docker-compose.yml`）里只有 Web 前端 `8080` 与
   listening-virtual 的设备入站口 TCP `6270`/UDP `6271` 映射到宿主机，网关 `8000` 不发布、外部请求经 Web 前端 nginx 反代到
   `dc3-gateway:8000`；dev 栈（`docker-compose-dev.yml`）才把网关 `8000` 与各中心端口一并发布到宿主机。无论哪种栈，其余后端端口都只在容器网络内可达，生产环境不要映射到宿主机。
 - **启动顺序由健康检查保证，不靠人工 sleep**。`depends_on: condition: service_healthy` 让依赖方等到被依赖方 readiness
   通过才启动；但这只覆盖应用栈内部，db 栈必须由你先行拉起。
 - **readiness 路径带 base-path**。中心服务用 `webflux.base-path`（如 auth 的 `/auth`），探针路径相应带前缀；网关不带。写监控/探活脚本时别漏掉前缀。
-- **分布式默认走 gRPC facade**。manager 等中心的 `dc3.facade.mode` 默认 `${DC3_FACADE_MODE:grpc}`，`dc3/env/dev.env` 也设为
-  `grpc`；single 单体的基础 `application.yml` 才声明 `local`
+- **分布式默认走 gRPC facade**。facade 开关按目标分为 `dc3.facade.{auth,manager,data}.mode`（缺省 `grpc`）：分布式各中心的
+  `application.yml` 按目标声明 `grpc`（自身置 `disabled`）；single 单体则三个开关全 `local`
   。这是部署拓扑选择，不是协议选择，细节见 [Facade 模式](./facade-modes)。
 
 ## 延伸阅读

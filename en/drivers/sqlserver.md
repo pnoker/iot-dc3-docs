@@ -73,13 +73,14 @@ The driver builds the JDBC URL from these attributes, in the form
 `jdbc:sqlserver://host:port;databaseName=...;encrypt=...;trustServerCertificate=...;` (semicolon-delimited, unlike
 MySQL's `?key=value` form). All five of `host`, `port`, `database`, `username`, and `password` are
 required—configuration validation (`validate()`) checks each one, and any missing field fails. The driver caches one
-HikariCP connection pool per device ID (one pool per device, max 5 connections), with the connection timeout set to
-`queryTimeout × 1000` milliseconds.
+HikariCP connection pool per device ID (one pool per device, max 5 connections), with the pool's `connectionTimeout`
+fixed at `4000` milliseconds, independent of `queryTimeout`.
 
-::: tip queryTimeout applies to both connecting and the query pace
-`queryTimeout` (default 30 seconds) is used as the pool's `connectionTimeout`: failing to acquire a connection, or a
-connection that stalls beyond this duration, fails. It is separate from the polling interval—if a slow SQL consistently
-approaches or exceeds it, optimize the SQL or add an index rather than just raising the timeout.
+::: tip queryTimeout only bounds each read/write SQL execution
+`queryTimeout` (default 30 seconds) is set on every read/write statement (`PreparedStatement.setQueryTimeout`): a single
+SQL statement running longer than this fails. The pool's `connectionTimeout` is a fixed `4000` milliseconds and is
+unrelated to it. It is also separate from the polling interval—if a slow SQL consistently approaches or exceeds it,
+optimize the SQL or add an index rather than just raising the timeout.
 :::
 
 ::: warning encrypt and trustServerCertificate are STRING and must be set together
@@ -131,8 +132,8 @@ SQL Server onboarding failures mostly cluster around connection, TLS handshake, 
 and field types. Work through them in order:
 
 1. **Can't connect (device stays offline)**. First confirm `host:port` is reachable: `telnet <host> 1433` or
-   `nc -vz <host> 1433`. The health check decides online via `conn.isValid(5)` (whether a valid connection can be
-   obtained within 5 seconds); a failed connect or heartbeat reports offline. Common root causes: SQL Server's TCP/IP
+   `nc -vz <host> 1433`. The health check decides online via `conn.isValid(2)` (whether a valid connection can be
+   obtained within 2 seconds); a failed connect or heartbeat reports offline. Common root causes: SQL Server's TCP/IP
    protocol not enabled, the instance listening only on named pipes, a firewall blocking 1433, or a dynamic port not
    pinned to 1433.
 
@@ -160,7 +161,8 @@ and field types. Work through them in order:
 6. **Write command returns failure**. Writing requires exactly one `?` placeholder in `writeQuery` and a statement
    targeting a writable table and row. `write()` treats "affected rows > 0" as success—if the `WHERE` condition matches
    no rows, `executeUpdate()` returns 0 and the write is judged failed. Run the same `UPDATE` by hand in the database
-   first to confirm it hits a row. A failed write throws `WritePointException` and invalidates the pool.
+   first to confirm it hits a row. A SQL error throws `WritePointException` and invalidates the pool; matching 0 rows
+   merely returns failure (`false`) without an exception.
 
 ::: warning Write Query uses a `?` placeholder, not `${value}`
 When writing, `writeQuery` uses a **single** `?` placeholder for the value (e.g.
@@ -185,7 +187,7 @@ structure (no SQL injection). Do not concatenate the value into the SQL by hand,
   the driver's `application.yml`; there is also a `custom` schedule with default cron `0/5 * * * * ?` (every 5 seconds),
   but the base class `schedule()` is an empty implementation and database drivers do not use it.
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?` with a lease timeout of `45 seconds`; the
-  verdict relies on `conn.isValid(5)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
+  verdict relies on `conn.isValid(2)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
 
 ::: info Implementation status: complete
 This driver is a **complete implementation** (not a skeleton). Reading, writing, the health check, the per-device cached

@@ -51,22 +51,26 @@ monolith. See [Facade Modes](./facade-modes) for the details.
 
 ## Deployment units: gateway, four centers, and drivers
 
-These are the modules that ship as running processes. Ports and what's exposed are governed by compose: only the
-gateway's HTTP `8000` faces outward. The HTTP/gRPC ports of the other centers are all cluster-internal.
+These are the modules that ship as running processes. Ports and what's exposed are governed by compose: the gateway's
+`8000` is the **logical** single API aggregation entry, but the app stack doesn't publish it to the host (outside traffic
+reaches it through the web frontend's `8080` reverse proxy; only the dev stack publishes `8000` directly — see
+[Services & Topology](./services)). The HTTP/gRPC ports of the other centers are all cluster-internal.
 
-| Deployment unit      | Role                                                                                 | HTTP   | gRPC   | External              |
-|----------------------|--------------------------------------------------------------------------------------|--------|--------|-----------------------|
-| `dc3-gateway`        | The only external HTTP entry point, authentication pass-through, MCP resource server | `8000` | —      | Yes                   |
-| `dc3-center-auth`    | Authentication / tenant / RBAC / OAuth 2.1                                           | `8300` | `9300` | No                    |
-| `dc3-center-manager` | Metadata management for drivers / profiles / devices / points, and the rest          | `8400` | `9400` | No                    |
-| `dc3-center-data`    | Point value persistence, command dispatch and acknowledgement, alarms                | `8500` | `9500` | No                    |
-| `dc3-center-agentic` | LLM sessions, tool calls, memory                                                     | `8600` | —      | No                    |
-| `dc3-center-single`  | A monolith merging auth + manager + data (local facade)                              | `8100` | `9100` | Depends on deployment |
-| `dc3-driver-*`       | Protocol adaptation (28 standalone processes)                                        | Varies | —      | A few only            |
+| Deployment unit      | Role                                                                                          | HTTP   | gRPC   | External              |
+|----------------------|-----------------------------------------------------------------------------------------------|--------|--------|-----------------------|
+| `dc3-gateway`        | Logical single API entry, authentication pass-through, MCP resource server                    | `8000` | —      | Depends on stack      |
+| `dc3-center-auth`    | Authentication / tenant / RBAC / OAuth 2.1                                                    | `8300` | `9300` | No                    |
+| `dc3-center-manager` | Metadata management for drivers / profiles / devices / points, and the rest                   | `8400` | `9400` | No                    |
+| `dc3-center-data`    | Point value persistence, command dispatch and acknowledgement, alarms                         | `8500` | `9500` | No                    |
+| `dc3-center-agentic` | LLM sessions, tool calls, memory                                                              | `8600` | —      | No                    |
+| `dc3-center-single`  | A monolith merging auth + manager + data + agentic (all four centers, local facade)           | `8100` | `9100` | Depends on deployment |
+| `dc3-driver-*`       | Protocol adaptation (36 standalone processes)                                                 | Varies | —      | A few only            |
 
-`dc3-center-single` folds the three centers into one process and uses the `local` facade for in-process direct calls — a
-good fit for local development or small, resource-constrained deployments. It shares the same `dc3-common-*` domain
-libraries as the distributed four-center version; the only differences are the facade implementation and the packaging.
+`dc3-center-single` folds **all four** centers into one process (its `pom.xml` depends on `dc3-common-auth`,
+`dc3-common-manager`, `dc3-common-data`, and `dc3-common-agentic` alike) and uses the `local` facade for in-process
+direct calls — a good fit for local development or small, resource-constrained deployments. It shares the same
+`dc3-common-*` domain libraries as the distributed four-center version; the only differences are the facade
+implementation and the packaging.
 
 ::: info The Agentic Center has no gRPC port
 `dc3-center-agentic` exposes only HTTP (`8600`) and opens no gRPC server port. It acts as a facade caller to reach the
@@ -95,8 +99,12 @@ from "what transport to use" across three modules with clean responsibilities:
 | Module                                        | Responsibility                                                                           | When active                                  |
 |-----------------------------------------------|------------------------------------------------------------------------------------------|----------------------------------------------|
 | `dc3-common-facade-api`                       | Defines the Java interfaces for cross-service calls (business code depends only on this) | Always                                       |
-| `dc3-common-facade-grpc`                      | The gRPC implementation of those interfaces, going through `dc3-api-*` stubs underneath  | `dc3.facade.mode=grpc` (distributed default) |
-| `dc3-common-facade-local-{auth,manager,data}` | The in-process direct-call implementation of those interfaces                            | `dc3.facade.mode=local` (monolith)           |
+| `dc3-common-facade-grpc`                      | The gRPC implementation of those interfaces, going through `dc3-api-*` stubs underneath  | `dc3.facade.{auth,manager,data}.mode=grpc` (grpc is the default when unset — the distributed default) |
+| `dc3-common-facade-local-{auth,manager,data}` | The in-process direct-call implementation of those interfaces                            | the same switch `=local` (monolith)          |
+
+The switches are **per target center**: `dc3.facade.auth.mode` / `dc3.facade.manager.mode` / `dc3.facade.data.mode`,
+taking `grpc` (default), `local`, or `disabled` (set `disabled` when the process itself is that center — no
+implementation is wired at all).
 
 Controllers and services only ever `@Autowired` the interfaces in `dc3-common-facade-api`. They never bind directly to
 gRPC stubs or a specific service. That's exactly why [Facade Modes](./facade-modes) can switch deployment topology
@@ -108,17 +116,20 @@ by responsibility:
 - Foundation: `dc3-common-constant` (enums and constants, like `PointCommandTypeEnum`), `dc3-common-model` (BO / VO /
   DTO, like `PointCommandDTO`), `dc3-common-exception`, `dc3-common-public` (the `R<T>` response wrapper),
   `dc3-common-web`, `dc3-common-log`, `dc3-common-thread`.
-- Data access: `dc3-common-dal` (MyBatis-Plus base capabilities, data-access and query wrappers),
-  `dc3-common-postgres` (multi-schema data source), `dc3-common-repository` (repository abstractions and point-value
-  domain objects, like `PointValueBO`), `dc3-common-sql`.
-- Communication: `dc3-common-rabbitmq` (exchange / queue configuration, like `dc3.e.value`), `dc3-common-mqtt`.
+- Data access: `dc3-db-*` (the R2DBC data-access layer — `dc3-db-core` provides the offset/cursor paging base,
+  alongside `dc3-db-runtime` and the per-center stores `dc3-db-{auth,manager,data,agentic}`). On the time-series side,
+  `dc3-tsdb-core` defines the `TsdbStore` port, implemented for TimescaleDB by `R2dbcTsdbStore` in `dc3-db-data`.
+- Communication: `dc3-mq` (the broker-neutral messaging layer — `dc3-mq-core` defines the send/receive contract, and
+  `dc3-mq-{rabbitmq,kafka,pulsar,mqtt}` are the broker adapters; `RabbitNames` inside the RabbitMQ adapter holds the
+  physical names like `dc3.e.value`), plus `dc3-common-mqtt` (drivers connecting straight to an external MQTT broker).
 - Domain: `dc3-common-{auth,manager,data,driver,gateway,agentic}`, each holding the business logic of one deployment
   unit. The `dc3-center-manager` process, for example, is little more than the runtime shell around
   `dc3-common-manager`.
 
 ::: info Runtime caching uses Caffeine, not Redis
-Latest-value caching, the token denylist, permission caching, and the like all use in-process Caffeine (like
-`PointValueLocalCache`). There's no dependency on standalone Redis.
+The token denylist, permission caching, and the like use in-process Caffeine. There's no dependency on standalone
+Redis. Point **latest values** are not a cache: they live in the shared `dc3_point_latest` projection table, updated in
+the same transaction as the history write, and every Data Center replica reads and writes the same table.
 :::
 
 ## Drivers grouped by protocol
@@ -147,10 +158,11 @@ The simulation category has two members with entirely different roles. Don't con
 
 ::: danger `dc3.driver.code` is a stable registration identity — don't change it casually
 Each driver registers with the management center using `dc3.driver.code` at startup. The RabbitMQ routing key for values
-and commands comes from the driver service name `dc3.driver.service` (`driverProperties.getService()`) — code and
-service are two independent fields on `DriverProperties`. Change code and you swap the registration identity; change
-service and you swap the routing identity. Either way, in-flight messages or registration records lose their owner.
-Unless you migrate accordingly, don't change these two values on a driver that's already deployed.
+and commands comes from the driver service name `dc3.driver.service` (`driverProperties.getService()`, with the node
+name appended for commands), while the per-instance queue-name suffix takes `dc3.driver.client` — code, service, and
+client are three independent fields on `DriverProperties`. Change code and you swap the registration identity; change
+service or client and you swap the routing identity. Either way, in-flight messages or registration records lose their
+owner. Unless you migrate accordingly, don't change these values on a driver that's already deployed.
 :::
 
 ## The Driver SDK's SPI: one aggregate interface, seven contracts
@@ -176,9 +188,12 @@ stable output, distinct from the random values the virtual driver produces on th
 like a success.
 :::
 
-::: tip Health-status TTL must exceed the collection cycle
-The health status a driver reports carries a TTL, and that TTL must exceed the read scheduling cycle (a 30s cron, say,
-paired with a TTL ≥ 25s). Otherwise the device gets judged offline between two heartbeats and flaps.
+::: tip Health-status TTL must exceed the heartbeat cycle
+The health status a driver reports carries a TTL (the lease duration), and that TTL must exceed the cadence of the
+device-health check — otherwise the device gets judged offline between two heartbeats and flaps. SDK defaults: the
+health cron runs every **15 seconds** (`0/15 * * * * ?`) with a lease `timeout: 45` seconds — keep that ratio and it
+won't flap. Slow the health cron down to 30 seconds and the TTL must be greater than 30 seconds (45 seconds or more
+recommended); see the health section of [Driver Authoring](../development/driver-authoring) for the full story.
 :::
 
 The SDK also ships runtime services for registration (`DriverRegisterService`, with exponential-backoff retry),

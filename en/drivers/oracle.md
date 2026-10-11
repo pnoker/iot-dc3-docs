@@ -70,7 +70,6 @@ timeout". Fill in one set per Oracle database on the [Device](../introduction/co
 |-----------------|------------------|--------|-------------|--------------------------------------------------------------|
 | Host            | `host`           | STRING | `localhost` | Oracle host IP or hostname                                   |
 | Port            | `port`           | INT    | `1521`      | Oracle port (standard 1521)                                  |
-| Database        | `database`       | STRING | (empty)     | Oracle database name                                         |
 | Username        | `username`       | STRING | `root`      | Oracle username                                              |
 | Password        | `password`       | STRING | (empty)     | Oracle password                                              |
 | Query Timeout   | `queryTimeout`   | INT    | `30`        | SQL query timeout in seconds                                 |
@@ -80,15 +79,17 @@ timeout". Fill in one set per Oracle database on the [Device](../introduction/co
 
 The driver builds the JDBC URL by `connectionType`: with `SID` it uses `sid` to form `jdbc:oracle:thin:@host:port:sid` (
 default `sid=ORCL`), and with `ServiceName` it uses `serviceName` to form `jdbc:oracle:thin:@//host:port/serviceName`.
-Configuration validation (`validate()`) requires all six of `host`, `port`, `database`, `username`, `password`, and
-`connectionType`, and any missing field fails. Whether `sid` or `serviceName` takes effect depends on `connectionType`
-—see Troubleshooting below. The driver caches one HikariCP connection pool per device ID (one pool per device, max 5
-connections), with the connection timeout set to `queryTimeout × 1000` milliseconds.
+Configuration validation (`validate()`) requires all four of `host`, `port`, `username`, and `password`, plus
+`serviceName` when `connectionType=ServiceName`; an unset `connectionType` falls back to `SID`. Whether `sid` or
+`serviceName` takes effect depends on `connectionType`—see Troubleshooting below. The driver caches one HikariCP
+connection pool per device ID (one pool per device, max 5 connections), with the pool's `connectionTimeout` fixed at
+`4000` milliseconds, independent of `queryTimeout`.
 
-::: tip queryTimeout applies to both connecting and the query pace
-`queryTimeout` (default 30 seconds) is used as the pool's `connectionTimeout`: failing to acquire a connection, or a
-connection that stalls beyond this duration, fails. It is separate from the polling interval—if a slow SQL consistently
-approaches or exceeds it, optimize the SQL or add an index rather than just raising the timeout.
+::: tip queryTimeout only bounds each read/write SQL execution
+`queryTimeout` (default 30 seconds) is set on every read/write statement (`PreparedStatement.setQueryTimeout`): a single
+SQL statement running longer than this fails. The pool's `connectionTimeout` is a fixed `4000` milliseconds and is
+unrelated to it. It is also separate from the polling interval—if a slow SQL consistently approaches or exceeds it,
+optimize the SQL or add an index rather than just raising the timeout.
 :::
 
 ### Point attributes (`point-attribute`)
@@ -138,8 +139,8 @@ account permissions, and query targeting. Work through them in order:
    and don't fill both expecting the driver to pick automatically.
 
 2. **Can't connect (device stays offline)**. First confirm `host:port` is reachable: `telnet <host> 1521` or
-   `nc -vz <host> 1521`. The health check decides online via `conn.isValid(5)` (whether a valid connection can be
-   obtained within 5 seconds); a failed connect or heartbeat reports offline. Common root causes: the listener not
+   `nc -vz <host> 1521`. The health check decides online via `conn.isValid(2)` (whether a valid connection can be
+   obtained within 2 seconds); a failed connect or heartbeat reports offline. Common root causes: the listener not
    started or not registering that instance, a firewall blocking 1521, or a broken container network.
 
 3. **Connects but is rejected (account / permission / instance name mismatch)**. Confirm `username`/`password` are
@@ -160,7 +161,8 @@ account permissions, and query targeting. Work through them in order:
 6. **Write command returns failure**. Writing requires exactly one `?` placeholder in `writeQuery` and a statement
    targeting a writable table and row. `write()` treats "affected rows > 0" as success—if the `WHERE` condition matches
    no rows, `executeUpdate()` returns 0 and the write is judged failed. Run the same `UPDATE` by hand in the database
-   first to confirm it hits a row. A failed write throws `WritePointException` and invalidates the pool.
+   first to confirm it hits a row. A SQL error throws `WritePointException` and invalidates the pool; matching 0 rows
+   merely returns failure (`false`) without an exception.
 
 ::: warning Connection Type decides whether to fill SID or Service Name
 With `connectionType=SID` the driver builds `jdbc:oracle:thin:@host:port:sid` using `sid` (default `sid=ORCL`); with
@@ -191,7 +193,7 @@ structure (no SQL injection). Do not concatenate the value into the SQL by hand,
   the driver's `application.yml`; there is also a `custom` schedule with default cron `0/5 * * * * ?` (every 5 seconds),
   but the base class `schedule()` is an empty implementation and database drivers do not use it.
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?` with a lease timeout of `45 seconds`; the
-  verdict relies on `conn.isValid(5)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
+  verdict relies on `conn.isValid(2)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
 
 ::: info Implementation status: complete
 This driver is a **complete implementation** (not a skeleton). Oracle's two SID / Service Name JDBC URL forms, reading,
@@ -207,7 +209,7 @@ Onboard the `temperature` column of the `id=1` row in a `sensor` table as a temp
 instance by SID):
 
 1. Create a [Device](../introduction/concepts/device) with `Oracle Driver`, and set the driver attributes
-   `host=192.168.1.10`, `port=1521`, `database=iot`, `username=root`, `password=******`, `connectionType=SID`,
+   `host=192.168.1.10`, `port=1521`, `username=root`, `password=******`, `connectionType=SID`,
    `sid=ORCL`.
 2. Add a temperature [Point](../introduction/concepts/point) (`pointTypeFlag=FLOAT`, `READ_ONLY`) to
    the [Profile](../introduction/concepts/profile) bound to the device, and set the point attribute

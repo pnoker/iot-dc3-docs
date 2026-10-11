@@ -26,7 +26,8 @@ The "Status" column summarizes each driver's overall maturity:
 
 These drivers act as masters (clients) that actively connect to the device, poll values
 per [Point](../introduction/concepts/point) and write via [commands](../introduction/concepts/command); they do not
-listen for pushes. `ethernet-ip` is currently a protocol skeleton — CIP framing is not yet complete.
+listen for pushes. `ethernet-ip` reads and writes tags via CIP unconnected messaging (no `ForwardOpen`
+connection-oriented I/O).
 
 | Driver (dc3.driver.code)                          | Category           | Read | Write | Subscribe/Report | Status   | Notes                                                      |
 |---------------------------------------------------|--------------------|------|-------|------------------|----------|------------------------------------------------------------|
@@ -36,8 +37,8 @@ listen for pushes. `ethernet-ip` is currently a protocol skeleton — CIP framin
 | [OPC DA](./opc-da) (`OpcDaDriver`)                | Industrial Bus/PLC | ✓    | ✓     | —                | Complete | Classic OPC Data Access (DCOM)                             |
 | [S7](./plcs7) (`PlcS7Driver`)                     | Industrial Bus/PLC | ✓    | ✓     | —                | Complete | Siemens PLC                                                |
 | [MELSEC](./melsec) (`MelsecDriver`)               | Industrial Bus/PLC | ✓    | ✓     | —                | Complete | Mitsubishi PLC (MC protocol)                               |
-| [FINS](./fins) (`FinsDriver`)                     | Industrial Bus/PLC | ✓    | ✓     | —                | Usable   | Omron PLC, supports 16/32-bit ints, float, string, and BCD |
-| [EtherNet/IP](./ethernet-ip) (`EthernetIpDriver`) | Industrial Bus/PLC | —    | —     | —                | Skeleton | Rockwell / CIP, framing pending                            |
+| [FINS](./fins) (`FinsDriver`)                     | Industrial Bus/PLC | ✓    | ✓     | —                | Usable   | Omron PLC, supports 16/32-bit ints, float, string, and BCD; main framing defects — see the driver page warnings |
+| [EtherNet/IP](./ethernet-ip) (`EthernetIpDriver`) | Industrial Bus/PLC | ✓    | ✓     | —                | Usable   | Rockwell / CIP, unconnected tag read/write                 |
 
 ## SCADA / Power / Metering
 
@@ -53,7 +54,7 @@ currently skeletons.
 | [SL651](./sl651) (`Sl651Driver`)            | SCADA/Power/Metering | —    | —     | ✓                | Complete | Hydrology telemetry, TCP server ingest |
 | [SNMP](./snmp) (`SnmpDriver`)               | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Network device monitoring              |
 | [DL/T645](./dlt645) (`Dlt645Driver`)         | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Electricity meter (DL/T645-2007)       |
-| [DNP3](./dnp3) (`Dnp3Driver`)                | SCADA/Power/Metering | ✓    | ✓     | —                | Available | Utility automation, native stack implemented |
+| [DNP3](./dnp3) (`Dnp3Driver`)                | SCADA/Power/Metering | ✓    | ✓     | —                | Usable   | Utility automation, native stack implemented |
 | [IEC 61850](./iec61850) (`Iec61850Driver`)   | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Substation automation (MMS client)     |
 | [KNX](./knx) (`KnxDriver`)                   | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Building automation bus (Calimero)     |
 | [M-Bus](./mbus) (`MbusDriver`)               | SCADA/Power/Metering | ✓    | ✓     | —                | Complete | Metering bus (EN 13757), self-built framing |
@@ -62,9 +63,10 @@ currently skeletons.
 
 IoT and wireless drivers. `mqtt` is publish/subscribe — values arrive passively via subscription (no active read),
 commands can be sent; `lwm2m` (embedded server, receives device registration and notifications) has read and write in
-place but its Observe/subscribe is not yet implemented; `coap`, `http`, `ble`, and `can` are request-response active
-read/write (`coap` Observe not implemented); `can` and `zigbee` are currently skeletons — `zigbee` only listens for
-coordinator network state (not node join or attribute reports), and `can` is backed by can-utils.
+place but its Observe/subscribe is not yet implemented; `coap`, `http`, and `ble` are request-response active
+read/write (`coap` Observe not implemented); `zigbee` reads and writes ZCL attributes through a serial coordinator but
+only listens for coordinator network state — not node join or attribute reports; `can` is currently a skeleton, backed
+by can-utils.
 
 | Driver (dc3.driver.code)            | Category     | Read | Write | Subscribe/Report | Status   | Notes                                                                    |
 |-------------------------------------|--------------|------|-------|------------------|----------|--------------------------------------------------------------------------|
@@ -72,8 +74,8 @@ coordinator network state (not node join or attribute reports), and `can` is bac
 | [CoAP](./coap) (`CoapDriver`)       | IoT/Wireless | ✓    | ✓     | —                | Usable   | RESTful for constrained devices, Observe not implemented                 |
 | [LwM2M](./lwm2m) (`Lwm2mDriver`)    | IoT/Wireless | ✓    | ✓     | —                | Usable   | Embedded server, read/write ready, Observe not implemented               |
 | [HTTP](./http) (`HttpDriver`)       | IoT/Wireless | ✓    | ✓     | —                | Complete | Generic HTTP polling                                                     |
-| [BLE](./ble) (`BleDriver`)          | IoT/Wireless | ✓    | ✓     | —                | Complete | Bluetooth Low Energy GATT                                                |
-| [Zigbee](./zigbee) (`ZigbeeDriver`) | IoT/Wireless | ✓    | ✓     | —                | Skeleton | Skeleton; subscribe (join/reports) not implemented                       |
+| [BLE](./ble) (`BleDriver`)          | IoT/Wireless | ✓    | ✓     | —                | Usable   | Bluetooth Low Energy GATT; requires host Bluetooth adapter and TinyB     |
+| [Zigbee](./zigbee) (`ZigbeeDriver`) | IoT/Wireless | ✓    | ✓     | —                | Usable   | Read/write via serial coordinator; subscribe (join/reports) not implemented |
 | [CAN](./can) (`CanDriver`)          | IoT/Wireless | ✓    | —     | —                | Skeleton | Controller Area Network, backed by can-utils                             |
 | [LoRaWAN](./lorawan) (`LorawanDriver`) | IoT/Wireless | ✓    | ✓     | ✓                | Usable   | ChirpStack MQTT uplink ingest, Cayenne LPP, downlink publish              |
 | [Kafka](./kafka) (`KafkaDriver`)     | IoT/Wireless | ✓    | ✓     | ✓                | Usable   | Streaming source, consume + produce                                      |
@@ -115,7 +117,7 @@ to write back to a device over the connection channel.
 ::: info Capability marks are code-driven
 The "✓ / —" in these tables reflect what each driver's `*DriverCustomServiceImpl` actually implements today: a "—" may
 mean the protocol direction simply is not offered (e.g. `virtual` write, `mqtt` active read), or that the skeleton is
-not yet filled in (e.g. `ethernet-ip`, `iec104`, `dlms`, `can`). The "Status" column is an overall maturity summary;
+not yet filled in (e.g. `iec104`, `dlms`, `can`). The "Status" column is an overall maturity summary;
 finer data-type or sub-capability gaps are flagged on each driver page via `::: warning` / `::: info`. For the final
 behavior, consult that module's `read()` / `write()` / `initial()` source; this table is kept in sync as drivers evolve.
 :::

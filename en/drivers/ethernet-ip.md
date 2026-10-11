@@ -44,14 +44,14 @@ collection:
 <EthernetIpDiagram lang="en" />
 
 CIP does not rely on physical addresses, so a point carries a `tagName` rather than an offset; the driver decodes the
-bytes the PLC returns into a concrete value according to the point's `tagType` and unifies it as
+tag value the PLC returns by the type code in the CIP reply and unifies it as
 a [PointValue](../introduction/concepts/point-value) sent upstream.
 
 ## Attribute Configuration
 
 EtherNet/IP onboarding parameters come in two layers: **driver attributes (driver-attribute)** describe "which PLC,
 which port and timeout" and are filled on the [device](../introduction/concepts/device); **point attributes (
-point-attribute)** describe "which tag, decoded as which type" and are filled on
+point-attribute)** describe "which tag to read and, for writes, which type to encode as" and are filled on
 each [Point](../introduction/concepts/point). Writable points add a **command attribute (command-attribute)**. The
 defaults of all of these come from the driver's `application.yml`; for the three-layer origin
 see [Attributes and Config](../introduction/concepts/attribute-config).
@@ -69,33 +69,37 @@ bounds how long a single request waits.
 | Slot      | `slot`    | INT    | `0`         | PLC backplane slot, locating the CPU module in the rack       |
 | Timeout   | `timeout` | INT    | `5000`      | Request timeout (milliseconds), set as the socket `SoTimeout` |
 
-::: info `slot` is currently only validated, not framed
-`validate()` lists `slot` as a required attribute, but the current connect and read/write code does not yet encode
-`slot` into the CIP routing path (the `ForwardOpen` connection path is still a placeholder). Single-CPU setups with the
-CPU in slot 0 are unaffected; precise addressing for multi-slot racks awaits completed protocol framing.
+::: info `slot` is encoded into the CIP connection path
+`validate()` requires `host` / `port` / `slot`; when framing, `buildConnectionPath()` first writes the backplane port
+segment (`0x01` + `slot`), then the ANSI extended symbol segment carrying the tag name, so the request is routed to the
+CPU in that chassis slot. For multi-slot racks set `slot` to the controller's actual slot (single CPU in slot 0 keeps
+the default).
 :::
 
 ### Point Attributes (`point-attribute`)
 
-Each collected point must state which tag to read and what data type that tag is in the PLC — the driver does not probe
-the PLC for the type; it decodes bytes strictly by the `tagType` you set.
+Each collected point must state which tag to read and, **for writes**, which type to encode the value as — reads follow
+the type code carried in the CIP reply instead (see the tip below).
 
 | Attribute     | code           | Type   | Default | Description                                                           |
 |---------------|----------------|--------|---------|-----------------------------------------------------------------------|
 | Tag Name      | `tagName`      | STRING | (empty) | CIP tag name, e.g. `Motor_Speed`, must match the PLC project verbatim |
-| Tag Type      | `tagType`      | STRING | `DINT`  | Tag data type: `BOOL` / `SINT` / `INT` / `DINT` / `REAL` / `STRING`   |
+| Tag Type      | `tagType`      | STRING | `DINT`  | Write encoding type: `BOOL` / `SINT` / `INT` / `DINT` / `REAL` (reads ignore it; `STRING` reads decode but writes are rejected) |
 | Element Count | `elementCount` | INT    | `1`     | Number of elements to read (for array tags)                           |
 
-::: tip `tagType` decides how bytes are decoded
-The driver parses the raw bytes the PLC returns (little-endian) into the matching type per `tagType`: `BOOL` 1 byte,
-`SINT` 1 byte, `INT` 2-byte integer, `DINT` 4-byte integer, `REAL` 4-byte float, `STRING` ASCII text. `tagType` must
-match the actual type of that tag in the PLC, otherwise parsing yields a meaningless value. The Point's own data
-type ([Point](../introduction/concepts/point) `pointTypeFlag`) should match it.
+::: tip Reads decode by the reply type code; writes encode by `tagType`
+**Read**: `parseTagValue()` ignores the configured `tagType` and decodes by the CIP type code in the Read Tag reply (
+`BOOL`/`SINT`/`INT`/`DINT`/`REAL` all little-endian, `STRING` as ASCII text); unknown type codes fall back to the raw
+hex. **Write**: `encodeTagValue()` / `mapTypeCode()` encode by the `tagType` you set, supporting `BOOL` / `SINT` /
+`INT` / `DINT` / `REAL`; `STRING` writes are rejected (they need structured-type support — the driver throws
+`...cannot be written atomically`). For writes, `tagType` must match the tag's actual type in the PLC, otherwise the
+controller misreads the bytes; the Point's own data type
+([Point](../introduction/concepts/point) `pointTypeFlag`) should correspond to it.
 :::
 
 ::: warning `elementCount` is not consumed yet
-`buildReadTagRequest()` hardcodes the element count in the read request to `1`, so the configured `elementCount` has no
-effect yet. Whole-array reads await completed implementation; for now reads are single-element only.
+`read()` calls `buildMrReadTagRequest()` with the element count hard-coded to `1`, so the configured `elementCount` has
+no effect yet. Whole-array reads await completed implementation; for now reads are single-element only.
 :::
 
 ### Command Attribute (`command-attribute`)
@@ -114,7 +118,9 @@ be implemented.
 
 ### Collection and Health
 
-- **Collection cycle**: default cron `0/30 * * * * ?` (reads once every 30 seconds).
+- **Collection cycle**: the `application.yml` baseline read cron is `0/30 * * * * ?` (read once every 30 seconds); the
+  default-active `dev` profile overrides it in `application-dev.yml` to `0/5 * * * * ?` (every 5 seconds), so the
+  out-of-the-box polling interval is 5 seconds.
 - **Custom schedule**: `schedule.custom` is enabled in the yml (cron `0/5 * * * * ?`), but the current `schedule()`
   method body is empty and performs no custom logic.
 - **Health / online**: device health check default cron `0/15 * * * * ?`, lease timeout `45 seconds` —
@@ -140,10 +146,11 @@ CIP tag name fails the read outright and throws `ReadPointException`. When troub
 first to check the tag spelling and scope (controller-level vs program-level tags).
 :::
 
-::: warning tagType mismatches the PLC's real type, yielding garbage
-The driver decodes bytes strictly by the `tagType` you set and never probes the PLC for the real type. Configuring a
-`REAL` (float) tag as `DINT` parses the float's 4 bytes as an integer and produces a meaningless large number. Confirm
-the actual type of each tag in the PLC project before onboarding, and make the point's `pointTypeFlag` match.
+::: warning A write-side tagType mismatch mis-encodes the value
+Writes encode bytes strictly by the `tagType` you set and never probe the PLC for the real type: writing to a `REAL`
+(float) tag configured as `DINT` encodes a 4-byte integer, which the PLC then misreads as a float. Reads are not
+affected — they decode by the type code in the CIP reply. Confirm the actual type of each tag in the PLC project before
+onboarding, and make the point's `pointTypeFlag` correspond.
 :::
 
 ::: warning Timeout too short causes intermittent read failures
@@ -161,11 +168,9 @@ the device online state alone.
 :::
 
 ::: info Cannot locate the CPU in a multi-slot rack
-`slot` is not encoded into the CIP routing path yet. If the PLC is in a non-zero slot, or the rack holds multiple CPUs,
-precise addressing awaits completed protocol framing; until then, validate onboarding with a single CPU placed in slot
-
-0.
-
+`slot` is encoded into the CIP connection path (backplane port segment `0x01` + `slot`), so requests are routed to the
+CPU in that slot. If it still cannot be reached, verify `slot` matches the controller's actual slot and that the rack
+backplane configuration matches the project.
 :::
 
 ## How It Lands in IoT DC3
@@ -173,36 +178,40 @@ precise addressing awaits completed protocol framing; until then, validate onboa
 - **dc3.driver.code**: `EthernetIpDriver` (a stable routing identifier — registration and message routing both rely on
   it, do not change it casually). Driver name `EtherNet/IP Driver`, type `DRIVER_CLIENT` (the driver actively connects
   to the PLC).
-- **Read**: `read()` wires the main flow — fetch tag name, build the Read Tag request, decode the bytes.
-- **Write**: `write()` wires the main flow — fetch tag name/type, encode the value, build the Write Tag request.
+- **Read**: ✓ implemented. `read()` first registers a CIP session with `RegisterSession` (encapsulation command
+  `0x00F0`), then fetches the tag value with a Read Tag (`0x4C`) unconnected message via `sendRRData` (`0x005F`).
+- **Write**: ✓ implemented. `write()` sends a Write Tag (`0x4D`) over the same unconnected channel, encoding the value
+  by the point's `tagType`.
 - **Subscribe / push**: not supported. EtherNet/IP explicit messaging is request-response; this driver actively polls on
   the collection cycle and does not listen for device-initiated pushes.
 
-Aligned with the [Driver Capability Matrix](./matrix): in the matrix EtherNet/IP is marked `—` for read/write/subscribe,
-with the note "Rockwell / CIP, skeleton pending."
+Aligned with the [Driver Capability Matrix](./matrix): in the matrix EtherNet/IP is marked read ✓ / write ✓ /
+subscribe `—`, status "Usable".
 
-::: warning Work in progress (skeleton)
-This driver is a protocol skeleton. The upper-layer read/write flow (fetching by `tagName`, encoding/decoding by
-`tagType`, socket connect and invalidation/reconnect) is in place, but the **CIP protocol framing is not yet complete**:
+::: info Implementation bounds (unconnected messaging, no connection-oriented I/O)
+CIP framing in `EthernetIpDriverCustomServiceImpl` is a full implementation (24-byte encapsulation header,
+`RegisterSession`, `sendRRData` unconnected messages, Read Tag `0x4C` / Write Tag `0x4D` all in place), with these
+bounds:
 
-- session setup `RegisterSession` and connection open `ForwardOpen` are still `TODO` placeholders;
-- `buildEncapsulationHeader()` writes only a 24-byte length header, not a full EtherNet/IP encapsulation frame;
-- `health()` only inspects socket state, not a real protocol probe;
-- the `elementCount` and `sendCommand` attributes are not consumed yet.
+- **Unconnected messaging only**: connection-oriented I/O via `ForwardOpen` is deliberately out of scope for this
+  build (unconnected messages already cover tag reads and writes);
+- `STRING` tag writes are rejected (they need structured-type support); `STRING` reads decode by the reply type code;
+- the `elementCount` and `sendCommand` attributes are not consumed yet (see the warnings above);
+- `health()` only inspects socket state, not a real protocol probe.
 
-Treat it as a starting template, not a production-ready driver. For the final behavior, consult the `read()` /
-`write()` / `initial()` source in `EthernetIpDriverCustomServiceImpl`.
+For the final behavior, consult the `read()` / `write()` / `initial()` source in `EthernetIpDriverCustomServiceImpl`.
 :::
 
-The minimal path to onboard an Allen-Bradley PLC (to validate the flow, not for production collection):
+The minimal path to onboard an Allen-Bradley PLC:
 
 1. Create a [device](../introduction/concepts/device) with `EtherNet/IP Driver`, and set the driver attributes
    `host=192.168.1.20`, `port=44818`, `slot=0`, `timeout=5000`.
 2. Add a speed [Point](../introduction/concepts/point) (`pointTypeFlag=INT`, `READ_ONLY`) to
    the [Profile](../introduction/concepts/profile) bound to the device, and set the point attributes
    `tagName=Motor_Speed`, `tagType=DINT`, `elementCount=1`.
-3. Start the driver and watch the connect and collection logs; once CIP framing is complete, the collected value appears
-   in [PointValue](../introduction/concepts/point-value) within 30 seconds.
+3. Start the driver and watch the connect and collection logs; the collected value appears in
+   [PointValue](../introduction/concepts/point-value) within 30 seconds (the default `dev` profile polls every 5
+   seconds).
 
 For the complete onboarding procedure, see [Device Onboarding](../operation/device-onboarding).
 

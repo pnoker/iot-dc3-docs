@@ -40,7 +40,7 @@ TCP 与 UDP 在本驱动里的行为差异很重要：
 
 属性来自驱动的 `application.yml`，分三层：**驱动属性**填在[设备](../introduction/concepts/device)上（一台设备一份连接参数），
 **位号属性**填在每个[位号](../introduction/concepts/point)上（描述这一路采什么、怎么解析），**写命令属性**
-填在可写位号的写命令上。每张表前的散文先讲清每个属性干什么。
+填在[自定义指令](../introduction/concepts/command)上（由 `execute()` 消费，写位号不读，见下文写命令属性一节）。每张表前的散文先讲清每个属性干什么。
 
 ### 驱动属性（设备级 `driver-attribute`）
 
@@ -85,16 +85,17 @@ TCP 与 UDP 在本驱动里的行为差异很重要：
 
 ### 写命令属性（`command-attribute`）
 
-可写位号的写命令上填 `sendCommand` 模板，里面用 `${value}` 占位。写值时驱动把 `${value}` 替换成实际命令值，再作为 HEX
-指令发给设备（TCP 复用长连接、UDP 临时建 socket）。
+`application.yml` 在 `command-attribute` 里声明了 `sendCommand` 一项，消费它的是**自定义指令**链路：`execute()`
+把模板里的 `${参数名}` 占位（默认模板 `${value}`，即指令参数 `value`）替换成指令实参，渲染出的 HEX 串作为指令输出参数
+`sendCommand` 返回——本驱动的 `execute()` 只做渲染回显，**不会把帧发给设备**。写位号（`write()`）不读这组属性，走的是另一条路，见下方 warning。
 
-| 属性           | code          | 类型     | 默认值        | 说明                      |
-|--------------|---------------|--------|------------|-------------------------|
-| Send Command | `sendCommand` | STRING | `${value}` | 写指令模板，`${value}` 用命令值替换 |
+| 属性           | code          | 类型     | 默认值        | 说明                                   |
+|--------------|---------------|--------|------------|--------------------------------------|
+| Send Command | `sendCommand` | STRING | `${value}` | 自定义指令的 HEX 模板，`${参数名}` 用指令实参替换         |
 
-::: warning 写命令的 `sendCommand` 读自位号属性
-源码中 `write()` 的 `sendCommand` 取自**位号属性**（`pointConfig`）而非写命令属性。若可写位号没有在位号属性里配
-`sendCommand`，写操作会因指令为空而直接返回失败。`command-attribute` 的 `${value}` 模板在 `execute()` 渲染流程中生效。
+::: warning 写位号的 `sendCommand` 读自位号属性，与命令属性无关
+`write()` 的 `sendCommand` 取自**位号属性**（`pointConfig`）而非命令属性，替换 `${value}` 后作为 HEX
+指令发给设备（TCP 复用长连接、UDP 临时建 socket）。若可写位号没有在位号属性里配 `sendCommand`，写操作会因指令为空而直接返回失败。
 :::
 
 ## 故障排查

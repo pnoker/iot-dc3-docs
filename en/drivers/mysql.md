@@ -71,12 +71,13 @@ The driver builds the JDBC URL from `host`, `port`, and `database`, in the form
 `jdbc:mysql://host:port/database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`. All five of `host`,
 `port`, `database`, `username`, and `password` are required—configuration validation (`validate()`) checks each one, and
 any missing field fails. The driver caches one HikariCP connection pool per device ID (one pool per device, max 5
-connections), with the connection timeout set to `queryTimeout × 1000` milliseconds.
+connections); the pool's `connectionTimeout` is a fixed `4000` milliseconds and is unrelated to `queryTimeout`.
 
-::: tip queryTimeout applies to both connecting and the query pace
-`queryTimeout` (default 30 seconds) is used as the pool's `connectionTimeout`: failing to acquire a connection, or a
-connection that stalls beyond this duration, fails. It is separate from the polling interval—if a slow SQL consistently
-approaches or exceeds it, optimize the SQL or add an index rather than just raising the timeout.
+::: tip queryTimeout only bounds each read/write SQL execution
+`queryTimeout` (default 30 seconds) is set on every read/write statement (`PreparedStatement.setQueryTimeout`): a single
+SQL statement running longer than this fails. The pool's `connectionTimeout` is a fixed `4000` milliseconds and is
+unrelated to it. It is also separate from the polling interval—if a slow SQL consistently approaches or exceeds it,
+optimize the SQL or add an index rather than just raising the timeout.
 :::
 
 ### Point attributes (`point-attribute`)
@@ -120,7 +121,7 @@ MySQL onboarding failures mostly cluster around connection, account permissions,
 through them in order:
 
 1. **Can't connect (device stays offline)**. First confirm `host:port` is reachable: `telnet <host> 3306` or
-   `nc -vz <host> 3306`. The health check decides online via `conn.isValid(5)` (whether a valid connection can be
+   `nc -vz <host> 3306`. The health check decides online via `conn.isValid(2)` (whether a valid connection can be
    obtained within 5 seconds); a failed connect or heartbeat reports offline. Common root causes: the database not
    listening on the public/container network, a firewall, or a `bind-address` restriction.
 
@@ -170,7 +171,7 @@ structure (no SQL injection). Do not concatenate the value into the SQL by hand,
   the driver's `application.yml`; there is also a `custom` schedule with default cron `0/5 * * * * ?` (every 5 seconds),
   but the base class `schedule()` is an empty implementation and database drivers do not use it.
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?` with a lease timeout of `45 seconds`; the
-  verdict relies on `conn.isValid(5)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
+  verdict relies on `conn.isValid(2)`. See [Device](../introduction/concepts/device) for the online-state mechanism.
 
 ::: info Implementation status: complete
 This driver is a **complete implementation** (not a skeleton). Reading, writing, the health check, the per-device cached

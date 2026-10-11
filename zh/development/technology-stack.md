@@ -4,8 +4,8 @@ title: 技术栈
 
 # 技术栈
 
-这页汇总 IoT DC3 当前推荐和运行中的主要技术选型。精确版本以仓库内的 `pom.xml`、`dc3-web/package.json` 和
-`docs/package.json` 为准；README 只保留面向新读者的摘要。
+这页汇总 IoT DC3 当前推荐和运行中的主要技术选型。精确版本以上游仓库内的 `pom.xml` 与 `dc3-web/package.json`（前端源码已并入
+iot-dc3 仓库的 `dc3-web/`）、以及本站 `package.json` 为准；README 只保留面向新读者的摘要。
 
 ## 后端与中心服务
 
@@ -23,7 +23,7 @@ title: 技术栈
 |------------|------------------------------|-------------------------|
 | 主存储        | PostgreSQL                   | 业务数据、租户、资源、设备模型与运行数据    |
 | 时序与扩展      | TimescaleDB · AGE · pgvector | 位号历史、图能力和向量能力扩展         |
-| ORM / 数据访问 | MyBatis-Plus                 | DO 层持久化访问与分页查询          |
+| 数据访问       | Spring Data R2DBC            | 响应式持久化访问（`dc3-db-*`）与 offset 分页 |
 | 消息总线       | RabbitMQ                     | 驱动与数据中心之间的异步值上报、命令下发与削峰 |
 | 缓存与调度      | Caffeine · Quartz            | 进程内缓存、定时任务与调度           |
 
@@ -31,10 +31,10 @@ title: 技术栈
 
 | 范围      | 技术                                           | 用途                                       |
 |---------|----------------------------------------------|------------------------------------------|
-| Web 前端  | Vue 3 · TypeScript 6 · Vite 8 · Element Plus | `dc3-web/` 下的管理控制台                       |
+| Web 前端  | Vue 3 · TypeScript 5.9 · Vite 8 · Element Plus | `dc3-web/` 下的管理控制台                       |
 | 可视化     | AntV G2/G6                                   | 仪表盘图表与关系可视化                              |
 | 文档站     | VitePress                                    | 当前 `docs/` 文档站、架构图和流程图（自定义 Vue 图组件）     |
-| CLI 自动化 | TypeScript · pnpm · Vitest                   | sibling `dc3-cli/` 项目，面向 Gateway 的命令行客户端 |
+| CLI 自动化 | TypeScript · pnpm · Vitest                   | 仓库内 `dc3-cli/` 子项目，面向 Gateway 的命令行客户端  |
 | 容器部署    | Podman · Docker Compose                      | 本地依赖、开发栈、应用栈和可选观测栈                       |
 
 ## 继续阅读

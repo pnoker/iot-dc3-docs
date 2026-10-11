@@ -43,7 +43,8 @@ in the registry.
 ## Attribute Configuration
 
 LwM2M attributes come in two layers: **driver attributes** are set on the [device](../introduction/concepts/device) and
-describe "where the server listens, which endpoint to match, whether to encrypt"; **point attributes** are set on
+describe "which endpoint to match", plus a set of server-listen/encryption declarations that are currently inert;
+**point attributes** are set on
 each [point](../introduction/concepts/point) and describe "which resource path in the object tree this point maps to."
 Both originate from the driver's `application.yml` `driver-attribute` / `point-attribute` declarations; at onboarding
 you [fill a concrete value](../introduction/concepts/attribute-config) for each attribute on the device instance.
@@ -52,8 +53,10 @@ you [fill a concrete value](../introduction/concepts/attribute-config) for each 
 
 `endpoint` is the key that maps this DC3 device to a registered LwM2M client—it must match the endpoint name the device
 reports at registration **exactly**, otherwise they will not match and the device stays offline. `serverHost` /
-`serverPort` / `securePort` declare the server's bind address and ports; `securityMode` decides plaintext versus PSK
-encryption, with `pskIdentity` and `pskKey` added when PSK is enabled.
+`serverPort` / `securePort` / `securityMode` / PSK only declare the server's bind address, ports, and encryption
+nominally — **none of them build the server and their values have no effect** (`serverHost`/`serverPort` are only
+presence-checked by `validate()`). What actually decides the listening port and encryption capability is the deployment
+config and the driver implementation; see the warning below.
 
 | Attribute     | code           | Type   | Default   | Remark                                        |
 |---------------|----------------|--------|-----------|-----------------------------------------------|
@@ -65,12 +68,15 @@ encryption, with `pskIdentity` and `pskKey` added when PSK is enabled.
 | PSK Identity  | `pskIdentity`  | STRING | (empty)   | PSK identity (when `securityMode=PSK`)        |
 | PSK Key       | `pskKey`       | STRING | (empty)   | HEX-encoded PSK key (when `securityMode=PSK`) |
 
-::: warning serverHost / serverPort / securePort are not actually applied yet
-When the driver starts the embedded server it uses the **default binding** of `new LeshanServerBuilder().build()` (which
-happens to be `5683`/`5684`); it does not feed the `serverHost`/`serverPort`/`securePort` or PSK values above into
-Leshan. In other words these items are **declared but not wired**: filling them only lands on the default ports and a
-plaintext link. To bring the link up, use the default plaintext `5683` port; changing the port or enabling PSK still
-needs to be wired into the driver (see Implementation status below).
+::: warning The serverHost / serverPort / securePort rows above do not build the server
+The embedded server's bind address and port come from the **deployment config**
+`dc3.driver.lwm2m.server-host` / `dc3.driver.lwm2m.server-port` (default `0.0.0.0:5683`), which `Lwm2mServerManager`
+feeds explicitly into Leshan as a plaintext CoAP endpoint; the device-level `serverHost`/`serverPort`/`securePort`/
+`securityMode`/PSK attributes above have **values that are never consumed** (`serverHost`/`serverPort` are only
+presence-checked by `validate()`). Also, the driver only builds the plaintext CoAP endpoint —
+there is **no DTLS/CoAPS endpoint** (`securePort` only appears in the startup log), so PSK/encryption is unavailable.
+Bring the link up over plaintext `5683`; to change the listening port, edit the deployment property
+`dc3.driver.lwm2m.server-port` and restart the driver (see Implementation status below).
 :::
 
 ### Point attributes (`point-attribute`)
@@ -116,7 +122,7 @@ The following cycles come from `application.yml`'s `dc3.driver.schedule` / `heal
 |---------------------------------------------|-----------------------------------------------------------------|-------------------------------------------------------|
 | Device stays offline, reads return nothing  | `endpoint` differs from what the device reports at registration | They must match exactly—see the first note below      |
 | Device cannot reach the server              | UDP `5683` blocked by a firewall, or broken NAT mapping         | Verify the UDP link before the app config             |
-| Changing `serverPort` still listens on 5683 | Port config is not fed to Leshan yet                            | Port override is not implemented—use the default port |
+| Changing the device attribute `serverPort` still listens on 5683 | The server port comes from the deployment property `dc3.driver.lwm2m.server-port`; device attributes do not build the server | Change `server-port` in the deployment config and restart |
 | Registration fails after enabling PSK       | PSK config not applied yet, or the device forces DTLS           | Bring the link up with `NOSEC` plaintext first        |
 | `observe=true` receives no pushes           | Observe auto-forwarding is not implemented                      | Rely on the default 30-second active read             |
 
@@ -134,11 +140,12 @@ or a broken NAT mapping, rather than a wrong application config—verify the lin
 paths. When the device is on the public internet/cellular, remember to allow the corresponding UDP ports.
 :::
 
-::: warning Changing ports and enabling PSK are not yet available
-The driver currently does not consume the `serverPort`/`securePort`/`securityMode`/PSK config; the embedded server is
-fixed to Leshan defaults (plaintext `5683` / DTLS `5684`). So changing the listening port or using a PSK handshake is
-not possible today—use the default `NOSEC` plaintext `5683` port to get the link working first. To support encryption,
-these settings must first be wired into `LeshanServerBuilder` inside `Lwm2mServerManager`.
+::: warning Encryption is not yet available; the listening port comes from the deployment config
+The device attributes `serverPort`/`securePort`/`securityMode`/PSK have values that are never consumed; the embedded server only builds
+a plaintext CoAP endpoint (default `5683`, and **no** DTLS `5684` endpoint). So a PSK/DTLS handshake is impossible
+today—use a `NOSEC` plaintext link to get read/write working first. To change the listening port, edit the deployment
+property `dc3.driver.lwm2m.server-port` (default `5683`) and restart the driver; to support encryption, the PSK config
+must first be wired into `LeshanServerBuilder` inside `Lwm2mServerManager`, together with a CoAPS endpoint.
 :::
 
 ## How It Lands in IoT DC3
@@ -151,17 +158,18 @@ these settings must first be wired into `LeshanServerBuilder` inside `Lwm2mServe
   point value—this is real protocol I/O, not a stub.
 - **Write (implemented)**: `write()` calls `Lwm2mServerManager.write()`, sending a `WriteRequest` to the same three-part
   path; success returns `true`, failure/timeout returns `false`.
-- **Subscribe (not implemented)**: the [driver capability matrix](./matrix) marks LwM2M as
-  read/write/subscribe-complete, but **Observe-based reporting is not landed yet**—
+- **Subscribe (not implemented)**: the [driver capability matrix](./matrix) marks LwM2M's subscribe as
+  "—" — **Observe-based reporting is not landed yet**—
   `Lwm2mObservationHandler.onObservation()` only logs and carries a `TODO`; the driver neither registers Observe nor
   maintains the endpoint→deviceId / resource-path→pointId mapping needed to forward observed values.
 
-::: warning Implementation status: read/write usable, subscribe and server config incomplete
-The class doc of `Lwm2mDriverCustomServiceImpl` still marks it a "work-in-progress skeleton," but **read and write are
-wired to real Leshan I/O and work against a registered device**. Three things remain unfinished: ① auto-forwarding of
-Observe-subscribed values; ② feeding `serverHost`/`serverPort`/`securePort` config into Leshan; ③ the PSK-encrypted
-link. Treat it as a "read/write runnable, subscribe/encryption pending" onboarding starting point, and validate
-read/write over a plaintext link with the example below first.
+::: warning Implementation status: read/write usable, subscribe and encryption incomplete
+**Read and write are wired to real Leshan I/O and work against a registered device**. Three things remain unfinished:
+① auto-forwarding of Observe-subscribed values; ② wiring the device-level `serverHost`/`serverPort`/`securePort`/
+`securityMode`/PSK attributes (the server bind currently comes from the deployment config `dc3.driver.lwm2m.server-*`);
+③ the PSK/DTLS encrypted link (the server has no CoAPS endpoint today). Treat it as a "read/write runnable,
+subscribe/encryption pending" onboarding starting point, and validate read/write over a plaintext link with the
+example below first.
 :::
 
 ::: details Minimal onboarding example: read back a temperature point
@@ -169,8 +177,9 @@ Onboard a LwM2M sensor whose endpoint name is `urn:imei:860000000000001` and who
 `/3303/0/5700`:
 
 1. Create a [device](../introduction/concepts/device) with `LwM2M Driver`, and set the driver attributes
-   `endpoint=urn:imei:860000000000001`, `securityMode=NOSEC` (ports are currently fixed to the default `5683`, neither
-   needed nor changeable).
+   `endpoint=urn:imei:860000000000001`, `securityMode=NOSEC`, plus `serverHost`/`serverPort` at their defaults
+   (`validate()` requires them to be filled, but their values have no effect; the listening port comes from the
+   deployment property `dc3.driver.lwm2m.server-port`, default `5683`).
 2. Have the LwM2M client register to this service's port `5683` (plaintext) using the **same** endpoint name.
 3. Add a temperature [point](../introduction/concepts/point) (`READ_ONLY`) to
    the [profile](../introduction/concepts/profile) bound to the device, with point attributes `objectId=3303`,

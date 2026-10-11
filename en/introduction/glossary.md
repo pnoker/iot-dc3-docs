@@ -29,6 +29,12 @@ row gives the canonical name and where to read more.
 | 管理中心    | Manager Center · `dc3-center-manager` | Metadata management (driver / profile / device / point). See [Services](../architecture/services)                                                                 | Center service |
 | 数据中心    | Data Center · `dc3-center-data`       | Point-value persistence and command dispatch. See [Data Plane](../architecture/data-plane)                                                                        | Center service |
 | 智能中心    | Agentic Center · `dc3-center-agentic` | LLM chat and tool calling. See [Services](../architecture/services)                                                                                               | Center service |
+| 指令      | Command                               | Point-level read/write actions go through the point read/write link; a "custom command" is a device-level action published via the `dc3.e.command` exchange. See [Command](./concepts/command) | Metadata      |
+| 事件      | Event                                 | A one-off fact reported by a device or the system, able to trigger alarms. See [Event](./concepts/event)                                                          | Metadata      |
+| 物模型     | Thing Model                           | The device-capability description a Profile carries (the point / command / event trio), benchmarked against the IoT industry's "thing model". See [Profile](./concepts/profile) | Metadata      |
+| 主体      | Principal                             | An entity within a tenant that can be authorized (users, service accounts, etc.). See [Tenant](./concepts/tenant)                                                 | Cross-cutting |
+| 租约      | Lease                                 | The driver/device online-state mechanism: heartbeat renewal; an unrenewed lease is judged offline (default 15s heartbeat / 45s timeout). See [Device](./concepts/device) | Device access |
+| 超表      | Hypertable                            | TimescaleDB's automatically partitioned time-series table (`dc3_point_value`), queried like a normal table. See [Point Value](./concepts/point-value)             | Data          |
 | 租户      | Tenant · `tenantId`                   | The isolation boundary for business data. See [Tenant](./concepts/tenant)                                                                                         | Cross-cutting  |
 | 属性      | Attribute                             | A driver protocol-layer configuration item, registered by the driver from its `application.yml` at startup. See [Attribute & Config](./concepts/attribute-config) | Configuration  |
 | 配置      | Config                                | The concrete value a device instance supplies for an attribute. See [Attribute & Config](./concepts/attribute-config)                                             | Configuration  |
@@ -65,14 +71,15 @@ platform layer.
 
 ## Protocol and Interface Identifiers
 
-These identifiers appear directly in the doc examples and the source: the message-bus exchanges, the driver routing key,
-the login endpoints, and the auth headers the gateway injects. Treat the source as the authority for exact usage; here
-we give each one's role in the pipeline.
+These identifiers appear directly in the doc examples and the source: the message-bus exchanges, the driver registration
+keys, the login endpoints, and the auth headers the gateway injects. Treat the source as the authority for exact usage;
+here we give each one's role in the pipeline.
 
 | Name · Identifier      | Type                      | Description                                                                                                                      | Domain       |
 |------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------|--------------|
-| `dc3.driver.code`      | Driver routing identifier | A driver's stable routing identifier used for message-bus addressing; it is a stable identifier and must not be changed casually | Driver       |
+| `dc3.driver.code`      | Driver business code      | The driver's stable business code within its tenant (unique on `(tenant_id, driver_code)`), used for registration identity and identification—a stable identifier not to be changed casually; message-bus addressing uses the driver service name `dc3.driver.service` (`{tenant}/{app name}`), not this code | Driver       |
 | `dc3.e.value`          | RabbitMQ exchange         | The exchange for point-value reporting; a driver wraps a reading as a `PointValue` and sends it here                             | Data flow    |
+| `dc3.e.command`        | AMQP                      | Publish/receipt of device-level custom commands (data center)                                                                   | Command      |
 | `dc3.e.point_command`  | RabbitMQ exchange         | The exchange for read/write command dispatch; the data center routes commands to the target driver through it                    | Command flow |
 | `X-Auth-Tenant`        | HTTP auth header          | The tenant identifier carried on protected endpoints, feeding downstream tenant isolation                                        | Auth         |
 | `X-Auth-Login`         | HTTP auth header          | The login-identity identifier carried on protected endpoints                                                                     | Auth         |

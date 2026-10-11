@@ -19,7 +19,8 @@ Omron PLC 的接入，并清楚当前实现支持到哪一步。
 
 FINS（Factory Interface Network Service）是欧姆龙 PLC 的原生通信协议，CP/CJ/CS 等系列广泛在用。它把 PLC 的内存按用途划分为若干
 **内存区（Memory Area）**，每个区以"字"（16 位）为寻址单位；上位机通过发送内存读/写命令帧，按内存区代码 + 字地址访问数据。FINS
-可承载在 UDP、TCP、以太网或欧姆龙专用总线上，本驱动使用 **FINS/TCP**——在每个 FINS 帧前加 4 字节长度前缀。
+可承载在 UDP、TCP、以太网或欧姆龙专用总线上，本驱动走 **TCP** 传输——在每个 FINS 帧前加 4 字节长度前缀（注意这不是欧姆龙标准
+FINS/TCP 封装，见下方告警）。
 
 在[物联网四层架构](../foundations/fieldbus)中，FINS 属于**网络层**：它定义了车间内设备如何被寻址、命令如何编码、字节如何在链路上传输。IoT
 DC3 在它之上做归一化，把"读 `D100` 这个字"翻译成统一的[位号值](../introduction/concepts/point-value)。
@@ -34,9 +35,26 @@ FINS 区代码：`D`=0x82、`W`=0xB1、`H`=0xB0、`C`=0x83。
 ### 一帧 FINS 读命令如何拼装
 
 驱动不依赖第三方协议库，而是手工按字节拼装 FINS 帧。读 1 个字的请求帧由 4 字节 TCP 长度前缀 + 10 字节 FINS 头 + 2
-字节命令码 + 4 字节读参数组成：
+字节命令码 + 6 字节读参数（内存区代码 1B + 起始字地址 2B + 位 1B + 字数 2B）组成：
 
 <FinsDiagram lang="zh" />
+
+::: warning 当前 main 的读帧组帧有缓冲区缺陷，读取 100% 失败
+`FinsDriverCustomServiceImpl.buildMemoryReadFrame()` 拼 18 字节 FINS 读帧（10 头 + 2 命令码 + 6 读参数），缓冲区却只
+`ByteBuffer.allocate(16)`，写到最后的字数字段时必然抛 `BufferOverflowException`，被包装成 `FINS read failed` 抛出——每一轮读都失败。写帧按
+`10 + 2 + 6 + data` 分配，不受影响。修复只需把读帧缓冲区改为 18 字节（上游 iot-dc3 待修）；修复前不要按「读已落地」预期投产。
+:::
+
+::: warning 写帧的 item count 按字节长度填写，真实 PLC 写入待验证
+`buildMemoryWriteFrame()` 把写帧的 item count 字段填成 `data.length`（字节长度），而读帧同一字段填的是字数（`wordCount()`）——FINS
+规范里该字段是字数：写 1 个 `INT16` 字应填 `1`，当前会填成 `2`。对真实欧姆龙 PLC
+写入可能被拒或字数错位；上游改为 `data.length / 2` 并联调验证前，不要按「写已落地」预期投产。
+:::
+
+::: warning 4 字节长度前缀并非标准 FINS/TCP 封装
+欧姆龙标准 FINS/TCP 帧带 `'FINS'` 魔数头（`0x46494E53`）+ 长度 + 命令 + 错误码，且建连有握手；当前驱动只在 FINS 帧前加 4
+字节长度前缀、无握手。对真实欧姆龙以太网模块（9600 / FINS TCP）联调前，需先验证这种封装能被对端接受。
+:::
 
 响应帧在 FINS 头与命令码之后带 2 字节**结束码（end code）**：非 0 表示 PLC 拒绝或出错，驱动据此抛出 `ReadPointException`；为
 0 时数据从第 14 字节开始，按 `dataType` 解码（见下文的实现状态说明）。
@@ -56,7 +74,7 @@ FINS 的接入参数分两类：连到哪台 PLC 由设备级的 **driver 属性
 |-------------|--------------|--------|-------------|----------------------|
 | Host        | `host`       | STRING | `127.0.0.1` | PLC 主机地址             |
 | Port        | `port`       | INT    | `9600`      | FINS 端口（标准 9600）     |
-| Protocol    | `protocol`   | STRING | `TCP`       | 传输协议（驱动固定走 FINS/TCP） |
+| Protocol    | `protocol`   | STRING | `TCP`       | 传输协议（驱动固定走 TCP，4 字节长度前缀封装） |
 | Source Node | `sourceNode` | INT    | `1`         | FINS 源节点号            |
 | Dest Node   | `destNode`   | INT    | `2`         | FINS 目的节点号           |
 | Source Unit | `sourceUnit` | INT    | `0`         | FINS 源单元号            |
@@ -125,9 +143,11 @@ FINS 的接入参数分两类：连到哪台 PLC 由设备级的 **driver 属性
 ## 在 IoT DC3 中如何落地
 
 - **dc3.driver.code**：`FinsDriver`（稳定路由标识，注册、命令分发都靠它，不要随意改）。
-- **读能力**：✓ 已落地——周期轮询，读取字长随 `dataType`，解码支持
-  `INT16`/`UINT16`/`INT32`/`UINT32`/`FLOAT`/`STRING`/`BCD`。
-- **写能力**：✓ 已落地——`INT16`/`UINT16`/`INT32`/`UINT32`/`STRING` 与 `FLOAT`（IEEE 754）均可正确写入。
+- **读能力**：✓ 已实现——周期轮询，读取字长随 `dataType`，解码支持
+  `INT16`/`UINT16`/`INT32`/`UINT32`/`FLOAT`/`STRING`/`BCD`。注意：当前 main 存在读帧缓冲区缺陷（见上文告警），修复前每轮读都会抛
+  `FINS read failed`。
+- **写能力**：✓ 已实现——`INT16`/`UINT16`/`INT32`/`UINT32`/`STRING` 与 `FLOAT`（IEEE 754）的编码均正确；注意：当前 main
+  写帧的 item count 按字节长度填写（见上文告警），对真实 PLC 的写入待验证。
 - **订阅/上报能力**：— 不提供。FINS 是主动轮询型，驱动不监听设备推送，与[驱动能力矩阵](./matrix)中标注一致。
 
 ::: tip 一个驱动实例可接多台 PLC
@@ -143,7 +163,8 @@ FINS 的接入参数分两类：连到哪台 PLC 由设备级的 **driver 属性
    `protocol`、节点/单元号、`timeout`）保持默认。
 2. 给设备绑定的[模板](../introduction/concepts/profile)加一个[位号](../introduction/concepts/point)（
    `pointTypeFlag=INT`、`READ_ONLY`），point 属性填 `memoryArea=D`、`address=100`、`dataType=INT16`。
-3. 启动驱动，30 秒内就能在[位号值](../introduction/concepts/point-value)里看到 `D100` 的采集值。
+3. 启动驱动，读路径打通后 30 秒内就能在[位号值](../introduction/concepts/point-value)里看到 `D100` 的采集值（当前 main
+   的读帧缓冲区缺陷修复前，每轮读会抛 `FINS read failed`，见上文告警）。
 
 ## 延伸阅读
 

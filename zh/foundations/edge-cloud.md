@@ -121,9 +121,9 @@ MQ 这道缓冲之外，采集不会因为云端变慢而反压掉线。
 TimescaleDB 时序库并对外可查，这是云侧"数据服务"的具体形态。
 
 **Facade 模式 = 边云分工的开关。** 中心服务之间的相互调用面向 `dc3-common-facade-api` 的契约接口编程，运行时由
-`DC3_FACADE_MODE` 决定实现：[`grpc`（分布式默认）](../architecture/facade-modes) 让各中心独立成进程、跨进程协作，适合"
+`dc3.facade.{auth,manager,data}.mode` 逐目标决定实现：[`grpc`（分布式默认）](../architecture/facade-modes) 让各中心独立成进程、跨进程协作，适合"
 中心集中在云、驱动散布在边"的拓扑；`local`（单进程）把所有中心合一跑在一台机器上，适合本地与小型单机。也就是说，"
-边云如何分工、要不要分布式"在 DC3 里被收敛成一个部署开关，而不是两套代码——同一份业务逻辑，换 `DC3_FACADE_MODE` 即可在两种形态间切换。
+边云如何分工、要不要分布式"在 DC3 里被收敛成一个部署开关，而不是两套代码——同一份业务逻辑，换 `dc3.facade.*.mode` 即可在两种形态间切换。
 
 ::: tip 把这一章的概念映射到 DC3
 
@@ -132,7 +132,7 @@ TimescaleDB 时序库并对外可查，这是云侧"数据服务"的具体形态
 - 云侧"设备元数据管理" → 管理中心 `dc3-center-manager`
 - 云侧"连接/状态管理"（在线离线、租约过期）→ 数据中心 `dc3-center-data`
 - 云侧"数据服务" → 数据中心 `dc3-center-data` + TimescaleDB
-- 边云分工的部署开关 → Facade 模式 `DC3_FACADE_MODE`
+- 边云分工的部署开关 → Facade 模式 `dc3.facade.{auth,manager,data}.mode`
   :::
 
 ::: info 关于"边缘自治"的实现边界

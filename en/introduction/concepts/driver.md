@@ -96,7 +96,10 @@ former is produced by driver registration, the latter by you when configuring a 
 
 On startup, registration is triggered by `DriverInitRunner` (an `ApplicationRunner`): it builds a `RegisterBO` (carrying
 `tenant`, `driver`=`DriverBO`, `driverAttributes`, etc.) and calls `DriverRegisterService.initial()` to report to the
-management center, retrying with exponential backoff until it succeeds. After registration, a driver is not "online
+management center. A failed registration retries with capped exponential backoff—starting at 2 s, doubling each time,
+capped at 30 s, at most 30 attempts before giving up, which aborts the driver bootstrap sequence (the subsequent custom
+and schedule initialization never run)—so the management center must be ready before the driver. After registration, a
+driver is not "online
 forever the moment it registers"—its **online status is a lease**: the SDK periodically triggers `DriverHealth.health()`
 to report a heartbeat, renewing a 45-second lease in `dc3_entity_state` (`entity_type_flag = 3` denotes a driver); when
 the lease expires unrenewed it is judged `offline`. State values are `online` / `offline` / `maintain` / `fault`.
@@ -125,7 +128,7 @@ You want to onboard a batch of Modbus TCP meters in a workshop:
 
 ## Built-in drivers
 
-DC3 ships with **28** ready-to-use protocol drivers, covering industrial field protocols (Modbus RTU/TCP, OPC UA/DA, PLC
+DC3 ships with **36** ready-to-use protocol drivers, covering industrial field protocols (Modbus RTU/TCP, OPC UA/DA, PLC
 S7, Melsec, BACnet/IP, IEC104, DLMS, SNMP, CAN…), IoT protocols (MQTT, CoAP, LwM2M, HTTP, ZigBee, BLE…), serial/network
 pass-through (Serial, TCP/UDP), and database access (MySQL, PostgreSQL, Oracle, SQLServer). For the full list and each
 driver's responsibility see the [Module Map](../../architecture/modules).

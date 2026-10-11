@@ -127,7 +127,8 @@ The new module's own `pom.xml` usually just inherits the driver parent module an
 <parent>
   <groupId>io.github.pnoker</groupId>
   <artifactId>dc3-driver</artifactId>
-  <version>2026.9.22</version>
+  <!-- Keep in sync with the upstream version (the copied template already carries it; usually no edit needed) -->
+  <version>2026.10.9</version>
 </parent>
 
 <artifactId>dc3-driver-knx</artifactId>
@@ -158,14 +159,14 @@ dc3:
 
     schedule:
       read:                       # read scheduling: periodically collect point values
-        enabled: true
+        enable: true
         cron: '0/30 * * * * ?'    # one round every 30 seconds
       custom:                     # custom scheduling: driver schedule() callback
-        enabled: true
+        enable: true
         cron: '0/5 * * * * ?'
     health:
       device:                     # device health reporting
-        enabled: true
+        enable: true
         cron: '0/15 * * * * ?'
         timeout: 45               # device status lease TTL (seconds)
         timeout-unit: SECONDS
@@ -211,12 +212,27 @@ Attribute field quick reference (the meanings are explained above):
 | `default-value`       | Default value                                                                                                                   |
 | `remark`              | Description text; English recommended                                                                                           |
 
-::: warning The toggle field is named enabled
-The scheduling toggle field is named `enabled`. `DriverScheduleServiceImpl` reads `getRead().getEnabled()` /
-`getCustom().getEnabled()` / `device.getEnabled()`, bound to the `private Boolean enabled` inside `DriverProperties`.
-Spring's relaxed binding will not map `enable` to `enabled` — they are different property names. The
-`dc3-driver-virtual` template writes `enable`, which actually has no effect. For a new driver, use `enabled`. Device
-health's `enabled` defaults to `false` and must be explicitly set to `true` to turn it on.
+::: info Two more attribute groups in the template
+Besides the `driver-attribute` / `point-attribute` groups used above, the real `application.yml` of `dc3-driver-virtual`
+registers two template-specific groups:
+
+- `command-attribute`: `payloadTemplate` (default `'${value}'`) and `responseTemplate` (default `'{}'`), consumed by
+  `DriverCommand.execute(...)` — they render the payload template with the command params and produce a mock response.
+  Define them when your driver implements custom commands.
+- `event-attribute`: `eventCodePath` (default `$.eventCode`) and `payloadPath` (default `$.payload`), two JSONPaths that
+  tell the SDK how to resolve the event code and payload from a device report.
+
+These map one-to-one to the `commandAttribute` / `eventAttribute` fields of `DriverProperties`; protocol drivers that do
+no command mocking or event reporting can omit them.
+:::
+
+::: warning The toggle field is named enable
+The scheduling and health toggle field is named `enable`. `DriverScheduleServiceImpl` reads `getRead().getEnable()` /
+`getCustom().getEnable()` / `deviceHealth.getEnable()`, bound to the `private Boolean enable` inside `DriverProperties`.
+Spring's relaxed binding will not map `enabled` to `enable` — they are different property names — so a config written
+with `enabled` is **silently ignored** and the read/custom jobs never get scheduled. Note the two defaults point in
+opposite directions: read/custom scheduling's `enable` defaults to `false` and must be explicitly set to `true`; device
+health's `enable` defaults to `true` and must be explicitly set to `false` to turn it off.
 :::
 
 The attribute registration chain: `dc3.driver` in `application.yml` → SDK parses it into a `RegisterBO` → submitted to
@@ -372,9 +388,11 @@ java -jar dc3-driver/dc3-driver-knx/target/dc3-driver-knx.jar
 
 :::
 
-In development the driver auto-registers with the management center. Check the driver logs and confirm an event like
-`Driver register succeeded` appears — that means registration worked. (During retries it prints
-`Driver register failed on attempt n/30, retrying...`.)
+In development the driver auto-registers with the management center. Mind the log semantics: a failed registration
+attempt prints `Driver registration failed, attempt=n, maxAttempts=30, retryDelayMillis=...` (WARN); **a first-try
+success prints no "register succeeded" line at all** — only after registration, initialization, and schedule wiring all
+complete does a single `Driver runtime initialized` (INFO) line appear. The most reliable success signal is the driver
+showing up in the management center's driver list with no retry warnings in the log.
 
 Run an end-to-end smoke test along the golden path (HTTP paths and fields come from the gateway contract; example values
 are marked as examples):
@@ -391,7 +409,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
-  -d '{"deviceId": 1, "pointId": 1, "page": {"current": 1, "size": 10}}'
+  -d '{"deviceId": 1, "pointId": 1, "offset": 0, "limit": 10}'
 ```
 
 4. Dispatch a write command to a writable point to confirm `write()` is invoked and acknowledged:
@@ -402,15 +420,16 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
-  -d '{"deviceId": 1, "pointId": 1, "value": "42"}'
+  -d '{"deviceId": "1", "pointId": "1", "value": "42"}'
 ```
 
-The endpoint returns a `commandId`. Use it to query the command history and check the execution status (
+The endpoint returns `202 Accepted` with `{"commandId":"...","statusUri":"..."}` in the body (the `Location` header
+carries the same status URL). Use the `commandId` to query the command history and check the execution status (
 `PointCommandHistoryVO`'s `status` takes `SUCCESS`/`FAILED` etc.; on a successful write, `responseValue` echoes the
-written value):
+written value; note the query parameter is named `command_id`):
 
 ```bash
-curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=<commandId>' \
+curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?command_id=<commandId>' \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
@@ -430,7 +449,7 @@ the [API Documentation](./api-documentation) for details.
 |---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Driver code conflict                        | Duplicate `dc3.driver.code` — keep it globally unique and stable; do not change the code of an already-deployed driver                                                     |
 | `DriverCustomService` not loaded            | The implementation class lacks `@Service`, or sits outside the application class's component-scan scope                                                                    |
-| Registration keeps retrying without success | Management center not ready or gRPC unreachable — check the `Driver register failed on attempt n/30` logs, verify `CENTER_MANAGER_HOST` and the management center's health |
+| Registration keeps retrying without success | Management center not ready or gRPC unreachable — check the `Driver registration failed, attempt=n, maxAttempts=30` logs, verify `CENTER_MANAGER_HOST` and the management center's health |
 | `read` returns empty or throws              | Do not swallow exceptions; let the logs surface the protocol error. A single-point failure should not bring down the whole round                                           |
 | Devices frequently go offline (flap)        | The status TTL is smaller than the read/report cycle — increase the TTL or shorten the schedule cycle                                                                      |
 | Reads happen but the data page has no value | Check RabbitMQ connectivity, data center logs, and tenant context                                                                                                          |

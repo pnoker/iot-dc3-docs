@@ -37,7 +37,8 @@ Modbus 这类标准协议，而是厂商自定义的私有报文：发一串固�
 ## 属性配置
 
 串口的配置分三层：**驱动属性**（`driver-attribute`，设备级）描述这条串口怎么打开（线路参数）；**位号属性**（`point-attribute`
-）描述每个采集点发什么、回包怎么拆、按什么格式解码；**命令属性**（`command-attribute`）描述可写位号往哪儿写。下面三张表的默认值与说明均来自驱动
+）描述每个采集点发什么、回包怎么拆、按什么格式解码；**命令属性**（`command-attribute`）是写命令上的预留属性（当前为占位声明，写入
+真正用到的模板在位号属性的 `sendCommand` 上，见下文）。下面三张表的默认值与说明均来自驱动
 `application.yml`，属性的三层来历见[属性与配置](../introduction/concepts/attribute-config)。
 
 ### 驱动属性（设备级 `driver-attribute`）
@@ -76,26 +77,28 @@ Modbus 这类标准协议，而是厂商自定义的私有报文：发一串固�
 `frameFooter` 从帧头之后找帧终点（`lastIndexOf`）；② 从帧头之后再加 `dataOffset` 得到数据区起点，按 `checksumType`
 在帧尾前留出校验区（CRC16 占 2 字节、XOR 占 1 字节）；③ 若 `checksumType≠NONE`，对帧头之后到数据区结束的字节算校验并与回包中的校验字节比对，不符则报错；④
 按 `dataLength`（0=取到校验区之前）切出数据区，按 `dataFormat`+`byteOrder`
-解码。位号的数据类型（[Point](../introduction/concepts/point) 的 `pointTypeFlag`）应与 `dataFormat` 对得上：`BINARY`/`FLOAT`
-下 1/2/4/8 字节会按 `byteOrder` 拼为整数或浮点（`FLOAT` 用 4 字节单精度、8 字节双精度），长度不在 1/2/4/8 之列时退化为 HEX
+解码。位号的数据类型（[Point](../introduction/concepts/point) 的 `pointTypeFlag`）应与 `dataFormat` 对得上：`BINARY` 按 1/2/4/8 字节用 `byteOrder`
+拼为整数，`FLOAT` 用 4 字节单精度、8 字节双精度解码；长度不满足时（`FLOAT` 的 1/2 字节也算）退化为 HEX
 字符串。
 :::
 
 ### 命令属性（`command-attribute`）
 
-可写位号在写命令上填：
+`application.yml` 在 `command-attribute` 里声明了下面两个属性，但它们当前是**占位声明**：`write()` 的签名只接收
+`pointConfig`（位号属性），并不传入命令属性，本驱动也未覆写 `execute()`，因此写入时这两个属性不会被读取：
 
 | 属性           | code          | 类型     | 默认值        | 说明                         |
 |--------------|---------------|--------|------------|----------------------------|
 | Send Command | `sendCommand` | STRING | `${value}` | 带 `${value}` 占位符的 HEX 指令模板 |
 | Byte Order   | `byteOrder`   | STRING | `BIG`      | 编码写入值的字节序：BIG, LITTLE      |
 
-写入时，驱动把命令参数渲染进 `sendCommand` 模板的 `${value}` 位置，按 HEX 转成字节后整帧发出，不读回包。
+写入真正用到的模板是**位号属性**里的 `sendCommand`：`write()` 对它做 `sendCommand.replace("${value}", value)` 的字符串替换，按
+HEX 转成字节后整帧发出，不读回包。
 
-::: warning 写命令的 byteOrder 当前未参与编码
-`command-attribute` 列了 `byteOrder`，但 `write()` 的实现只做了 `sendCommand.replace("${value}", value)` 的字符串替换，再把整条结果当作
-HEX 解析发出——`${value}` 必须是一段合法 HEX 文本，`byteOrder` 不会对它做大小端转换。要写一个多字节数值，请在上层把它编码成正确字节序的
-HEX 字符串再作为命令参数传入。
+::: warning 写入模板配在位号属性上，byteOrder 当前未参与编码
+`write()` 的模板取自**位号属性** `sendCommand`，不是命令属性；实现只做 `sendCommand.replace("${value}", value)` 的字符串替换，再把整条结果当作
+HEX 解析发出——`${value}` 必须是一段合法 HEX 文本，`byteOrder`（无论填在命令还是位号上）都不会对它做大小端转换。要写一个多字节数值，请在上层把它编码成正确字节序的
+HEX 字符串再传入。若位号的 `sendCommand` 不含 `${value}`，写操作只会把该指令原样发出，写入值不会被替换进帧里。
 :::
 
 ### 采集与健康

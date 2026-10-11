@@ -21,8 +21,9 @@ of this page you can onboard an Omron PLC and know exactly how far the current i
 FINS (Factory Interface Network Service) is the native communication protocol of Omron PLCs, widely used across the
 CP/CJ/CS series. It partitions PLC memory by purpose into several **Memory Areas**, each addressed in units of one "
 word" (16 bits); a host accesses data by sending memory read/write command frames carrying a memory-area code plus a
-word address. FINS can run over UDP, TCP, Ethernet, or Omron's proprietary buses; this driver uses **FINS/TCP**,
-prepending a 4-byte length prefix to each FINS frame.
+word address. FINS can run over UDP, TCP, Ethernet, or Omron's proprietary buses; this driver uses **TCP** transport,
+prepending a 4-byte length prefix to each FINS frame (note this is not the standard Omron FINS/TCP envelope — see the
+warning below).
 
 In the [four-layer IoT architecture](../foundations/fieldbus), FINS sits at the **network layer**: it defines how
 devices on the shop floor are addressed, how commands are encoded, and how bytes travel on the link. IoT DC3 normalizes
@@ -40,9 +41,31 @@ connection these usually stay at their defaults.
 ### How one FINS read frame is assembled
 
 The driver uses no third-party protocol library; it assembles FINS frames byte by byte. A request to read 1 word
-consists of a 4-byte TCP length prefix + a 10-byte FINS header + a 2-byte command code + 4 bytes of read parameters:
+consists of a 4-byte TCP length prefix + a 10-byte FINS header + a 2-byte command code + 6 bytes of read parameters (
+memory-area code 1B + start word address 2B + bit 1B + item count 2B):
 
 <FinsDiagram lang="en" />
+
+::: warning The read frame on current main has a buffer defect — reads fail 100%
+`FinsDriverCustomServiceImpl.buildMemoryReadFrame()` assembles an 18-byte FINS read frame (10 header + 2 command code +
+6 read parameters) but allocates only `ByteBuffer.allocate(16)`, so writing the final item-count field always throws
+`BufferOverflowException`, surfaced as `FINS read failed` — every read round fails. The write frame allocates
+`10 + 2 + 6 + data` and is unaffected. The fix is a one-liner (allocate 18 for the read frame) in upstream iot-dc3;
+until it lands, do not expect the read path to work in production.
+:::
+
+::: warning The write frame's item count is filled with a byte length — verify writes against a real PLC
+`buildMemoryWriteFrame()` fills the write frame's item-count field with `data.length` (a byte length), while the read
+frame fills the same field with a word count (`wordCount()`). Per the FINS spec that field is a word count: writing one
+`INT16` word should carry `1`, not `2`. A real Omron PLC may reject the write or land the wrong word count; until
+upstream fills `data.length / 2` and it is verified in the field, do not rely on the write path either.
+:::
+
+::: warning The 4-byte length prefix is not the standard FINS/TCP envelope
+The standard Omron FINS/TCP frame carries a `'FINS'` magic header (`0x46494E53`) + length + command + error code, plus a
+connection handshake; the current driver only prepends a 4-byte length prefix and performs no handshake. Before
+commissioning against a real Omron Ethernet unit (9600 / FINS TCP), verify that this framing is accepted by the peer.
+:::
 
 The response frame carries a 2-byte **end code** after the FINS header and command code: non-zero means the PLC rejected
 or errored, and the driver raises a `ReadPointException` accordingly; when it is zero, data starts at byte 14 and is
@@ -66,7 +89,7 @@ connection; `timeout` serves as both the TCP connect timeout and the read timeou
 |-------------|--------------|--------|-------------|------------------------------------------------------|
 | Host        | `host`       | STRING | `127.0.0.1` | PLC host address                                     |
 | Port        | `port`       | INT    | `9600`      | FINS port (standard 9600)                            |
-| Protocol    | `protocol`   | STRING | `TCP`       | Transport protocol (the driver always uses FINS/TCP) |
+| Protocol    | `protocol`   | STRING | `TCP`       | Transport protocol (the driver always uses TCP, 4-byte length-prefix framing) |
 | Source Node | `sourceNode` | INT    | `1`         | FINS source node number                              |
 | Dest Node   | `destNode`   | INT    | `2`         | FINS destination node number                         |
 | Source Unit | `sourceUnit` | INT    | `0`         | FINS source unit number                              |
@@ -153,9 +176,11 @@ device:
 - **dc3.driver.code**: `FinsDriver` (stable routing identifier used for registration and command dispatch; do not change
   it casually).
 - **Read capability**: ✓ implemented——periodic polling; word count follows `dataType`, decoding
-  `INT16`/`UINT16`/`INT32`/`UINT32`/`FLOAT`/`STRING`/`BCD`.
+  `INT16`/`UINT16`/`INT32`/`UINT32`/`FLOAT`/`STRING`/`BCD`. Note: current main carries a read-frame buffer defect (see
+  the warning above), so every read throws `FINS read failed` until it is fixed.
 - **Write capability**: ✓ implemented——`INT16`/`UINT16`/`INT32`/`UINT32`/`STRING` and `FLOAT` (IEEE 754) all encode
-  correctly.
+  correctly. Note: on current main the write frame's item count is filled with a byte length (see the warning above),
+  so writes against a real PLC still need field verification.
 - **Subscribe/report capability**: — not provided. FINS is active-poll only; the driver does not listen for device
   pushes, consistent with the [Driver Capability Matrix](./matrix).
 
@@ -174,7 +199,9 @@ Onboard an Omron PLC at IP `192.168.1.20:9600` and acquire one 16-bit integer at
 2. Add a [Point](../introduction/concepts/point) (`pointTypeFlag=INT`, `READ_ONLY`) to
    the [Profile](../introduction/concepts/profile) bound to the device, with point attributes `memoryArea=D`,
    `address=100`, `dataType=INT16`.
-3. Start the driver; within 30 seconds the `D100` value appears in [PointValue](../introduction/concepts/point-value).
+3. Start the driver; once the read path works, the `D100` value appears in [PointValue](../introduction/concepts/point-value)
+   within 30 seconds (on current main every read throws `FINS read failed` until the read-frame buffer defect above is
+   fixed).
 
 ## Further reading
 

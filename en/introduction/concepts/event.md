@@ -34,6 +34,7 @@ Event definition `EventBO` (table `dc3_event`):
 | `eventLevelFlag` | EventLevelEnum    | Event level, see below                                                       |
 | `profileId`      | Long              | The owning [Profile](./profile)                                              |
 | `eventExt`       | JSON              | Extended configuration                                                       |
+| `signature` / `version` | String / Integer | Data signature and version (common audit fields)                             |
 
 Event parameter `EventParamBO` (table `dc3_event_param`, declares which output parameters an event carries):
 

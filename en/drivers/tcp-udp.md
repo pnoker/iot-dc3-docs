@@ -45,7 +45,9 @@ What you exchange with the device is binary. This driver writes commands uniform
 Attributes come from the driver's `application.yml` in three layers: **driver attributes** go on
 the [Device](../introduction/concepts/device) (one set of connection parameters per device), **point attributes** go on
 each [Point](../introduction/concepts/point) (describe what this channel reads and how to parse it), and **command
-attributes** go on a writable point's write command. The prose before each table explains what each attribute does.
+attributes** go on [custom commands](../introduction/concepts/command) (consumed by `execute()`; the write path never
+reads them — see the write command attributes section below). The prose before each table explains what each attribute
+does.
 
 ### Driver Attributes (device-level `driver-attribute`)
 
@@ -94,18 +96,22 @@ The flow below strings together the key hops of "one poll" from sending the comm
 
 ### Write Command Attributes (`command-attribute`)
 
-A writable point's write command takes a `sendCommand` template with a `${value}` placeholder. On write the driver
-replaces `${value}` with the actual command value, then sends it to the device as a HEX command (TCP reuses the
-long-lived connection, UDP creates a temporary socket).
+`application.yml` declares one `sendCommand` entry under `command-attribute`, and what consumes it is the
+**custom command** path: `execute()` replaces the `${param}` placeholders in the template (the default template is
+`${value}`, i.e. the command parameter `value`) with the call's actual parameters and returns the rendered HEX string
+as the command's output parameter `sendCommand` — this driver's `execute()` only renders and echoes; it does
+**not** send the frame to the device. Writing a point (`write()`) never reads these attributes; it takes a different
+path — see the warning below.
 
-| Attribute    | code          | Type   | Default    | Description                                                         |
-|--------------|---------------|--------|------------|---------------------------------------------------------------------|
-| Send Command | `sendCommand` | STRING | `${value}` | write command template; `${value}` is replaced by the command value |
+| Attribute    | code          | Type   | Default    | Description                                                              |
+|--------------|---------------|--------|------------|--------------------------------------------------------------------------|
+| Send Command | `sendCommand` | STRING | `${value}` | custom-command HEX template; `${param}` is replaced by the parameter value |
 
-::: warning The write path reads `sendCommand` from the point attribute
-In the source, `write()` takes `sendCommand` from the **point attribute** (`pointConfig`), not the command attribute. If
-a writable point has no `sendCommand` set in its point attributes, the write returns failure because the command is
-empty. The `command-attribute` `${value}` template applies in the `execute()` rendering flow.
+::: warning The write path reads `sendCommand` from the point attribute, not the command attribute
+`write()` takes `sendCommand` from the **point attribute** (`pointConfig`), never from the command attributes, then
+replaces `${value}` and sends the result to the device as a HEX command (TCP reuses the long-lived connection, UDP
+creates a temporary socket). If a writable point has no `sendCommand` in its point attributes, the write returns
+failure because the command is empty.
 :::
 
 ## Troubleshooting

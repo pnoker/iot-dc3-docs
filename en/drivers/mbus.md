@@ -10,7 +10,7 @@ title: M-Bus Driver
 
 M-Bus (EN 13757) is the European standard for remote meter reading. A master sends short frames to address a meter by primary address, and the meter replies with a long frame containing a variable-length data record (DIF/VIF/data) that carries the measured quantity.
 
-- **Driver name / code**: `M-Bus Driver` / `MbusDriver`
+- **Driver name / code**: `M-Bus Meter-Bus Driver` / `MbusDriver`
 - **Type**: `DRIVER_CLIENT (opens the serial port and polls the meter)`
 - **Underlying library**: jSerialComm (self-built EN 13757-2/3 frame encode/decode — no native jrxtx dependency)
 
@@ -34,6 +34,12 @@ M-Bus (EN 13757) is the European standard for remote meter reading. A master sen
 |-----------|------|------|---------|-------------|
 | Record Index | `recordIndex` | INT | `0` | 0-based index of the data record to read |
 | Data Format | `dataFormat` | STRING | `AUTO` | Data format: AUTO, HEX, BCD, INT, FLOAT |
+
+**Command attributes (`command-attribute`)** — a single one, currently not consumed:
+
+| Attribute | code | Type | Default | Description |
+|-----------|------|------|---------|-------------|
+| Data Format | `dataFormat` | STRING | `ASCII` | Write encoding (`write()` currently hardcodes US-ASCII and ignores this attribute) |
 
 ## Collection and health
 

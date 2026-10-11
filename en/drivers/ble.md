@@ -167,7 +167,7 @@ no custom logic. Only `read` (`0/30`) and `health` (`0/15`) actually take effect
 - **Capabilities**: read ✓, write ✓, subscribe —. Consistent with the [driver capability matrix](./matrix)—BLE is
   request/response active read-write: the driver polls characteristics with read and pushes commands with write, and
   does not subscribe to GATT notify/indication for passive reporting.
-- **Implementation status**: available. `read()`/`write()`/`initial()`/`health()` are all fully implemented, using the
+- **Implementation status**: usable. `read()`/`write()`/`initial()`/`health()` are all fully implemented, using the
   Sputnikdev Bluetooth Manager + TinyB for connection and GATT read/write.
 
 ::: warning Prerequisite: a working Bluetooth adapter + TinyB native library on the host

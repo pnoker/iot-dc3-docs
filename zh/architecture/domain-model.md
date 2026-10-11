@@ -86,9 +86,8 @@ DO 类：
 一个领域对象在系统里有三种长相，对应三个层、三种关注点。以位号为例：`PointDO` / `PointBO` / `PointVO`。
 
 - **DO（`*DO`，如 `PointDO`）—— 数据库形态。** 它是 `dc3_point` 表的镜像：标志位是裸 `Byte`（`pointTypeFlag`、`rwFlag`、
-  `enableFlag` 都是 `Byte`），带 MyBatis-Plus 注解 `@TableName` / `@TableId(type = ASSIGN_ID)`（Snowflake ID）/
-  `@TableLogic`（逻辑删除 `deleted`）/ JSON 扩展用 `JacksonTypeHandler`。DO 只在持久层出现，**裸 `Byte` 标志位不允许泄漏到业务层或对外响应
-  **。
+  `enableFlag` 都是 `Byte`），纯 Lombok POJO（`Serializable`，无 ORM 注解），主键是 Snowflake `Long id`，JSON 扩展字段经
+  `JsonExt` 序列化存取。DO 只在持久层出现，**裸 `Byte` 标志位不允许泄漏到业务层或对外响应**。
 - **BO（`*BO`，如 `PointBO`）—— 业务形态。** 同样的标志位在这里是**域枚举**：`pointTypeFlag` 是 `PointTypeEnum`、`rwFlag` 是
   `RwTypeEnum`、`enableFlag` 是 `EnableFlagEnum`。BO 继承 `BaseBO` 并实现 `TenantOwned`（携带 `tenantId`
   ，租户隔离的起点）。业务代码、Service 之间传的是 BO，不是 VO。换算字段在 BO 里用 `BigDecimal`（`baseValue` / `multiple`），到

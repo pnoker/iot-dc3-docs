@@ -4,8 +4,8 @@ title: 驱动总览
 
 # 驱动 Drivers
 
-> IoT DC3 内置 **36 个协议驱动**，覆盖工业总线、PLC/SCADA、物联网、数据库与虚拟测试。每个驱动是一个独立服务（`dc3-driver-*`
-> ），启动时把自己和可接受的[配置属性](../introduction/concepts/attribute-config)
+> IoT DC3 内置 **36 个协议驱动**，覆盖工业总线 / PLC、SCADA / 电力 / 计量、物联网、数据库与虚拟测试。每个驱动是一个独立服务
+> （`dc3-driver-*`），启动时把自己和可接受的[配置属性](../introduction/concepts/attribute-config)
 > 注册到管理中心，按[位号](../introduction/concepts/point)采数、按[指令](../introduction/concepts/command)写值。
 
 接入一台设备的通用流程见[设备接入](../operation/device-onboarding)
@@ -18,7 +18,7 @@ title: 驱动总览
 第三节 物联网体系结构，p13），把上述异构协议的读写收敛为统一的[位号](../introduction/concepts/point)值；这正对应 IoT
 三层架构中应用层的"**统一数据建模**、通信通道管理"（同上，p13）——上层应用只消费归一化后的位号，不再感知底层协议差异。
 
-## 工业总线 / PLC / SCADA
+## 工业总线 / PLC
 
 | 驱动                           | 协议                | 说明            |
 |------------------------------|-------------------|---------------|
@@ -30,16 +30,21 @@ title: 驱动总览
 | [MELSEC](./melsec)           | Mitsubishi MELSEC | 三菱 PLC        |
 | [FINS](./fins)               | Omron FINS        | 欧姆龙 PLC       |
 | [EtherNet/IP](./ethernet-ip) | EtherNet/IP (CIP) | 罗克韦尔 / CIP    |
-| [BACnet/IP](./bacnet-ip)     | BACnet/IP         | 楼宇自控          |
-| [IEC 104](./iec104)          | IEC 60870-5-104   | 电力 SCADA      |
-| [DLMS](./dlms)               | DLMS / COSEM      | 智能电表          |
-| [SL651](./sl651)             | SL651             | 水文监测          |
-| [SNMP](./snmp)               | SNMP              | 网络设备监控        |
-| [DL/T645](./dlt645)          | DL/T645-2007      | 电能表协议         |
-| [DNP3](./dnp3)               | DNP3 (IEEE 1815)  | 电力自动化         |
-| [IEC 61850](./iec61850)      | IEC 61850 (MMS)   | 变电站自动化        |
-| [KNX](./knx)                 | KNX               | 楼宇自动化总线       |
-| [M-Bus](./mbus)              | M-Bus (EN 13757)  | 仪表总线          |
+
+## SCADA / 电力 / 计量
+
+| 驱动                      | 协议               | 说明         |
+|-------------------------|------------------|------------|
+| [BACnet/IP](./bacnet-ip) | BACnet/IP       | 楼宇自控       |
+| [IEC 104](./iec104)     | IEC 60870-5-104   | 电力 SCADA   |
+| [DLMS](./dlms)          | DLMS / COSEM      | 智能电表       |
+| [SL651](./sl651)        | SL651             | 水文监测       |
+| [SNMP](./snmp)          | SNMP              | 网络设备监控     |
+| [DL/T645](./dlt645)     | DL/T645-2007      | 电能表协议      |
+| [DNP3](./dnp3)          | DNP3 (IEEE 1815)  | 电力自动化      |
+| [IEC 61850](./iec61850) | IEC 61850 (MMS)   | 变电站自动化     |
+| [KNX](./knx)            | KNX               | 楼宇自动化总线    |
+| [M-Bus](./mbus)         | M-Bus (EN 13757)  | 仪表总线       |
 
 ## 物联网 / 无线
 

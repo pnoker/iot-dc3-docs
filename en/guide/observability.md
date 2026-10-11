@@ -134,7 +134,7 @@ GF_SERVER_ROOT_URL="https://ops.example.com/grafana" make up-optional
 ```
 
 Prometheus publishes no port to the host and is normally queried through Grafana. To look at it directly, temporarily
-add a port mapping in the compose file, or use `podman exec` to drop into the container.
+add a port mapping in the compose file, or use `docker exec` / `podman exec` to drop into the container.
 
 ## Constraints and boundaries
 

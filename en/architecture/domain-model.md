@@ -100,10 +100,9 @@ A domain object takes three forms in the system, one per tier and per concern. U
 `PointBO` / `PointVO`.
 
 - **DO (`*DO`, e.g. `PointDO`) — the database shape.** It mirrors the `dc3_point` table. Flags are raw `Byte` (
-  `pointTypeFlag`, `rwFlag`, `enableFlag` are all `Byte`), with MyBatis-Plus annotations `@TableName` /
-  `@TableId(type = ASSIGN_ID)` (Snowflake ID) / `@TableLogic` (logical delete on `deleted`) / `JacksonTypeHandler` for
-  JSON extensions. DOs live only in the persistence tier. **Raw `Byte` flags must not leak into the business tier or
-  external responses.**
+  `pointTypeFlag`, `rwFlag`, `enableFlag` are all `Byte`), a plain Lombok POJO (`Serializable`, no ORM annotations),
+  keyed by a Snowflake `Long id`, with JSON extension fields serialized via `JsonExt`. DOs live only in the persistence
+  tier. **Raw `Byte` flags must not leak into the business tier or external responses.**
 - **BO (`*BO`, e.g. `PointBO`) — the business shape.** The same flags become **domain enums**: `pointTypeFlag` is
   `PointTypeEnum`, `rwFlag` is `RwTypeEnum`, `enableFlag` is `EnableFlagEnum`. A BO extends `BaseBO` and implements
   `TenantOwned` (carrying `tenantId`, the starting point of tenant isolation). Business code and inter-Service calls

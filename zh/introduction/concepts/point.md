@@ -39,6 +39,7 @@ import PointRelationDiagram from '../../../.vitepress/theme/components/PointRela
 | `pointExt`      | PointExt       | 扩展配置（协议映射、约束、采集策略等）        |
 | `enableFlag`    | EnableFlagEnum | 启停状态                       |
 | `tenantId`      | Long           | 归属[租户](./tenant)           |
+| `signature` / `version` | String / Integer | 数据签名与版本（通用审计字段） |
 
 ## 数据类型 `pointTypeFlag`
 

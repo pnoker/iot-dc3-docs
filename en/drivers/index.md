@@ -4,7 +4,7 @@ title: Drivers
 
 # Drivers
 
-> IoT DC3 ships **36 protocol drivers** covering industrial buses, PLC/SCADA, IoT, databases, and virtual testing. Each
+> IoT DC3 ships **36 protocol drivers** covering industrial buses and PLCs, SCADA/power/metering, IoT, databases, and virtual testing. Each
 > driver is a standalone service (`dc3-driver-*`) that registers itself and
 > the [config attributes](../introduction/concepts/attribute-config) it accepts with the manager on startup, then
 > reads [points](../introduction/concepts/point) and writes via [commands](../introduction/concepts/command).
@@ -15,7 +15,7 @@ the [Driver](../introduction/concepts/driver) concept. Pick your protocol by cat
 ## The protocol adaptation layer
 
 The device world speaks heterogeneous, siloed protocols: Modbus master/slave, the OPC UA address space, MQTT
-pub/sub, vendor-specific PLC frames, SQL result sets — with no shared addressing and no shared wire format. The 28
+pub/sub, vendor-specific PLC frames, SQL result sets — with no shared addressing and no shared wire format. The 36
 drivers each act as a **sensing-data convergence point** at the network layer (see Wen Zhe & Fan Yabin, *Research and
 Application of Four-Network Convergence Technology Based on the Internet of Things*, Jilin People's Publishing House,
 2016, ch. 1 §3, p13), folding reads and writes across those protocols into unified [point](../introduction/concepts/point)
@@ -23,7 +23,7 @@ values — the "unified data modeling and communication-channel management" of t
 IoT architecture (ibid., p13). Upper-layer applications consume normalized points only and never see the protocol
 differences underneath.
 
-## Industrial Bus / PLC / SCADA
+## Industrial Bus / PLC
 
 | Driver                       | Protocol          | Notes                           |
 |------------------------------|-------------------|---------------------------------|
@@ -35,16 +35,21 @@ differences underneath.
 | [MELSEC](./melsec)           | Mitsubishi MELSEC | Mitsubishi PLC                  |
 | [FINS](./fins)               | Omron FINS        | Omron PLC                       |
 | [EtherNet/IP](./ethernet-ip) | EtherNet/IP (CIP) | Rockwell / CIP                  |
-| [BACnet/IP](./bacnet-ip)     | BACnet/IP         | Building automation             |
-| [IEC 104](./iec104)          | IEC 60870-5-104   | Power SCADA                     |
-| [DLMS](./dlms)               | DLMS / COSEM      | Smart meters                    |
-| [SL651](./sl651)             | SL651             | Hydrology monitoring            |
-| [SNMP](./snmp)               | SNMP              | Network device monitoring       |
-| [DL/T645](./dlt645)          | DL/T645-2007      | Electricity meter protocol      |
-| [DNP3](./dnp3)               | DNP3 (IEEE 1815)  | Utility automation              |
-| [IEC 61850](./iec61850)      | IEC 61850 (MMS)   | Substation automation           |
-| [KNX](./knx)                 | KNX               | Building automation bus         |
-| [M-Bus](./mbus)              | M-Bus (EN 13757)  | Metering bus                    |
+
+## SCADA / Power / Metering
+
+| Driver                  | Protocol         | Notes                      |
+|-------------------------|------------------|----------------------------|
+| [BACnet/IP](./bacnet-ip) | BACnet/IP       | Building automation        |
+| [IEC 104](./iec104)     | IEC 60870-5-104   | Power SCADA                |
+| [DLMS](./dlms)          | DLMS / COSEM      | Smart meters               |
+| [SL651](./sl651)        | SL651             | Hydrology monitoring       |
+| [SNMP](./snmp)          | SNMP              | Network device monitoring  |
+| [DL/T645](./dlt645)     | DL/T645-2007      | Electricity meter protocol |
+| [DNP3](./dnp3)          | DNP3 (IEEE 1815)  | Utility automation         |
+| [IEC 61850](./iec61850) | IEC 61850 (MMS)   | Substation automation      |
+| [KNX](./knx)            | KNX               | Building automation bus    |
+| [M-Bus](./mbus)         | M-Bus (EN 13757)  | Metering bus               |
 
 ## IoT / Wireless
 

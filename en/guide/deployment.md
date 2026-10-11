@@ -28,12 +28,21 @@ Kubernetes cluster, mode 4 - and mode 5 when you want GitOps / repeatable instal
 full command runbook lives in the main repo at
 [`dc3/doc/DEPLOYMENT.md`](https://github.com/pnoker/iot-dc3/blob/main/dc3/doc/DEPLOYMENT.md).
 
+::: info Version applicability
+All five modes' files live on the main branch of the main repo. Mode 1 (single-host Compose) works on any image line;
+the mode 2-5 (scale / swarm / k8s / helm) orchestration files entered the repo on 2026-08-18 - checkouts older than
+v2026.8.19 (including the stale release line) don't contain them. Note that Docker Hub never had a 2026.8 image line,
+and the v2026.8.19 checkout still defaults to the nonexistent `2026.6` tag: the first image line that works out of
+the box is `2026.9`.
+:::
+
 ### Image availability (know this before picking a mode)
 
 The release CI publishes only the **app images** (web, gateway, the four centers plus `dc3-center-single`, drivers)
 to Docker Hub `pnoker/*` and Aliyun `registry.cn-beijing.aliyuncs.com/dc3/*`. The **dependency images**
-`dc3-postgres` and `dc3-rabbitmq` are built locally by `docker-compose-db.yml` and are **not published** - build
-and push them to your own registry for swarm / k8s / helm. `push-images.sh` needs a local environment able to build
+`dc3-postgres` and `dc3-rabbitmq` are built locally by `docker-compose-db.yml`; the current release CI no longer
+publishes them (Docker Hub retains only the `2026.5` line and older historical tags) - build and push them to your
+own registry for swarm / k8s / helm. `push-images.sh` needs a local environment able to build
 the full image set (JDK/Maven, enough disk) plus push credentials for the target registry:
 
 ```bash
@@ -101,8 +110,8 @@ kubectl apply -k dc3/deploy/k8s
 kubectl -n dc3 get pods -w
 ```
 
-> Note: the main repo currently tracks a weak-default `secret.env` in git - `cp` over it locally, but never commit
-> real values back.
+> Note: git tracks only the template `secret.env.example`; `secret.env` itself is excluded by the main repo's
+> `.gitignore` - copy the template, fill in strong random values, and the real values can't be committed by accident.
 
 ## Mode 5 - Helm
 
@@ -170,9 +179,10 @@ deploy time.
 6. **Network** - restrict egress (centers only need the LLM endpoint), keep backend ports off the host; on k8s
    enable Pod Security Admission `baseline` (not built into the manifests - label the namespace yourself:
    `kubectl label ns dc3 pod-security.kubernetes.io/enforce=baseline`).
-7. **API surface** - Swagger/OpenAPI is disabled only on the `pro` profile (the build argument does not decide
-   runtime behavior - see the warning above); confirm `NODE_ENV=pro` is in effect and no debug endpoints are
-   reachable before go-live.
+7. **API surface** - Swagger/OpenAPI protection applies equally on the `pre` and `pro` profiles: with api-docs enabled
+   but no internal signature configured (`dc3.docs.internal-signature-enabled` plus the internal HMAC secret), the
+   service refuses to start (the build argument does not decide runtime behavior - see the warning above). Confirm
+   `NODE_ENV=pre`/`pro` is in effect and no debug endpoints are reachable before go-live.
 
 ## FAQ
 

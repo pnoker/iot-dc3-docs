@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vitepress dev",
-    "build": "node scripts/gen-diagram-index.mjs && vitepress build && node scripts/generate-llms-full.cjs && node scripts/sitemap-clean.cjs",
+    "build": "node scripts/gen-diagram-index.mjs && vitepress build && node scripts/fix-diagram-anchors.mjs && vitepress build && node scripts/generate-llms-full.cjs && node scripts/sitemap-clean.cjs",
     "preview": "vitepress preview",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",

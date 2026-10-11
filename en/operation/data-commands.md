@@ -44,15 +44,15 @@ how to use them.
 ## Reading data: latest values and history
 
 The Data Center exposes two read interfaces. Both are `POST` (the body carries pagination and filter conditions) and
-each returns `Page<PointValueVO>`. Every value carries `deviceId`, `pointId`, `rawValue` (raw value), `calValue` (
+each returns a paginated list of `PointValueVO`. Every value carries `deviceId`, `pointId`, `rawValue` (raw value), `calValue` (
 engineering value), `numValue` (numeric projection, nullable), plus `createTime` and `operateTime`. Both are
 tenant-isolated (`tenantId`) and sit under the permission code `point_value:list`. Protected interfaces require the auth
 headers `X-Auth-Tenant`, `X-Auth-Login`, and `X-Auth-Token` — see
 the [API documentation](../development/api-documentation) for how to obtain them.
 
 `/api/v3/data/point_value/latest` returns the current value of each point. `deviceId` and `pointId` are optional —
-supplying only `deviceId` returns the latest values of all points on that device. Pagination fields nest inside the
-`page` object:
+supplying only `deviceId` returns the latest values of all points on that device. Pagination fields are the flat
+`offset` / `limit` pair (default `limit=50`, max 200):
 
 ::: code-group
 
@@ -61,33 +61,37 @@ supplying only `deviceId` returns the latest values of all points on that device
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}' \
-  -d '{"deviceId": 1001, "page": {"current": 1, "size": 20}}'
+  -d '{"deviceId": 1001, "offset": 0, "limit": 20}'
 ```
 
 ```bash [list historical range]
-# Use rangeKey (today/24h/7d/30d) or createTimeFrom / rangeHours to bound the time window
+# Use rangeKey (today/24h/7d/30d) or createTimeFrom / rangeHours to bound the time window; cursor paging —
+# pass the response's nextCursor back as the cursor field of the next request
 curl -X POST http://localhost:8000/api/v3/data/point_value/list \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Tenant: <tenant>' -H 'X-Auth-Login: <account>' -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001,
        "rangeKey": "24h",
-       "page": {"current": 1, "size": 100}}'
+       "limit": 100}'
 ```
 
 :::
 
 Compared to `latest`, `/api/v3/data/point_value/list` adds time-filter fields such as `createTimeFrom`, `rangeHours`,
-and `rangeKey` (`today`/`24h`/`7d`/`30d`) for paging through history. The response looks roughly like this (sample
-values):
+and `rangeKey` (`today`/`24h`/`7d`/`30d`) for paging through history. The two endpoints page differently: `latest` is
+offset-paged (the response is `{items, offset, limit, total, hasNext}`) while `list` is **cursor-paged** (the response
+is `{items, nextCursor, hasNext}`; pass `nextCursor` back as the next request's `cursor`). The response looks roughly
+like this (sample values):
 
 ```json
 {
   "data": {
-    "current": 1, "size": 20, "total": 1,
-    "records": [
+    "items": [
       { "deviceId": 1001, "pointId": 2001, "rawValue": "26.5", "calValue": "26.5",
         "numValue": 26.5, "createTime": "2026-06-22T11:59:58" }
-    ]
+    ],
+    "nextCursor": "example-next-page-cursor",
+    "hasNext": false
   }
 }
 ```
@@ -208,7 +212,7 @@ two plane documents.
 | Symptom                                               | Check first                                                                                                                 |
 |-------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
 | Devices exist but `/point_value/latest` returns empty | Whether tenant/`deviceId`/`pointId` are correct, the acquisition cycle, driver protocol logs, whether RabbitMQ is backed up |
-| Historical values have gaps or lag                    | Batch thresholds (`POINT_BATCH_SPEED`/`POINT_BATCH_INTERVAL`), RabbitMQ backlog, Data Center logs                           |
+| Historical values have gaps or lag                    | Batch parameters (`POINT_BATCH_SIZE`/`POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`), RabbitMQ backlog, Data Center logs                           |
 | Command stuck at `PENDING`/`SENT` for a long time     | Whether the target driver is online, whether it listens on `dc3.q.point_command.{serviceName}`                              |
 | Command becomes `EXPIRED`                             | Device/driver offline or slow to respond; the 10-second `expireAt` has elapsed                                              |
 | Write command returns `FAILED`                        | Whether the point's `rwFlag` allows writes, the written value's type/range, the protocol return code                        |

@@ -50,7 +50,7 @@ const apiMocks = vi.hoisted(() => ({
 vi.mock('@/api/foo', () => apiMocks);
 ```
 
-对于包含多个 `vi.mock` 的文件，shared-mocks guardrail 会强制要求这种写法。
+对于包含多个 `vi.mock` 的文件，`tests/README.md` 的 Mocking 约定要求统一采用这种写法（多个 `vi.mock` 的 spy 收进一个 `vi.hoisted` 块）——这是成文约定，目前没有对应的机械 guardrail。
 
 ## 本地通过、CI 上因 "leftover state" 失败
 
@@ -97,7 +97,7 @@ it('validates before searching', …);
 
 ## 一次小的 API 改动引发巨大的 snapshot diff
 
-`tests/api/api-contracts.test.ts.snap` 大约 2800 行，因为它覆盖了每一个 API wrapper。对某个 wrapper的小改动会触发其中一小段聚焦的
+`tests/api/__snapshots__/api-contracts.test.ts.snap` 有数千行，因为它覆盖了每一个 API wrapper。对某个 wrapper 的小改动会触发其中一小段聚焦的
 diff；如果出现巨大 diff，说明很多 wrapper 都发生了变化。自检：
 
 - 鉴权头的结构变了吗？（存储格式变更）

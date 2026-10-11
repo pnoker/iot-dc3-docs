@@ -68,8 +68,8 @@ troubleshooting, trust `status` — don't read "no echo" as "not yet executed".
 ## Runtime entry points
 
 All platform API traffic goes through the Gateway (in-container `8000`; the `dev` stack publishes it to the host via
-`DC3_GATEWAY_PORT`). It fronts the four centers — Auth, Manager, Data, and Agentic — and handles auth-header extraction
-`DC3_GATEWAY_PORT`; the `app` stack does not expose it directly — externally only the web front end `8080/8443` proxies into it). It fronts the four centers — Auth, Manager, Data, and Agentic — and handles auth-header extraction
+`DC3_GATEWAY_PORT`; the `app` stack does not expose it directly — externally only the web front end `8080/8443` proxies
+into it via nginx). It fronts the four centers — Auth, Manager, Data, and Agentic — and handles auth-header extraction
 and tenant-context injection in one place. During development you can bypass the gateway and hit a center directly to
 debug. In production, traffic always goes through the gateway.
 

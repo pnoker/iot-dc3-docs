@@ -84,8 +84,9 @@ Web 不用改。
 <DriverLifecycleDiagram lang="zh" />
 
 驱动启动时由 `DriverInitRunner`（`ApplicationRunner`）触发注册：构造 `RegisterBO`（含 `tenant`、`driver`=`DriverBO`、
-`driverAttributes` 等）调用 `DriverRegisterService.initial()` 上报管理中心，注册失败按指数退避重试直至成功。注册后驱动并非"
-一注册就永远在线"——它的**在线状态是一份租约**：SDK 周期触发 `DriverHealth.health()` 上报心跳，在 `dc3_entity_state`（
+`driverAttributes` 等）调用 `DriverRegisterService.initial()` 上报管理中心，注册失败按指数退避重试——从 2 秒起、每次
+翻倍、封顶 30 秒，最多尝试 30 次仍失败则放弃注册，驱动启动序列就此终止（后续的自定义初始化与调度初始化不再
+执行）——因此管理中心需先于驱动就绪。注册后驱动并非"一注册就永远在线"——它的**在线状态是一份租约**：SDK 周期触发 `DriverHealth.health()` 上报心跳，在 `dc3_entity_state`（
 `entity_type_flag = 3` 表示驱动）续租 45 秒；租约到期未续即判定 `offline`。状态取值为 `online` / `offline` / `maintain` /
 `fault`。
 

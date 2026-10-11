@@ -22,7 +22,7 @@ IoT DC3 用四个 Compose 栈拼出完整环境：`db` 起依赖、`dev` 从源�
   AGE/TimescaleDB/pgvector，承载元数据、时序值、告警、Agentic 会话）和 `dc3-rabbitmq`（数据流/命令流的消息总线）。任何应用栈都依赖它先就绪。
 - **`dev`**（`docker-compose-dev.yml`）：源码构建栈，从本地 `Dockerfile` 现场 `build` 出 `dc3-gateway`
   与四个中心（auth/manager/data/agentic）等。给改后端代码、要本地调试的人用；前端不在此栈内，单独 `pnpm dev` 起。
-- **`app`**（`docker-compose.yml`）：预构建镜像栈，直接拉远端镜像跑，含前端 `dc3-web`、网关、四个中心、以及一组驱动容器。给评估、演示、生产部署用——不编译、起得快。
+- **`app`**（`docker-compose.yml`）：预构建镜像栈，直接拉远端镜像跑，含前端 `dc3-web`、网关、四个中心、以及全部 36 个内置驱动容器。给评估、演示、生产部署用——不编译、起得快。
 - **`optional`**（`docker-compose-optional.yml`）：可观测性与可选依赖栈，含
   EMQX、Elasticsearch/Logstash/Kibana、Prometheus、Grafana、APM 及若干
   exporter。按需叠加，不影响核心链路。详见 [可观测性](./observability)。
@@ -68,7 +68,7 @@ gRPC（9300/9400/9500，agentic 无 gRPC server），这是开发便利，**不�
 | `STACK`    | `dev`            | 选栈：`db` / `dev` / `app` / `optional`                   |
 | `SERVICES` | （空=全部）           | 只操作指定服务，空格分隔，如 `SERVICES="gateway agentic"`            |
 | `GROUP`    | （空）              | 预定义服务组：`center`（四个中心）/ `core`（中心 + 网关）/ `drivers`（驱动组） |
-| `COMPOSE`  | `podman compose` | 容器运行时（本仓库统一用 podman）                                   |
+| `COMPOSE`  | 自动探测           | 容器运行时：`docker compose` 可用则优先，其次 `podman compose`；可显式 `COMPOSE=podman compose` 指定 |
 
 `GROUP` 是 `SERVICES` 的快捷写法——`center` 展开为 `auth manager data agentic`，`core` 再加 `gateway`，`drivers` 展开为内置驱动集合。
 `SERVICES` 与 `GROUP` 可叠加。
@@ -122,7 +122,7 @@ make reset STACK=db CONFIRM_RESET_VOLUMES=true
 自 `2026.9` 起，`dc3-center-*` 与 `dc3-gateway` 另有 GraalVM native 镜像线（同一镜像名，tag 加 `-native` 后缀，如 `dc3-center-auth:2026.9-native`），启动毫秒级、内存占用更低；驱动服务仍在 JVM 镜像线上运行。
 
 ::: tip 钉死版本再上生产
-Docker Hub 上的当前版本线是 `2026.9`（最新 `2026.9.22`），与 compose 默认值一致，开箱即可起栈。生产环境仍建议把根目录 `.env` 的 `DC3_IMAGE_TAG` 钉死到具体补丁版本（如 `2026.9.22`）而非跟随默认系列 tag。
+Docker Hub 最新发布线是 `2026.10`（最新补丁 `2026.10.9`，2026-10-08 推送，`latest` 指向它，含 `-native` 变体）；仓库默认 `DC3_IMAGE_TAG=2026.9`，`.env.example` 与 Compose fallback 一致，开箱即可起栈。生产环境仍建议把根目录 `.env` 的 `DC3_IMAGE_TAG` 钉死到具体补丁版本（如 `2026.10.9`）而非跟随系列 tag。另注意 app 镜像线从 `2025.9.3` 直接跳到 `2026.9`（从无 `2026.5`/`2026.6` tag）：旧检出的 `.env.example` 若写着 `2026.6`，拉镜像会失败，改成 `2026.9` 及以上即可。
 :::
 
 ::: code-group
@@ -144,7 +144,7 @@ make up STACK=app REGISTRY=cn
 
 ::: warning Makefile 用 REGISTRY，Compose 用 DC3_IMAGE_REGISTRY
 两个名字别混。`REGISTRY=auto|global|cn` 是 `make` 的选择器，它负责把对应的 `DC3_IMAGE_REGISTRY` 命名空间注入 Compose；直接跑
-`podman compose` 时要自己设 `DC3_IMAGE_REGISTRY`。
+`docker compose` / `podman compose` 时要自己设 `DC3_IMAGE_REGISTRY`（运行时由 Makefile 的 `COMPOSE` 自动探测，`docker compose` 优先）。
 :::
 
 ## 起栈后：种子数据与对外验证
@@ -152,7 +152,7 @@ make up STACK=app REGISTRY=cn
 `app`/`dev` 栈起来后，平台已可用。验证对外入口最直接的方式是走前端 `dc3-web`（默认 `http://127.0.0.1:8080`）。若要从命令行打
 API，需经网关——但网关在 `app` 栈不对外，通常在 `dev` 栈（发布 8000）下验证。登录是两步：先 `POST /api/v3/auth/token/salt` 取盐，再
 `POST /api/v3/auth/token/generate` 换取 12 小时有效的 token，后续请求带上 `X-Auth-Tenant` / `X-Auth-Login` /
-`X-Auth-Token` 三个鉴权头。
+`X-Auth-Token` 三个鉴权头（`X-Auth-Token` 的值是 JSON `{"salt":"...","token":"..."}`，不是裸 token）。
 
 ```bash
 # 仅在网关对外的 dev 栈下可用；值均为示例，按你的租户/账号替换
@@ -162,10 +162,10 @@ curl -s -X POST http://127.0.0.1:8000/api/v3/auth/token/salt \
   -d '{"tenant":"default","name":"dc3"}'
 # → 返回盐字符串（示例；建议 5 分钟内使用）
 
-# 2) 用盐对密码哈希后换取 token（公开），返回 12 小时有效的访问令牌
+# 2) 连同盐提交明文密码换取 token（公开；盐不参与密码哈希，校验在服务端完成），返回 12 小时有效的访问令牌
 curl -s -X POST http://127.0.0.1:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回>","password":"<哈希后密码>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<上一步返回>","password":"<明文密码>"}'
 ```
 
 数据库首次在**空数据卷**上启动时，`dc3-postgres` 入口会按文件名顺序执行 `initdb` 下的 **7 个种子脚本**，一次性建好库结构与基础数据：

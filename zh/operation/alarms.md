@@ -11,7 +11,7 @@ import AlarmNotifyFlowDiagram from '../../.vitepress/theme/components/AlarmNotif
 # 告警与通知
 
 平台把"什么时候出问题、谁该被告知"统一收敛到一张运行告警表和一条通知链路。读完这页，你能看懂五类告警来源如何汇入
-`dc3_entity_alarm`、前端三个告警视图是怎么从同一张表过滤出来的，以及规则触发后通知是怎么经由邮件/短信/Webhook 发出去的。
+`dc3_entity_alarm`、前端三个告警视图是怎么从同一张表过滤出来的，以及规则触发后通知是怎么经由飞书机器人/Webhook/邮件发出去的。
 
 > 你在这里：已[接入一个设备](./device-onboarding)
 > 并有数据流转，想为异常配置告警与通知。要理解数据从哪来，可回看[数据平面](../architecture/data-plane)。
@@ -62,12 +62,12 @@ DC3 的选择是：**所有运行告警，无论来源，统一落在 `dc3_entit
 
 <AlarmErDiagram lang="zh" />
 
-### 触发状态机：pending → firing → recovered → closed
+### 触发状态机：NORMAL → FIRING → RECOVERED
 
-`dc3_rule_state` 是每条规则对每个实体（由 `fingerprint` 唯一标识）的运行态，`entity_state_flag` 取值受 SQL 约束
-`CHECK (entity_state_flag BETWEEN 0 AND 3)`：
+`dc3_rule_state` 是每条规则对每个实体（由 `fingerprint` 唯一标识）的运行态，`entity_state_flag` 取 `RuleStatusEnum` 的三个值；
+SQL 约束 `CHECK (entity_state_flag BETWEEN 0 AND 3)` 只是预留的宽度约束，`3` 目前没有对应状态：
 
-- `0=pending` 待触发，`1=firing` 触发中，`2=recovered` 已恢复，`3=closed` 已关闭。
+- `0=NORMAL` 正常，`1=FIRING` 触发中，`2=RECOVERED` 已恢复。
 - 状态翻转时记录 `first_trigger_time` / `last_trigger_time` / `last_recover_time` / `last_notify_time` 与
   `trigger_count`，并把当次告警的 `alarm_id` 回填——这让"同一异常持续触发"只累加计数、不重复刷屏，恢复也能被感知。
 
@@ -78,9 +78,12 @@ DC3 的选择是：**所有运行告警，无论来源，统一落在 `dc3_entit
 
 <AlarmNotifyFlowDiagram lang="zh" />
 
-`dc3_notify_channel.channel_type_flag` 受约束 `CHECK (channel_type_flag BETWEEN 0 AND 2)`，即 `0=email`、`1=SMS`、
-`2=webhook`；`dc3_notify_history.status_flag` 受约束 `CHECK (status_flag BETWEEN 0 AND 4)`，覆盖
-pending/sent/success/failed/retry 五态，失败可重试并累加 `retry_count`。
+`dc3_notify_channel.channel_type_flag` 受约束 `CHECK (channel_type_flag BETWEEN 0 AND 2)`，取值来自
+`NotifyChannelTypeEnum`：`0=feishu-bot` 飞书机器人、`1=webhook`、`2=email`——不存在短信（SMS）通道。注意 EMAIL
+适配器目前是占位实现（尚未接入 SMTP/邮件服务商），投递结果会记为 `SKIPPED`；实际能发出通知的是飞书机器人与
+Webhook 两种渠道。`dc3_notify_history.status_flag` 受约束 `CHECK (status_flag BETWEEN 0 AND 4)`，取值来自
+`NotifyHistoryStatusEnum` 的五态：`0=pending`、`1=success`、`2=failed`、`3=retrying`、`4=skipped`，失败可重试并累加
+`retry_count`。
 
 ## 事件历史 vs 运行告警：别混为一谈
 
@@ -106,16 +109,17 @@ pending/sent/success/failed/retry 五态，失败可重试并累加 `retry_count
 ::: code-group
 
 ```bash [curl 查询告警]
-# 经网关 (8000) 查询运行告警，按 source/类型/确认态过滤
-# X-Auth-* 三件套由 POST /api/v3/auth/token/generate 登录后取得
+# 经网关 (8000) 查询运行告警，按 source/类型/确认态过滤；分页是平铺的 offset/limit
+# X-Auth-* 三件套由 POST /api/v3/auth/token/generate 登录后取得；
+# 注意 X-Auth-Token 的值是 JSON 信封 {"salt":...,"token":...}，直接传裸 token 会 401
 curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/page \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Tenant: <示例: 你的租户>' \
   -H 'X-Auth-Login: <示例: 你的登录名>' \
-  -H 'X-Auth-Token: <示例: 登录返回的 token>' \
+  -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
   -d '{
-        "current": 1,
-        "size": 20,
+        "offset": 0,
+        "limit": 20,
         "source": "device",
         "alarmTypeFlag": 0,
         "confirmFlag": 0
@@ -128,17 +132,27 @@ curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/page \
 curl -X POST 'http://localhost:8000/api/v3/data/dashboard/alert/confirm?source=device&id=1024' \
   -H 'X-Auth-Tenant: <示例: 你的租户>' \
   -H 'X-Auth-Login: <示例: 你的登录名>' \
-  -H 'X-Auth-Token: <示例: 登录返回的 token>'
+  -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}'
+
+# 批量确认/取消走 bulk_confirm：body 为 {"confirm":true|false,"items":[{"source":"...","id":...}]}，
+# 返回实际更新行数（confirm=false 即批量取消确认）
+curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/bulk_confirm \
+  -H 'Content-Type: application/json' \
+  -H 'X-Auth-Tenant: <示例: 你的租户>' \
+  -H 'X-Auth-Login: <示例: 你的登录名>' \
+  -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
+  -d '{"confirm":true,"items":[{"source":"device","id":1024},{"source":"device","id":1025}]}'
 ```
 
 ```json [响应形态（示例）]
 {
   "code": "R200",
   "data": {
-    "current": 1,
-    "size": 20,
+    "offset": 0,
+    "limit": 20,
     "total": 3,
-    "records": [
+    "hasNext": false,
+    "items": [
       {
         "id": "示例-雪花ID",
         "source": "device",

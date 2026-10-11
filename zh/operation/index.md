@@ -71,8 +71,8 @@ Agentic Center 做自然语言运营。每一步都依赖前一步的产物—�
 
 ## 从登录到一条命令：最小可跑示例
 
-下面用黄金路径的真实接口，演示"拿 token → 下一条读命令"的最小闭环。登录分两步：先取盐，再用加盐后的口令换 token（有效期 12
-小时）；之后所有受保护接口都要带上三个鉴权头。示例值（租户、用户名、ID）仅为占位，按你的实际数据替换。
+下面用黄金路径的真实接口，演示"拿 token → 下一条读命令"的最小闭环。登录分两步：先取盐，再携盐与明文密码换 token（有效期 12
+小时；盐不参与密码哈希，校验由服务端 Argon2 完成）；之后所有受保护接口都要带上三个鉴权头。示例值（租户、用户名、ID）仅为占位，按你的实际数据替换。
 
 ::: code-group
 
@@ -82,7 +82,7 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
 
-# 用加盐后的口令换 access token（12 小时有效）
+# 携带盐与明文密码换 access token（12 小时有效；盐不参与密码哈希，服务端 Argon2 校验）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<明文密码>"}'

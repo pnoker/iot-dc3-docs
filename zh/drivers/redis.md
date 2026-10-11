@@ -29,6 +29,9 @@ Redis 是内存键值存储，本驱动把位号映射到键（HASH 时可选字
 | Data Type | dataType | STRING | STRING | STRING 或 HASH |
 | Field | field | STRING | （空） | Hash 字段 |
 
+此外 `application.yml` 还声明了一组 **写命令属性（`command-attribute`）**：`Data Type`（code `dataType`，STRING，STRING）。它当前是
+占位声明——`write()` 只读位号属性里的 `dataType`，本驱动也未覆写 `execute()`，因此写命令上填不填这组属性都不影响写入行为。
+
 ## 采集与健康
 
 - **采集周期**：`read` 调度默认 cron `0/30 * * * * ?`（每 30 秒对所有位号跑一轮轮询）。

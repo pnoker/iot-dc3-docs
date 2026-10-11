@@ -44,6 +44,7 @@ Point `PointBO` (table `dc3_point`):
 | `pointExt`      | PointExt       | Extended config (protocol mapping, constraints, collection strategy, etc.) |
 | `enableFlag`    | EnableFlagEnum | Enable / disable state                                                     |
 | `tenantId`      | Long           | Owning [Tenant](./tenant)                                                  |
+| `signature` / `version` | String / Integer | Data signature and version (common audit fields)                           |
 
 ## Data Type `pointTypeFlag`
 

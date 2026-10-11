@@ -12,7 +12,7 @@ import AlarmNotifyFlowDiagram from '../../.vitepress/theme/components/AlarmNotif
 
 IoT DC3 folds "something went wrong" and "who needs to know" into a single runtime alarm table and one notification
 pipeline. This page covers how the five alarm sources all land in `dc3_entity_alarm`, how the three frontend alarm views
-filter that same table, and how notifications go out over email, SMS, or webhook once a rule fires.
+filter that same table, and how notifications go out over Feishu bot, webhook, or email once a rule fires.
 
 > You are here: you've already [onboarded a device](./device-onboarding) with data flowing, and now want to configure
 > alarms and notifications for anomalies. To see where the data comes from, revisit
@@ -71,12 +71,13 @@ columns, with no foreign-key constraints in the database:
 
 <AlarmErDiagram lang="en" />
 
-### Trigger state machine: pending → firing → recovered → closed
+### Trigger state machine: NORMAL → FIRING → RECOVERED
 
 `dc3_rule_state` holds the runtime state of each rule for each entity (uniquely keyed by `fingerprint`), and
-`entity_state_flag` is constrained by `CHECK (entity_state_flag BETWEEN 0 AND 3)`:
+`entity_state_flag` takes the three values of `RuleStatusEnum`; the SQL constraint
+`CHECK (entity_state_flag BETWEEN 0 AND 3)` is only a reserved width bound — `3` has no state today:
 
-- `0=pending` awaiting trigger, `1=firing`, `2=recovered`, `3=closed`.
+- `0=NORMAL`, `1=FIRING`, `2=RECOVERED`.
 - On a state flip it records `first_trigger_time` / `last_trigger_time` / `last_recover_time` / `last_notify_time` plus
   `trigger_count`, and backfills the current alarm's `alarm_id`. So one anomaly firing continuously just increments the
   count instead of spamming — and recovery is still detected.
@@ -89,9 +90,12 @@ over RabbitMQ, with the status written back afterward:
 
 <AlarmNotifyFlowDiagram lang="en" />
 
-`dc3_notify_channel.channel_type_flag` is constrained by `CHECK (channel_type_flag BETWEEN 0 AND 2)`, so `0=email`,
-`1=SMS`, `2=webhook`. `dc3_notify_history.status_flag` is constrained by `CHECK (status_flag BETWEEN 0 AND 4)`, covering
-the five states pending / sent / success / failed / retry — failures can be retried and increment `retry_count`.
+`dc3_notify_channel.channel_type_flag` is constrained by `CHECK (channel_type_flag BETWEEN 0 AND 2)` and takes the
+`NotifyChannelTypeEnum` values: `0=feishu-bot`, `1=webhook`, `2=email` — there is no SMS channel. Note that the EMAIL
+adapter is currently a placeholder (no SMTP/mail-provider integration yet): deliveries are recorded as `SKIPPED`. The
+channels that actually send today are the Feishu bot and webhook. `dc3_notify_history.status_flag` is constrained by
+`CHECK (status_flag BETWEEN 0 AND 4)` and takes the five `NotifyHistoryStatusEnum` values: `0=pending`, `1=success`,
+`2=failed`, `3=retrying`, `4=skipped` — failures can be retried and increment `retry_count`.
 
 ## Event history vs runtime alarms: don't conflate them
 
@@ -121,30 +125,51 @@ shape, with example values marked as such.
 ::: code-group
 
 ```bash [curl query alarms]
-# Query runtime alarms via the gateway (8000), filtering by source/type/confirmation state
-# The three X-Auth-* values are obtained after logging in via POST /api/v3/auth/token/generate
+# Query runtime alarms via the gateway (8000), filtering by source/type/confirmation state;
+# pagination is the flat offset/limit pair
+# The three X-Auth-* values are obtained after logging in via POST /api/v3/auth/token/generate;
+# note that X-Auth-Token must be the JSON envelope {"salt":...,"token":...} — a bare token gets a 401
 curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/page \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Tenant: <example: your tenant>' \
   -H 'X-Auth-Login: <example: your login name>' \
-  -H 'X-Auth-Token: <example: token returned on login>' \
+  -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token returned on login>"}' \
   -d '{
-        "current": 1,
-        "size": 20,
+        "offset": 0,
+        "limit": 20,
         "source": "device",
         "alarmTypeFlag": 0,
         "confirmFlag": 0
       }'
 ```
 
+```bash [curl confirm alarms]
+# Acknowledge one alarm: both source and id come from a row of the query above
+# Returns true when the row was actually updated; the counterpart is POST /api/v3/data/dashboard/alert/unconfirm
+curl -X POST 'http://localhost:8000/api/v3/data/dashboard/alert/confirm?source=device&id=1024' \
+  -H 'X-Auth-Tenant: <example: your tenant>' \
+  -H 'X-Auth-Login: <example: your login name>' \
+  -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token returned on login>"}'
+
+# Bulk confirm/unconfirm goes through bulk_confirm: body is {"confirm":true|false,"items":[{"source":"...","id":...}]},
+# and the response is the number of rows actually updated (confirm=false unconfirms in bulk)
+curl -X POST http://localhost:8000/api/v3/data/dashboard/alert/bulk_confirm \
+  -H 'Content-Type: application/json' \
+  -H 'X-Auth-Tenant: <example: your tenant>' \
+  -H 'X-Auth-Login: <example: your login name>' \
+  -H 'X-Auth-Token: {"salt":"<example salt>","token":"<token returned on login>"}' \
+  -d '{"confirm":true,"items":[{"source":"device","id":1024},{"source":"device","id":1025}]}'
+```
+
 ```json [response shape (example)]
 {
   "code": "R200",
   "data": {
-    "current": 1,
-    "size": 20,
+    "offset": 0,
+    "limit": 20,
     "total": 3,
-    "records": [
+    "hasNext": false,
+    "items": [
       {
         "id": "example-snowflake-ID",
         "source": "device",

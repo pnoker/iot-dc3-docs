@@ -64,12 +64,13 @@ Server 库填一组：
 
 驱动用这些属性拼出 JDBC URL，形如 `jdbc:sqlserver://host:port;databaseName=...;encrypt=...;trustServerCertificate=...;`
 （分号分隔，区别于 MySQL 的 `?key=value` 形式）。`host`、`port`、`database`、`username`、`password` 五项均为必填——配置校验（
-`validate()`）逐项检查，缺任一项都不通过。驱动按设备 ID 缓存一个 HikariCP 连接池（一台设备一个池，最大 5 连接），连接超时取
-`queryTimeout × 1000` 毫秒。
+`validate()`）逐项检查，缺任一项都不通过。驱动按设备 ID 缓存一个 HikariCP 连接池（一台设备一个池，最大 5 连接），连接池的
+`connectionTimeout` 固定 `4000` 毫秒、与 `queryTimeout` 无关。
 
-::: tip queryTimeout 同时作用于建连与查询节奏
-`queryTimeout`（默认 30 秒）被设为连接池的 `connectionTimeout`：拿不到连接、或建连卡住超过这个时长就会失败。它与采集周期是两回事——慢
-SQL 若长期逼近或超过它，应优化 SQL 或加索引，而不是一味调大超时。
+::: tip queryTimeout 只作用于单条读/写 SQL 的执行
+`queryTimeout`（默认 30 秒）被设到每条读/写语句上（`PreparedStatement.setQueryTimeout`）：单条 SQL
+执行超过这个时长即失败。连接池的 `connectionTimeout` 是固定 `4000` 毫秒，与它无关。它与采集周期也是两回事——慢 SQL
+若长期逼近或超过它，应优化 SQL 或加索引，而不是一味调大超时。
 :::
 
 ::: warning encrypt 与 trustServerCertificate 是 STRING，要配套填
@@ -114,7 +115,7 @@ SQL 若长期逼近或超过它，应优化 SQL 或加索引，而不是一味�
 SQL Server 接入失败大多集中在连接、TLS 握手、账号权限、查询定位、字段类型几类。按下面顺序排查：
 
 1. **连不上库（设备一直 offline）**。先确认 `host:port` 可达：`telnet <host> 1433` 或 `nc -vz <host> 1433`。健康检查通过
-   `conn.isValid(5)`（5 秒内能否拿到有效连接）判定在线，建连或心跳失败即报 offline。常见根因：SQL Server 的 TCP/IP
+   `conn.isValid(2)`（2 秒内能否拿到有效连接）判定在线，建连或心跳失败即报 offline。常见根因：SQL Server 的 TCP/IP
    协议未启用、实例只监听命名管道、防火墙拦截 1433、或动态端口未固定到 1433。
 
 2. **加密 / 证书握手失败**。`encrypt=true` 时驱动会做 TLS 握手并校验服务端证书；连自签名证书的实例时若没设
@@ -132,8 +133,8 @@ SQL Server 接入失败大多集中在连接、TLS 握手、账号权限、查�
    `datetime`/`bit` 列直接当数值，都可能解析异常。`readQuery` 里用 `CAST`/`CONVERT` 或只选目标数值列，保证取回的值与位号类型相符。
 
 6. **写命令返回失败**。写值要求 `writeQuery` 里恰有一个 `?` 占位符、且语句指向可写的表与行。`write()` 返回"受影响行数 > 0"
-   为成功——若 `WHERE` 条件没命中任何行，`executeUpdate()` 返回 0、写被判为失败。先用同样的 `UPDATE` 在库里手工跑一遍确认能命中行。写失败抛
-   `WritePointException` 并使连接池失效。
+   为成功——若 `WHERE` 条件没命中任何行，`executeUpdate()` 返回 0、写被判为失败。先用同样的 `UPDATE` 在库里手工跑一遍确认能命中行。SQL
+   执行出错时抛 `WritePointException` 并使连接池失效；命中 0 行仅返回失败（`false`），不抛异常。
 
 ::: warning Write Query 用 `?` 占位符，不是 `${value}`
 写值时 `writeQuery` 里用**一个** `?` 占位符代表写入值（如 `UPDATE sensor SET temperature = ? WHERE id = 1`），驱动通过
@@ -150,7 +151,7 @@ SQL 里手动拼接值，也不要用 `${value}` 这类模板语法，那样既�
   Server 的「✓ / ✓ / —」一致。
 - **采集周期**：默认 cron `0/30 * * * * ?`（每 30 秒读一轮），在驱动 `application.yml` 的 `schedule.read` 配置；另有一个
   `custom` 自定义调度默认 cron `0/5 * * * * ?`（每 5 秒），但基类的 `schedule()` 为空实现、数据库驱动不使用它。
-- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`；判定靠 `conn.isValid(5)`
+- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`；判定靠 `conn.isValid(2)`
   。在线状态机制见[设备](../introduction/concepts/device)。
 
 ::: info 实现状态：完整

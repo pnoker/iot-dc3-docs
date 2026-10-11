@@ -13,13 +13,13 @@ import PointValueFlowDiagram from '../../../.vitepress/theme/components/PointVal
 `device + point` 并带时间戳，由[驱动](./driver)采集上行，落入 TimescaleDB 时序库。
 
 位号值回答的是"某个量**现在/那一刻**是多少"。[位号](./point)是模板里的"列定义"（这类设备有"出水温度"
-这个测点），位号值则是这一列在一行行时间上的"取数"——同一个位号会随时间产生成千上万条位号值。
+这个位号），位号值则是这一列在一行行时间上的"取数"——同一个位号会随时间产生成千上万条位号值。
 
 它和[事件](./event)是一对互补的上行数据：位号值是**连续数值**的周期采样（温度每秒一条），事件是**离散发生**的一次业务动作（"
 温度过高告警"触发了一次）。门禁设备的"温度 = 25.3℃"是位号值，"门被强行打开"是事件。
 
-不要把位号值和"位号当前值"混为一谈：位号值是一条条**历史流水**，每次采集都新增一条、只追加不更新；"当前值"只是按
-`device_id + point_id` 取最新一条位号值的查询结果。
+不要把位号值和"位号当前值"混为一谈：位号值是一条条**历史流水**，每次采集都新增一条，同键的重复上报按最后写入覆盖；
+"当前值"是 `dc3_point_latest` 投影里 `device_id + point_id` 的最新一条位号值。
 
 ## rawValue 与 calValue
 
@@ -37,6 +37,11 @@ import PointValueFlowDiagram from '../../../.vitepress/theme/components/PointVal
 
 | 字段               | 类型            | 含义                                                       |
 |------------------|---------------|----------------------------------------------------------|
+| `messageId`      | String        | 不可变事件身份，消息唯一标识，用于追溯                              |
+| `schemaVersion`  | Integer       | 位号值上报报文的 schema 版本                                 |
+| `driverNode`     | String        | 产生该样本的驱动运行节点                                      |
+| `sequence`       | Long          | 同一驱动节点内的单调递增序号                                    |
+| `fencingToken`   | Long          | 管理中心下发的所有权围栏令牌                                    |
 | `deviceId`       | Long          | 归属[设备](./device)                                         |
 | `pointId`        | Long          | 归属[位号](./point)                                          |
 | `rawValue`       | String        | 原始值，设备原样回传，未换算                                           |
@@ -58,7 +63,7 @@ NULL，聚合查询用 `num_value IS NOT NULL` 直接跳过它们。
 
 <PointValueRelationDiagram lang="zh" />
 
-- 位号值由 `deviceId + pointId` 共同定位：**哪台设备**的**哪个测点**。
+- 位号值由 `deviceId + pointId` 共同定位：**哪台设备**的**哪个位号**。
 - [位号](./point)给出列定义（类型、单位、换算规则），位号值是这列的一行行运行态取数。
 - [事件](./event)与位号值并列于上行链路，一个连续、一个离散，互为补充。
 
@@ -66,13 +71,18 @@ NULL，聚合查询用 `num_value IS NOT NULL` 直接跳过它们。
 
 <PointValueFlowDiagram lang="zh" />
 
-驱动从设备读到 `rawValue`，按位号换算规则算出 `calValue`，能解析为数字时再填 `numValue`，连同 `deviceId` / `pointId` /
-`driverId` / `tenantId` / `createTime` 打包上行；数据中心把它**追加**写入 `dc3_point_value` 超表（hypertable，按
-`create_time` 1 天分片 + 按 `device_id` 哈希分片，压缩与 180 天保留策略由 TimescaleDB 自动维护）。
+驱动从设备读到 `rawValue`，按位号换算规则算出 `calValue`，能解析为数字时再填 `numValue`，连同 `messageId` /
+`schemaVersion` / `driverNode` / `sequence` / `fencingToken` 等身份与幂等字段及 `deviceId` / `pointId` / `driverId`
+/ `tenantId` / `createTime` 打包上行；数据中心以 `(tenant_id, device_id, point_id, create_time)` 为唯一键做
+**自然 upsert** 写入 `dc3_point_value` 超表（hypertable，按 `create_time` 1 天分片 + 按 `device_id` 哈希分片）：
+同一键的重复采样原地覆盖、后写胜出（重复投递的拦截在摄入幂等窗口完成），并在同一事务里刷新 `dc3_point_latest`
+最新值投影；写入 7 天后自动压缩，原始样本保留 **30 天**，更长的历史由 1 分钟（保留 1 年）与 1 小时（长期保留）
+两层聚合承接。
 
-::: warning 位号值只增不改，注意保留策略
-`dc3_point_value` 是append-only 的历史流水：每次采集都新增一行，不做 UPDATE。查"当前值"是取最新一条，不是某个会被覆盖的字段。另外它配置了
-180 天保留策略——超期数据会被自动清理，需要长期留存请提前归档。
+::: warning 位号值近乎只增，注意保留策略
+`dc3_point_value` 是历史流水：正常采集每个时间戳新增一行，不做 UPDATE；只有同一 `(tenant_id, device_id, point_id,
+create_time)` 键的重复上报才原地覆盖。查"当前值"走 `dc3_point_latest` 最新值投影，不是某个会被覆盖的字段。原始样本
+只保留 **30 天**——超期原始数据会被自动清理（长程查询走 1 分钟 / 1 小时分层聚合），需要长期留存原始明细请提前归档。
 :::
 
 ## 示例
@@ -95,11 +105,12 @@ PointValueBO{
 
 ## 查询 API
 
-| 方法   | 路径                                                    | 说明                                            |
-|------|-------------------------------------------------------|-----------------------------------------------|
-| POST | `/point_value/latest`                                 | 分页查询各位号的最新值                                   |
-| POST | `/point_value/list`                                   | 分页查询位号值历史                                     |
-| GET  | `/point_value/list_history_by_device_id_and_point_id` | 按 `device_id + point_id` 查历史值（`count` 默认 100） |
+| 方法   | 路径                       | 说明                                                          |
+|------|--------------------------|-------------------------------------------------------------|
+| POST | `/point_value/latest`    | 分页查询各位号的最新值                                            |
+| POST | `/point_value/list`      | 分页查询位号值历史（`cursor` 游标翻页）                             |
+| GET  | `/point_value/history`   | 按 `device_id + point_id` 查单个位号的历史值（`cursor` 翻页，`limit` 默认 100、上限 500） |
+| GET  | `/point_value/dashboard` | 查单个位号的数据仪表盘（趋势带 / 分布 / 采样健康，`range_hours` 默认 24、上限 168）   |
 
 ## 延伸阅读
 

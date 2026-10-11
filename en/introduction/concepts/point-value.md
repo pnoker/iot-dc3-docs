@@ -14,7 +14,7 @@ import PointValueFlowDiagram from '../../../.vitepress/theme/components/PointVal
 > a [driver](./driver), and lands in the TimescaleDB time-series store.
 
 A point value answers "what is this quantity **now / at that moment**." A [point](./point) is the "column definition" in
-the template (this kind of device has an "outlet temperature" measurement); a point value is the "reading" of that
+the template (this kind of device has an "outlet temperature" point); a point value is the "reading" of that
 column across rows over time—one point produces thousands upon thousands of point values as time passes.
 
 It is the complementary upstream counterpart to an [event](./event): a point value is a periodic sample of a **continuous value** (a temperature reading every second), an event is a discrete **business occurrence** ("
@@ -22,8 +22,8 @@ over-temperature alarm" fired once). For a door-access device, "temperature = 25
 open" is an event.
 
 Don't conflate a point value with "the point's current value": point values are individual **history records**—each
-sample appends a new row, append-only, never updated; "current value" is simply the result of querying the latest point
-value by `device_id + point_id`.
+sample appends a new row (a duplicate report on the same key is overwritten, last write wins); "current value" is the
+latest entry for `device_id + point_id` in the `dc3_point_latest` projection.
 
 ## rawValue vs calValue
 
@@ -43,6 +43,11 @@ Point value `PointValueBO` (table `dc3_point_value`):
 
 | Field            | Type          | Meaning                                                                                                         |
 |------------------|---------------|-----------------------------------------------------------------------------------------------------------------|
+| `messageId`      | String        | Immutable event identity; unique message ID used for traceability                                              |
+| `schemaVersion`  | Integer       | Wire-schema version of the point-value report                                                                   |
+| `driverNode`     | String        | Runtime node of the driver that produced the sample                                                             |
+| `sequence`       | Long          | Monotonic sequence within the producing driver node                                                             |
+| `fencingToken`   | Long          | Ownership fencing token issued by the manager center                                                            |
 | `deviceId`       | Long          | Owning [device](./device)                                                                                       |
 | `pointId`        | Long          | Owning [point](./point)                                                                                         |
 | `rawValue`       | String        | Raw value, returned by the device verbatim, not converted                                                       |
@@ -65,7 +70,7 @@ NULL, and aggregate queries use `num_value IS NOT NULL` to skip them outright.
 
 <PointValueRelationDiagram lang="en" />
 
-- A point value is located jointly by `deviceId + pointId`: **which device's** **which measurement**.
+- A point value is located jointly by `deviceId + pointId`: **which device's** **which point**.
 - A [point](./point) gives the column definition (type, unit, conversion rule); a point value is the runtime reading of
   that column, row by row.
 - An [event](./event) sits alongside point values on the upstream link—one continuous, one discrete, complementary.
@@ -75,15 +80,21 @@ NULL, and aggregate queries use `num_value IS NOT NULL` to skip them outright.
 <PointValueFlowDiagram lang="en" />
 
 The driver reads `rawValue` from the device, computes `calValue` via the point's conversion rule, fills `numValue` when
-it parses as a number, and ships it upstream together with `deviceId` / `pointId` / `driverId` / `tenantId` /
-`createTime`; the Data Center **appends** it to the `dc3_point_value` hypertable (chunked by `create_time` at 1-day
-intervals plus hash-partitioned by `device_id`, with compression and a 180-day retention policy maintained automatically
-by TimescaleDB).
+it parses as a number, and ships it upstream together with identity/idempotency fields (`messageId` / `schemaVersion` /
+`driverNode` / `sequence` / `fencingToken`) and `deviceId` / `pointId` / `driverId` / `tenantId` / `createTime`; the
+Data Center **naturally upserts** it into the `dc3_point_value` hypertable keyed uniquely on
+`(tenant_id, device_id, point_id, create_time)` (chunked by `create_time` at 1-day intervals plus hash-partitioned by
+`device_id`): a duplicate sample on the same key updates in place, last write wins (replayed deliveries are caught by
+the ingest idempotency window), and the `dc3_point_latest` latest-value projection is refreshed in the same transaction.
+Chunks are compressed automatically after 7 days; raw samples are retained for **30 days**, with longer history served
+by the 1-minute (kept 1 year) and 1-hour (kept indefinitely) rollup layers.
 
-::: warning Point values are append-only—mind the retention policy
-`dc3_point_value` is an append-only history stream: each sample inserts a new row, with no UPDATE. Querying "current
-value" means taking the latest row, not reading some field that gets overwritten. It also carries a 180-day retention
-policy—data past that age is cleaned up automatically, so archive ahead of time if you need long-term retention.
+::: warning Point values are append-mostly—mind the retention policy
+`dc3_point_value` is a history stream: normal collection inserts one row per timestamp, with no UPDATE; only duplicate
+reports on the same `(tenant_id, device_id, point_id, create_time)` key overwrite in place. Querying "current value"
+goes through the `dc3_point_latest` projection, not some field that gets overwritten. Raw samples are retained for only
+**30 days**—data past that age is cleaned up automatically (long-range queries go through the 1-minute / 1-hour rollup
+layers), so archive raw detail ahead of time if you need long-term retention.
 :::
 
 ## Example
@@ -107,11 +118,12 @@ run AVG over `num_value` within the time window.
 
 ## Query API
 
-| Method | Path                                                  | Description                                                       |
-|--------|-------------------------------------------------------|-------------------------------------------------------------------|
-| POST   | `/point_value/latest`                                 | Paged query of the latest value per point                         |
-| POST   | `/point_value/list`                                   | Paged query of point value history                                |
-| GET    | `/point_value/list_history_by_device_id_and_point_id` | Query history by `device_id + point_id` (`count` defaults to 100) |
+| Method | Path                     | Description                                                                              |
+|--------|--------------------------|------------------------------------------------------------------------------------------|
+| POST   | `/point_value/latest`    | Paged query of the latest value per point                                                |
+| POST   | `/point_value/list`      | Paged query of point value history (cursor pagination)                                   |
+| GET    | `/point_value/history`   | Query one point's history by `device_id + point_id` (cursor pagination, `limit` defaults to 100, max 500) |
+| GET    | `/point_value/dashboard` | Query one point's data dashboard (trend band / distribution / sampling health, `range_hours` defaults to 24, max 168) |
 
 ## Further Reading
 

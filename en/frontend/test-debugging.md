@@ -1,3 +1,7 @@
+---
+title: Test Debugging FAQ
+---
+
 # Test Debugging FAQ
 
 Quick answers to the failures that recur most often when writing or running
@@ -51,8 +55,9 @@ const apiMocks = vi.hoisted(() => ({
 vi.mock('@/api/foo', () => apiMocks);
 ```
 
-The shared-mocks guardrail enforces this for files with more than one
-`vi.mock`.
+The Mocking convention in `tests/README.md` requires this for files with more
+than one `vi.mock` (bundle the spies in a single `vi.hoisted` block) — it is a
+written convention, not a mechanically enforced guardrail.
 
 ## Test passes locally but fails on CI for "leftover state"
 
@@ -113,9 +118,10 @@ Don't game the threshold by writing tautological tests — the
 
 ## Snapshot diff is huge after a small API change
 
-The `tests/api/api-contracts.test.ts.snap` file is ~2800 lines because it
-covers every API wrapper. A small change to a wrapper triggers a small
-focused diff inside it; a giant diff means many wrappers shifted. Ask:
+The `tests/api/__snapshots__/api-contracts.test.ts.snap` file is several
+thousand lines because it covers every API wrapper. A small change to a
+wrapper triggers a small focused diff inside it; a giant diff means many
+wrappers shifted. Ask:
 
 - Did the auth headers change shape? (storage-format change)
 - Did the URL prefix move? (proxy / version bump)

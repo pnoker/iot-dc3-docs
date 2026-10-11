@@ -43,7 +43,8 @@ The Agentic Center exposes a single core entry point shaped like OpenAI's Chat C
 connect directly:
 
 - Path: `POST /api/v3/agentic/chat/completions` through the gateway. The gateway's `StripPrefix=2` removes `/api/v3`
-  and forwards to the Agentic Center's `/chat/completions`.
+  and forwards to the Agentic Center's `/agentic/chat/completions` — the service's `spring.webflux.base-path=/agentic`
+  plus the controller mapping `/chat/completions`; hitting `:8600/chat/completions` directly returns 404.
 - Two response modes: with `stream=true` it returns token-by-token over **SSE**; otherwise it returns a single **JSON**
   response.
 - Permission: `@PreAuthorize("@perm.can('chat', 'list')")` — the caller must carry the platform auth headers
@@ -61,7 +62,7 @@ curl -X POST http://localhost:8000/api/v3/agentic/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-Auth-Tenant: <tenant>" \
   -H "X-Auth-Login: <login>" \
-  -H "X-Auth-Token: <token>" \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -d '{
         "model": "gpt-4o",
         "stream": false,
@@ -105,8 +106,12 @@ for human confirmation before continuing.
 
 Key facts along the critical path:
 
-- Tools are native Spring AI `@Tool` methods. They're registered as a `ToolCallbackProvider` by `ChatClientConfig` and
-  wrapped in an `AgenticToolTracingCallbackProvider` for call tracing.
+- Tools register in two layers: `ReactiveAgenticToolRegistry` registers 61 reactive tools with programmatic
+  `ToolDefinition`s (name + description + inputSchema), whose implementations return `Mono` and never block the event
+  loop; `ChatClientConfig` then registers 3 `@Tool` classes (tenant/user/system) as a `ToolCallbackProvider` via
+  `MethodToolCallbackProvider`, wrapped in an `AgenticToolTracingCallbackProvider` for call tracing. The
+  OpenAI-compatible path merges both layers for the model (68 tools); the Anthropic-native path (the Spring AI runtime)
+  currently attaches only the `@Tool` layer.
 - Every tool method starts with `AgenticToolContextUtil.requireTenantId(toolContext)` to extract the current tenant ID,
   so all queries carry tenant scope — the model **cannot see or touch** another tenant's data.
 - Write-type actions (command dispatch) go from the Agentic Center to the **Data Center**'s command plane via
@@ -115,50 +120,63 @@ Key facts along the critical path:
   surface, terminating at the same command plane. The command itself has a 10-second TTL (`PointCommandDTO.expireAt`
   defaults to `now+10s`) and won't execute once expired.
 
-## Ten built-in tools
+## Built-in tools: two registration layers, 68 tools
 
-The platform ships **10** built-in tool classes covering the full read surface — from tenants and users down to devices
-and commands — with a few that perform writes. Tool methods mainly use the verbs `lookup*` (fetch one or many by ID) and
-`search*` (paginated query), plus `list*ByXxxId` (enumerate by ownership). These don't follow the REST layer's `getXxx`/
+The tool surface prepared for the model totals **12 tool classes and 68 tools**, registered in two layers:
+
+- **Reactive tools (61)**: `ReactiveAgenticToolRegistry` registers 9 tool classes with programmatic `ToolDefinition`s —
+  seven business domains (device, driver, profile, point, point value, command, event), plus insight (alert/dashboard/
+  analytics/command status, 25 tools) and history (command/event execution records, 4 tools).
+- **`@Tool` tools (7)**: `ChatClientConfig` registers `TenantTool`, `UserTool`, and `SystemTool` via
+  `MethodToolCallbackProvider`, covering tenant/user context, system health, and device/driver online status.
+
+Tool methods mainly use the verbs `lookup*` (fetch one or many by ID) and
+`search*` (paginated query), plus `list*ByXxxId` (enumerate by ownership) and the insight layer's
+`get*` / `analytics*` / `page*`. These don't follow the REST layer's `getXxx`/
 `listXxx` convention. They're named for the model's benefit, independent of the external HTTP CRUD convention.
 
 Get a feel for what each domain can do first, then read the table. Given a question, the model decomposes it into a tool
 sequence — say, "first look up which points a profile has → then read the latest values of those points → finally decide
 whether to issue a command" — and orchestrates the calls automatically.
 
-| Tool class       | Domain      | Representative methods                                                                        | Typical use                                                                 |
-|------------------|-------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| `TenantTool`     | Tenant      | `getCurrentTenantInfo()`                                                                      | Confirm the current tenant context                                          |
-| `UserTool`       | User        | `getCurrentUserProfile()`                                                                     | Look up the current user's info                                             |
-| `DeviceTool`     | Device      | `lookupDeviceById()` / `searchDevices()`                                                      | Look up a device, search by criteria, check online status and latest values |
-| `DriverTool`     | Driver      | `lookupDriverById()` / `searchDrivers()`                                                      | Check protocol driver connectivity, device online statistics                |
-| `ProfileTool`    | Profile     | `lookupProfileById()` / `searchProfiles()`                                                    | Look up profiles and their capabilities                                     |
-| `PointTool`      | Point       | `lookupPointById()` / `searchPoints()`                                                        | Look up points, read/write direction, list points by device/profile         |
-| `PointValueTool` | Point value | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | Read live values, query history curves, issue read/write commands           |
-| `SystemTool`     | System      | `getSystemHealth()`                                                                           | Check platform health                                                       |
-| `CommandTool`    | Command     | `lookupCommandById()` / `searchCommands()`                                                    | Look up custom commands, list commands by device/profile                    |
-| `EventTool`      | Event       | `lookupEventById()` / `searchEvents()`                                                        | Look up events reported by devices                                          |
+| Tool class       | Domain      | Registered     | Representative methods                                                                        | Typical use                                                     |
+|------------------|-------------|----------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| `TenantTool`     | Tenant      | @Tool          | `getCurrentTenantInfo()`                                                                      | Confirm the current tenant context                              |
+| `UserTool`       | User        | @Tool          | `getCurrentUserProfile()`                                                                     | Look up the current user's info                                 |
+| `SystemTool`     | System      | @Tool          | `getSystemHealth()` / `getDeviceStatuses()` / `getDriverStatuses()`                           | Platform health, device/driver online status                    |
+| `DeviceTool`     | Device      | Registry       | `lookupDeviceById()` / `searchDevices()` / `getDeviceLatestPointValues()`                     | Look up a device, search by criteria, latest-value snapshot     |
+| `DriverTool`     | Driver      | Registry       | `lookupDriverById()` / `searchDrivers()`                                                      | Check protocol driver connectivity                              |
+| `ProfileTool`    | Profile     | Registry       | `lookupProfileById()` / `searchProfiles()` / `listProfilesByDeviceId()`                       | Look up profiles and their capabilities                         |
+| `PointTool`      | Point       | Registry       | `lookupPointById()` / `searchPoints()` / `listPointsByDevice()`                               | Look up points, read/write direction, list points by device/profile |
+| `PointValueTool` | Point value | Registry       | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | Read live values, query history curves, issue read/write commands |
+| `CommandTool`    | Command     | Registry       | `lookupCommandById()` / `searchCommands()` / `listCommandsByDeviceId()`                       | Look up custom commands, list commands by device/profile        |
+| `EventTool`      | Event       | Registry       | `lookupEventById()` / `searchEvents()` / `listEventsByDeviceId()`                             | Look up events reported by devices                              |
+| `InsightTool`    | Insight     | Registry       | `getAlertStats()` / `getTodayStats()` / `analyticsQueryHistory()` (25 in total)               | Alert stats, dashboard metrics, aggregate analytics, command status |
+| `HistoryTool`    | History     | Registry       | `searchCommandHistories()` / `searchEventHistories()`                                         | Look up command/event execution records                         |
 
 ::: info Risk metadata is annotated on REST endpoints, not tool methods
 The `x-dc3-ai` risk metadata (`riskLevel` / `destructive` / `idempotent` / `openWorld`) is **hand-annotated** in the
 Controller's `@Operation` extension (e.g. the chat endpoint of `ChatController`) for the OpenAPI / MCP catalog to
-consume. The Agentic Center's 10 tool methods carry only `@AgenticToolMetadata(domain, title)` — just the two fields
-`domain()` and `title()` — and no risk level. Don't treat endpoint-level risk metadata as a property of each tool
-method.
+consume. The Agentic Center's tool methods carry no risk level: `@Tool` methods carry only
+`@AgenticToolMetadata(domain, title)` — just the two fields `domain()` and `title()` — and registry tools'
+`ToolDefinition` carries only name / description / inputSchema. Don't treat endpoint-level risk metadata as a property
+of each tool method.
 :::
 
 ## Conversations live in the database, not in memory
 
 Many AI services keep conversation context in memory and lose it the moment the process restarts. The Agentic Center
-doesn't. It **persists every turn in the `dc3_agentic` schema**, and the `MessageChatMemoryRepository` adapter reads
-history back from `dc3_message` by `conversation_id`. Conversations survive restarts and can be audited.
+doesn't. It **persists every turn in the `dc3_agentic` schema**, and `ReactiveMessageStore.loadHistory` reads the most
+recent `historyWindowSize` messages back from `dc3_message` by `conversation_id`. Conversations survive restarts and
+can be audited.
 
 Here's how the three tables relate:
 
 <AgenticErDiagram lang="en" />
 
-- The retrieval window size is controlled by `dc3.agentic.historyWindowSize` (default `30`): only the most recent few
-  turns are fed to the model, saving tokens while keeping context.
+- The retrieval window size is controlled by `dc3.agentic.historyWindowSize` (default `30`): only the most recent 30
+  messages (user and assistant each take one row, roughly 15 turns) are fed to the model, saving tokens while keeping
+  context.
 - `dc3_session.session_ext` is a JSON blob holding this conversation's model choice, temperature, `maxTokens`, and other
   preferences, carried into the next turn.
 - Uploaded attachments land in the directory pointed to by `AGENTIC_ATTACHMENT_STORAGE_PATH`, with metadata recorded in
@@ -183,15 +201,17 @@ directly; write-type tools are hard to roll back once they go wrong. The Agentic
    generate a pending **Action** (with `actionId` as a UUID), sets its status to `AgenticActionStatusEnum.PENDING`, and
    sets the expiry to `now + 10 minutes`. The tool result carries `pendingConfirmation=true` and that `actionId` — no
    command is issued.
-2. Once the user has reviewed the action's contents, they confirm it with `POST /action/confirm` (or reject it with
-   `POST /action/reject`), passing the `action_id`. Only after confirmation does the service execute it via
+2. Once the user has reviewed the action's contents, they confirm it with `POST /api/v3/agentic/action/confirm` (or
+   reject it with `POST /api/v3/agentic/action/reject`; `action_id` is a query parameter). Only after confirmation does
+   the service execute it via
    `PointCommandFacade.submitWrite(...)`.
 
 This keeps the split clean: the AI proposes, a human decides. Irreversible physical-world actions stay within human
 authorization.
 
 ::: info This is Agentic's own Action mechanism, not the MCP gateway's risk gate
-The confirmation flow uses `actionId` + `POST /action/confirm|reject` — **not** `CONFIRM_REQUIRED` / `confirmId`, and
+The confirmation flow uses `actionId` + `POST /api/v3/agentic/action/confirm|reject` — **not** `CONFIRM_REQUIRED` /
+`confirmId`, and
 not a generic risk policy gated on `riskLevel=HIGH`. The latter belongs to the [MCP gateway](./mcp)'s
 `dc3_mcp_tool_confirmation` subsystem, a separate implementation from this chat chain. Don't conflate the two.
 :::
@@ -221,17 +241,18 @@ last line of defense when there's no DB configuration.
 | `AGENTIC_FALLBACK_OPENAI_TEMPERATURE` | `0.7`                          | Sampling temperature (0.0–2.0)                                               |
 | `AGENTIC_FALLBACK_OPENAI_MAX_TOKENS`  | `2048`                         | Maximum output tokens                                                        |
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         | Whether to enable tool calling                                               |
-| `AGENTIC_MEMORY_ENABLED`              | `false`                        | Whether to enable persisted conversation memory                              |
+| `AGENTIC_MEMORY_ENABLED`              | `true`                         | Whether to enable persisted conversation memory                              |
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           | Max messages in a single conversation window                                 |
 | `AGENTIC_MEMORY_SCHEMA_INIT`          | `never`                        | Memory table schema initialization (`always`/`never`/`create_if_not_exists`) |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` | Attachment storage directory                                                 |
 
 ::: tip Defaults reflect compose / `dev.env`, not the Spring bare defaults
-The defaults above are the values injected by compose / `dev.env`, which **differ** from the bare Spring defaults in
-`application-agentic.yml`: e.g. `AGENTIC_MEMORY_ENABLED` defaults to `true` in Spring (compose injects `false`), and
+The defaults above are the values injected by compose / `dev.env`, which are **not entirely identical** to the bare
+Spring defaults in `AgenticProperties`: `AGENTIC_MEMORY_ENABLED` now defaults to `true` on both sides (Spring and
+compose), but
 `AGENTIC_ATTACHMENT_STORAGE_PATH` defaults to `dc3/data/upload/agentic/attachment` in Spring (compose injects
 `dc3/data/agentic/attachments`). When you start via compose / `make up-*`, this table applies; if you run Spring
-directly in an IDE without compose, the yml bare defaults apply instead.
+directly in an IDE without compose, the Spring bare defaults apply instead.
 :::
 
 See [Environment Variables](../quickstart/environment) for the full reference.

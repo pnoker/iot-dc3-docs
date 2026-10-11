@@ -37,16 +37,17 @@ LwM2M 在**电信级、需要远程运维**的终端里很常见：NB-IoT 模组
 
 ## 属性配置
 
-LwM2M 的属性分两层：**driver 属性**配在[设备](../introduction/concepts/device)上，描述"服务端监听在哪、用哪个
-endpoint、是否加密"；**point 属性**配在[位号](../introduction/concepts/point)上，描述"这个位号对应对象树里的哪条资源路径"
+LwM2M 的属性分两层：**driver 属性**配在[设备](../introduction/concepts/device)上，描述"用哪个 endpoint
+对接设备"，以及一组（当前不生效的）服务端监听/加密声明；**point 属性**配在[位号](../introduction/concepts/point)上，描述"这个位号对应对象树里的哪条资源路径"
 。两者都来自驱动 `application.yml` 的 `driver-attribute` / `point-attribute`
 声明，接入时在设备实例上为每个属性[填具体值](../introduction/concepts/attribute-config)。
 
 ### 驱动属性（设备级 `driver-attribute`）
 
 `endpoint` 是把这台 DC3 设备和已注册的 LwM2M 客户端对应起来的关键——它必须与设备注册时上报的 endpoint 名**一字不差**
-，否则匹配不上、设备一直离线。`serverHost` / `serverPort` / `securePort` 声明服务端监听的地址与端口；`securityMode` 决定走明文还是
-PSK 加密，启用 PSK 时再补 `pskIdentity` 与 `pskKey`。
+，否则匹配不上、设备一直离线。`serverHost` / `serverPort` / `securePort` / `securityMode` / PSK 这几项只是按协议语义声明服务端监听与
+加密方式，**均不参与建服、取值也不生效**（`serverHost`/`serverPort` 仅在 `validate()` 里作必填检查）——真正决定监听端口与加密能力的
+是部署配置与驱动实现，见下方 warning。
 
 | 属性            | code           | 类型     | 默认值       | 说明                                   |
 |---------------|----------------|--------|-----------|--------------------------------------|
@@ -58,10 +59,12 @@ PSK 加密，启用 PSK 时再补 `pskIdentity` 与 `pskKey`。
 | PSK Identity  | `pskIdentity`  | STRING | （空）       | PSK 身份（`securityMode=PSK` 时）         |
 | PSK Key       | `pskKey`       | STRING | （空）       | HEX 编码的 PSK 密钥（`securityMode=PSK` 时） |
 
-::: warning serverHost / serverPort / securePort 当前未真正生效
-驱动启动内嵌服务端时用的是 `new LeshanServerBuilder().build()` 的**默认绑定**（恰好就是 `5683`/`5684`），并没有把上表里
-`serverHost`/`serverPort`/`securePort` 或 PSK 这些值喂给 Leshan。也就是说这几项目前是**声明在册、尚未连线**
-：填了也只会落到默认端口、明文链路。打通链路请按默认 `5683` 明文端口来，改端口/启 PSK 的能力还需在驱动里补齐（见下文实现状态）。
+::: warning 上表的 serverHost / serverPort / securePort 不参与建服
+内嵌服务端的监听地址与端口来自**部署配置** `dc3.driver.lwm2m.server-host` / `dc3.driver.lwm2m.server-port`（默认
+`0.0.0.0:5683`），由 `Lwm2mServerManager` 显式喂给 Leshan 建明文 CoAP 端点；上表里设备级的 `serverHost`/`serverPort`/
+`securePort`/`securityMode`/PSK 这些属性**取值当前不被消费**（`serverHost`/`serverPort` 仅在 `validate()` 里作必填检查）。另外驱动只建了明文 CoAP 端点、**没有 DTLS/CoAPS 端点**
+（`securePort` 仅写进启动日志），PSK/加密链路不可用。打通链路请按明文 `5683` 来；要换监听端口，改部署配置
+`dc3.driver.lwm2m.server-port` 后重启驱动（见下文实现状态）。
 :::
 
 ### 位号属性（`point-attribute`）
@@ -104,7 +107,7 @@ Observe，也不消费它**——`read()`/`write()` 都没有读取 `observe` �
 |---------------------------|----------------------------|-------------------|
 | 设备一直离线、读取无值               | `endpoint` 名与设备注册时上报的不一致   | 二者必须一字不差，见下方第一条   |
 | 设备连不上服务端                  | UDP `5683` 被防火墙挡或 NAT 映射失效 | 先验 UDP 链路再查应用配置   |
-| 改了 `serverPort` 仍只监听 5683 | 端口配置当前未喂给 Leshan           | 改端口能力未实现，按默认端口接入  |
+| 改了设备属性 `serverPort` 仍只监听 5683 | 服务端口由部署配置 `dc3.driver.lwm2m.server-port` 决定，设备属性不参与建服 | 改部署配置里的 `server-port` 并重启驱动 |
 | 启 PSK 后注册失败               | PSK 配置当前未生效，或设备强制要求 DTLS   | 先用 `NOSEC` 明文打通链路 |
 | `observe=true` 收不到推送      | Observe 自动转发未实现            | 依赖默认 30 秒主动读取     |
 
@@ -119,10 +122,11 @@ LwM2M 走 CoAP over UDP，连不通常是 UDP 端口（`5683`/`5684`）被防火
 endpoint 与位号路径。设备在公网/蜂窝上时，记得放行对应的 UDP 端口。
 :::
 
-::: warning 改端口与启用 PSK 暂不可用
-当前驱动不消费 `serverPort`/`securePort`/`securityMode`/PSK 配置，内嵌服务端固定走 Leshan 默认（明文 `5683` / DTLS `5684`
-）。因此：想换监听端口、或想用 PSK 加密握手，目前都做不到——请用默认 `NOSEC` 明文 `5683` 端口先把链路跑通。需要加密时，要先在
-`Lwm2mServerManager` 里把这些配置接进 `LeshanServerBuilder`。
+::: warning 加密链路暂不可用，监听端口走部署配置
+设备属性 `serverPort`/`securePort`/`securityMode`/PSK 的取值都不被消费；内嵌服务端只建明文 CoAP 端点（默认 `5683`，**没有** DTLS
+`5684` 端点）。因此 PSK/DTLS 加密握手目前做不到——请用 `NOSEC` 明文链路先把读写跑通。要换监听端口，请改部署配置
+`dc3.driver.lwm2m.server-port`（默认 `5683`）后重启驱动；需要加密时，要先在 `Lwm2mServerManager` 里把 PSK 配置接进
+`LeshanServerBuilder` 并补上 CoAPS 端点。
 :::
 
 ## 在 IoT DC3 中如何落地
@@ -133,21 +137,22 @@ endpoint 与位号路径。设备在公网/蜂窝上时，记得放行对应的 
   `ReadRequest(objectId, objectInstanceId, resourceId)`，把返回内容作为位号值——这是真实的协议 I/O，不是桩。
 - **写能力（已实现）**：`write()` 经 `Lwm2mServerManager.write()` 对同一三段路径发 `WriteRequest`，写成功返回 `true`、失败/超时返回
   `false`。
-- **订阅能力（未实现）**：[驱动能力矩阵](./matrix)把 LwM2M 标为读/写/订阅俱全，但 **Observe 订阅上报当前未落地**——
+- **订阅能力（未实现）**：[驱动能力矩阵](./matrix) 已把 LwM2M 的订阅记为「—」——**Observe 订阅上报当前未落地**：
   `Lwm2mObservationHandler.onObservation()` 仅打印日志、带 `TODO`，驱动既不注册 Observe、也没有 endpoint→deviceId /
   资源路径→pointId 的映射来转发观测值。
 
-::: warning 实现状态：读/写可用，订阅与服务端配置未完成
-`Lwm2mDriverCustomServiceImpl` 的类注释仍标注 "work-in-progress skeleton"，但**读和写已经接好真实的 Leshan I/O，对已注册设备可用
-**。尚未完成的是三块：① Observe 订阅值的自动转发；② 把 `serverHost`/`serverPort`/`securePort` 配置喂给 Leshan；③ PSK
-加密链路。请把它当作"读写可跑、订阅/加密待补"的接入起点，按下面示例先用明文链路验证读写。
+::: warning 实现状态：读/写可用，订阅与加密链路未完成
+**读和写已经接好真实的 Leshan I/O，对已注册设备可用**。尚未完成的是三块：① Observe 订阅值的自动转发；② 设备级
+`serverHost`/`serverPort`/`securePort`/`securityMode`/PSK 属性接线（服务端监听现由部署配置 `dc3.driver.lwm2m.server-*` 决定）
+；③ PSK/DTLS 加密链路（服务端当前无 CoAPS 端点）。请把它当作"读写可跑、订阅/加密待补"的接入起点，按下面示例先用明文链路验证读写。
 :::
 
 ::: details 最小接入示例：读回一个温度位号
 把一台 endpoint 名为 `urn:imei:860000000000001`、温度资源在 `/3303/0/5700` 的 LwM2M 传感器接进来：
 
 1. 选 `LwM2M Driver` 创建[设备](../introduction/concepts/device)，driver 属性填 `endpoint=urn:imei:860000000000001`、
-   `securityMode=NOSEC`（端口当前固定走默认 `5683`，无需也无法改）。
+   `securityMode=NOSEC`，`serverHost`/`serverPort` 按默认值填即可（`validate()` 要求已填，但取值不生效；监听端口由部署配置
+   `dc3.driver.lwm2m.server-port` 决定，默认 `5683`）。
 2. 让该 LwM2M 客户端用**同样的** endpoint 名，注册到这台服务的 `5683` 端口（明文）。
 3. 给设备绑定的[模板 Profile](../introduction/concepts/profile) 加一个温度[位号](../introduction/concepts/point)（
    `READ_ONLY`），point 属性填 `objectId=3303`、`objectInstanceId=0`、`resourceId=5700`。

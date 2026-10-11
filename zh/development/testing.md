@@ -47,13 +47,14 @@ Mock 又测不出真实问题。IoT DC3 据此把测试分成三层，越往下�
 
 ## 本地怎么跑
 
-后端命令统一走 `iot-dc3/` 下的 Makefile。最常用的四条：
+后端命令统一走 `iot-dc3/` 下的 Makefile。最常用的几条：
 
 ```bash
 make test                 # 单元测试（Surefire）
 make test-it              # 集成测试（Failsafe + Testcontainers，需容器运行时）
 make test-e2e             # E2E：等价于 DC3_E2E=true mvn -s .mvn/settings.xml -pl dc3-e2e -am -Pe2e verify
 make coverage             # 聚合 JaCoCo 报告（dc3-coverage -am verify）
+make validate-annotations # x-dc3-ai 注解门禁（Controller/Manager/Data/Agentic/Auth 五个 AnnotationGateTest）
 ```
 
 `make test-e2e` 本身已设置 `DC3_E2E=true` 并只在 `dc3-e2e` 模块上跑 `-Pe2e`，无需手动导出环境变量。只想跑单个模块或单个用例时，直接用
@@ -63,9 +64,9 @@ Maven：
 # 指定模块的单元测试
 mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-manager
 
-# 单个测试类 / 单个方法
+# 单个测试类 / 单个方法（类名与方法名以各模块 src/test 实际为准）
 mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-manager -Dtest=DeviceControllerTest
-mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-public -Dtest="RTest#testOkWithData"
+mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-public -Dtest="PasswordUtilTest#verifyMatchesEncodedPassword"
 ```
 
 `make coverage` 完成后，聚合报告落在：
@@ -144,20 +145,26 @@ pnpm test:e2e:headed      # 可见浏览器（E2E_HEADLESS=false）
 
 | 指标    | 当前门槛                                  |
 |-------|---------------------------------------|
-| 行覆盖率  | `coverage.line.minimum = 0.20`（20%）   |
-| 分支覆盖率 | `coverage.branch.minimum = 0.15`（15%） |
+| 行覆盖率  | `coverage.line.minimum = 0.24`（24%）   |
+| 分支覆盖率 | `coverage.branch.minimum = 0.20`（20%） |
 
 门槛当前相对克制，便于测试体系扩展期持续推进；判定只看静态最低阈值——任一指标低于上表门槛即阻断改动，不做与历史基线的回退比较。提高门槛时，应同时提交能支撑新门槛的测试，而非只调数字。
 
 ## CI 工作流
 
-PR 与推送在 GitHub Actions 上分三个工作流跑测试，与本地命令一一对应：
+仓库 `.github/workflows/` 共 9 个工作流，按改动面各管一段：
 
-| Workflow   | 触发                                | 主要任务      |
-|------------|-----------------------------------|-----------|
-| `ci.yml`   | push / PR 到 develop、release、main  | 快速编译      |
-| `test.yml` | push / PR 到 develop、release、main  | 单元、集成、覆盖率 |
-| `e2e.yml`  | push 到 develop、release、main 或手动触发 | E2E       |
+| Workflow             | 触发                                      | 主要任务                        |
+|----------------------|-----------------------------------------|-------------------------------|
+| `ci-backend.yml`     | push / PR 到 develop、main                | 审计链（控制器权限、PostgreSQL 初始化、R2DBC 迁移、格式与 Javadoc 门禁）+ 快速编译 |
+| `ci-web.yml`         | 触及 `dc3-web/**` 的 PR / push            | 前端质量检查（Vitest / Playwright）  |
+| `ci-cli.yml`         | 触及 `dc3-cli/**` 的 PR / push 或手动触发     | CLI 质量检查                     |
+| `test.yml`           | push / PR 到 develop、main（可复用工作流）      | 单元、集成、覆盖率                    |
+| `e2e.yml`            | PR 到 develop、main 或手动触发                | E2E                          |
+| `codeql.yml`         | push / PR 到 develop、main + 每周三定时        | CodeQL 代码扫描                  |
+| `security.yml`       | push / PR 到 develop、main + 每周一或手动触发    | dependency-review、Scorecard  |
+| `docker-ci.yml`      | push `v*` tag 或手动触发                     | 校验、构建并发布镜像与 GitHub Release   |
+| `deploy-ghpages.yml` | push main 触及 `dc3-web/**`               | 构建并部署 Web demo 到 GitHub Pages |
 
 合并前应确认：单元与集成 job 通过；覆盖率不低于 `dc3-coverage/pom.xml` 门槛（低于即阻断）；行为变更在说明里写清已验证内容与未验证风险。
 

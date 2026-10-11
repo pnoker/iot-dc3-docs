@@ -190,7 +190,7 @@ gateway (`http://localhost:8000`), and protected endpoints require the three aut
 curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H "X-Auth-Tenant: <tenant>" \
   -H "X-Auth-Login: <login>" \
-  -H "X-Auth-Token: <token>" \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H "Content-Type: application/json" \
   -d '{"deviceId": 1024, "pointId": 2048, "value": "25.5"}'
 # → {"code":"...","data":"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d", ...}
@@ -201,7 +201,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
 curl "http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d" \
   -H "X-Auth-Tenant: <tenant>" \
   -H "X-Auth-Login: <login>" \
-  -H "X-Auth-Token: <token>"
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
 ```
 
 :::

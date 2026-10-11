@@ -53,7 +53,9 @@ platform's auth, command, and data planes. For a systematic walkthrough of the I
 ## Three-Layer Structure: Access, Platform, Storage & Messaging
 
 The platform isn't one monolith. It's a set of services split by responsibility. From the caller's perspective, there's
-a single entry point — the gateway `dc3-gateway` (HTTP `8000`), the only externally exposed HTTP port. The HTTP and gRPC
+a single entry point — the gateway `dc3-gateway` (HTTP `8000`), the **logical** single API aggregation entry (under the
+app stack `8000` isn't published to the host; external traffic reaches it through the web frontend's `8080` reverse
+proxy — see [Services & Topology](./services)). The HTTP and gRPC
 ports of the other center services are reachable only on the internal network. The gateway routes requests to the four
 center services, which don't call each other over HTTP but cooperate cross-process through gRPC facades.
 
@@ -71,7 +73,7 @@ health checks, see [Services & Topology](./services).
 ::: info Monolithic and Distributed Deployment Forms
 The diagram shows the default distributed form (four centers as independent processes). The platform can also merge the
 centers into a single process (`dc3-center-single`) running on one machine. That's just a deployment topology choice —
-the business chain doesn't change. The switch is governed by `DC3_FACADE_MODE`; see [Facade Modes](./facade-modes).
+the business chain doesn't change. The switch is governed by the `dc3.facade.{auth,manager,data}.mode` group; see [Facade Modes](./facade-modes).
 :::
 
 ## gRPC Facade: How Centers Call One Another
@@ -82,23 +84,26 @@ assembled HTTP URLs to call peers directly, service boundaries would leak transp
 distributed deployments couldn't share one codebase.
 
 IoT DC3 solves this with **facade interfaces**. Cross-service calls program against the contract interfaces in
-`dc3-common-facade-api`, so business code knows the interface, not the transport. At runtime, `DC3_FACADE_MODE` picks
-the implementation behind the interface:
+`dc3-common-facade-api`, so business code knows the interface, not the transport. At runtime, a group of **per-target
+switches** — `dc3.facade.{auth,manager,data}.mode` — picks the implementation behind the interface:
 
-- `grpc` (distributed default) — the implementation comes from `dc3-common-facade-grpc`, and calls go cross-process via
-  gRPC to the target center.
-- `local` (single process) — the implementation comes from `dc3-common-facade-local-*`, and calls are direct in-process
-  method invocations with no network hop.
+- `grpc` (the default when unset; distributed centers declare it explicitly) — the implementation comes from
+  `dc3-common-facade-grpc`, and calls go cross-process via gRPC to the target center.
+- `local` (single process) — the implementation comes from `dc3-common-facade-local-{auth,manager,data}`, and calls are
+  direct in-process method invocations with no network hop.
+- `disabled` — the process itself is that center (e.g. the manager process sets `dc3.facade.manager.mode` to
+  `disabled`); no implementation is wired at all.
 
 In other words, "distributed or monolithic" is a deployment switch, not two codebases. The same business logic moves
-between the two forms just by changing `DC3_FACADE_MODE`.
+between the two forms just by changing this group of switches.
 
 ::: warning Read the Facade Mode Defaults Carefully
-In a distributed setup each center defaults to `grpc`. The management center's `application.yml` declares
-`dc3.facade.mode: ${DC3_FACADE_MODE:grpc}`, and `dc3/env/dev.env` also sets `DC3_FACADE_MODE=grpc`. The auth center's
-base `application.yml` contains a line `dc3.facade.mode: local`, but that's a local override for the single-process
-scenario — it does not mean the distributed default is `local`. Go by the environment variable and the manager's
-declaration. For the full distinction, see [Facade Modes](./facade-modes).
+Unset means `grpc`: the gRPC auto-configuration carries `matchIfMissing = true`, so leaving the property out wires the
+gRPC implementation. Each distributed center's `application.yml` declares its switches per target (the manager center,
+for instance, sets `dc3.facade.auth.mode: grpc` and `dc3.facade.data.mode: grpc`, and `disabled` for itself). The auth
+center's base `application.yml` writes `dc3.facade.auth.mode: local` (it calls itself, in-process), and
+`dc3-center-single` sets all three switches to `local`. To tell which mode a service actually uses, go by its own
+`application.yml` and the wiring conditions. For the full distinction, see [Facade Modes](./facade-modes).
 :::
 
 ## RabbitMQ Async Decoupling: Why Drivers and the Data Center Aren't Directly Connected
@@ -142,8 +147,8 @@ The enforcement points in practice:
 - **Interface layer (single by ID)**: `BaseController.requireTenant()` compares the entity's `tenantId` after fetching
   it, returning 404 (rather than leaking data) for cross-tenant access.
 - **Interface layer (batch)**: `BaseController.filterTenant()` strips records that don't belong to the current tenant
-  from batch results. The database query layer does no automatic tenant pruning today (`MybatisPlusConfig` registers
-  only the pagination plugin); isolation is applied at the controller layer.
+  from batch results. The database query layer (R2DBC) does no automatic tenant pruning today; isolation is applied at
+  the controller layer.
 - **Cross-service**: gRPC facade calls carry the tenant ID where the contract supports it, and cache keys also include
   tenant context.
 
@@ -172,17 +177,23 @@ signing) must likewise be changed to an environment-specific, strong random valu
 
 ## Consistency and Scalability
 
-The four center services are themselves **stateless**. Hot data such as sessions, token denylists, and latest values
-live in the Caffeine cache or the database, so requests aren't pinned to a particular instance. Each center can scale
-horizontally: attach a few more instances of the same kind behind the gateway to share the load. No shared memory is
-needed.
+The four center services are **stateless as far as business data goes**. Hot data such as latest values lives in the
+shared database (point latest values sit in the `dc3_point_latest` projection table, readable and writable by any
+replica), so requests aren't pinned to a particular instance, and at the business level each center can scale
+horizontally. But there's one **exception to know about**: the token denylist is an **in-process** Caffeine cache in
+the auth center — a logout record lands only in the replica that handled that logout, while the gateway asks auth to
+re-validate on every request. Run auth with multiple replicas behind a load balancer, and a revoked old token can still
+pass on a replica that never saw the logout. Sticky routing for auth, or moving the denylist to shared storage, is what
+makes logout globally effective.
 
-The data center's throughput bottleneck is on the consumption side, and consumption concurrency is tunable.
-`PointValueReceiver` consumes `dc3.q.value.point` with the default listener container (concurrency 2–8), switching between "
-immediate write" and "`PointValueJob` batch write" based on the inbound rate. The batch threshold is controlled by
-`POINT_BATCH_SPEED` (default 100 records) and `POINT_BATCH_INTERVAL` (default 5 s) — whichever is met first flushes to
-disk. Under a collection flood, RabbitMQ absorbs the burst first, and concurrent consumption plus batch writes then
-handle it.
+The data center's throughput bottleneck is on the consumption side, and the consumption settings are tunable.
+`PointValueReceiver` consumes `dc3.q.value.point` in **batch consumption** mode — it accumulates a batch (up to
+`POINT_BATCH_SIZE`, default 500 records) or until the receive window closes (`POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`,
+default 100 ms), then runs one reactive persist for the whole batch. Consumption concurrency is governed by
+`POINT_CONCURRENT_CONSUMERS` (default 4, capped by `POINT_MAX_CONCURRENT_CONSUMERS`, default 16) and
+`POINT_PREFETCH_COUNT` (default 1000); failures retry with exponential backoff (default 3 attempts) and then
+dead-letter. Under a collection flood, the message queue absorbs the burst first, and concurrent consumption plus
+batch writes then handle it.
 
 ::: info Strong Consistency and Eventual Consistency Coexist
 Steps on the request path — tenant isolation, authorization decisions, the command state machine — are strongly

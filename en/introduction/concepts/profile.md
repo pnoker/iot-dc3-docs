@@ -74,6 +74,7 @@ Profile `ProfileBO` (table `dc3_profile`):
 | `profileShareFlag` | ProfileShareTypeEnum | Sharing scope, see below                                                                 |
 | `profileTypeFlag`  | ProfileTypeEnum      | Creation source, see below                                                               |
 | `version`          | Integer              | Model version, queryable and set manually                                                |
+| `signature`        | String               | Data signature (common audit field, consistent with business objects like the [Driver](./driver)) |
 | `profileExt`       | ProfileExt (JSON)    | Weakly-structured extension field (designed to carry content such as `category`, `tags`) |
 | `enableFlag`       | EnableFlagEnum       | Enabled / disabled state                                                                 |
 | `tenantId`         | Long                 | Owning [Tenant](./tenant)                                                                |
@@ -142,8 +143,9 @@ Profile management endpoints are prefixed with `/profile` (Manager service):
 |--------|------------------------------|------------------------------------|
 | POST   | `/profile/add`               | Create a Profile                   |
 | POST   | `/profile/update`            | Update Profile metadata            |
-| POST   | `/profile/delete`            | Delete a Profile                   |
+| DELETE | `/profile/delete`            | Delete a Profile                   |
 | GET    | `/profile/get_by_id`         | Get a Profile by ID                |
+| POST   | `/profile/list_by_ids`       | Batch-get Profiles by a set of IDs |
 | POST   | `/profile/list`              | Page through Profiles              |
 | GET    | `/profile/list_by_device_id` | List the Profile bound by a device |
 

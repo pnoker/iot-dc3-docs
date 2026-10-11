@@ -33,6 +33,12 @@ M-Bus 是欧洲远程抄表标准，主站发短帧按主地址寻址，仪表�
 | Record Index | recordIndex | INT | 0 | 数据记录 0 基索引 |
 | Data Format | dataFormat | STRING | AUTO | 解码格式：AUTO、HEX、BCD、INT、FLOAT |
 
+**命令属性（`command-attribute`）**——仅一项，且当前不生效：
+
+| 属性 | code | 类型 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| Data Format | dataFormat | STRING | ASCII | 写值编码格式（`write()` 当前固定按 US-ASCII 编码，不消费此属性） |
+
 ## 采集与健康
 
 - **采集周期**：`read` 调度默认 cron `0/30 * * * * ?`（每 30 秒对所有位号跑一轮轮询）。

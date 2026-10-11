@@ -29,6 +29,7 @@ import EventFlowDiagram from '../../../.vitepress/theme/components/EventFlowDiag
 | `eventLevelFlag` | EventLevelEnum    | 事件级别，见下                            |
 | `profileId`      | Long              | 归属的[模板](./profile)                 |
 | `eventExt`       | JSON              | 扩展配置                               |
+| `signature` / `version` | String / Integer | 数据签名与版本（通用审计字段）       |
 
 事件参数 `EventParamBO`（表 `dc3_event_param`，声明事件携带哪些输出参数）：
 

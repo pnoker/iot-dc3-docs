@@ -14,14 +14,16 @@ vulnerability, and the minimum security baseline to hit before you take the plat
 ## Supported Versions
 
 We ship security patches only for the current mainline release. Version numbers follow a `YYYY.M.x` year-month scheme —
-for example, `2026.5.x` is the May 2026 line — and the patch number `x` keeps rolling forward within a mainline. The
-current line is `2026.9.x` (latest `2026.9.22`, image line tag `2026.9`).
+for example, `2026.10.x` is the October 2026 line — and the patch number `x` keeps rolling forward within a mainline. The
+current line is `2026.10.x` (latest release `2026.10.9`; the `latest` image tag points to it, including the `-native`
+variants). The repository's default image tag is `2026.9` (the `2026.9.x` line, ready to use out of the box).
 
 The table lists the release lines that still get security updates. Older versions are no longer back-ported; upgrade to
 a supported mainline before reporting.
 
 | Version line            | Supported              |
 |-------------------------|------------------------|
+| `2026.10.x`             | ✅ Supported            |
 | `2026.9.x`              | ✅ Supported            |
 | `2025.9.x` and earlier  | ❌ No longer maintained |
 
@@ -40,11 +42,15 @@ that ships it.
 exposes unpatched instances to attack. Use the private channels below instead.
 :::
 
-If you find a potential security vulnerability, report it through either private channel:
+If you find a potential security vulnerability, report it through any of the private channels below:
 
-1. **Email**: Write to [pnokers@icloud.com](mailto:pnokers@icloud.com) with `Security Vulnerability` in the subject so it
+1. **GitHub Security Advisory (upstream-preferred)**: Use GitHub's private vulnerability reporting
+   at [github.com/pnoker/iot-dc3/security/advisories/new](https://github.com/pnoker/iot-dc3/security/advisories/new).
+   This is the channel the repository's `SECURITY.md` marks as preferred: the report reaches the maintainers directly
+   with a private, tracked workflow for following the fix.
+2. **Email**: Write to [pnokers@icloud.com](mailto:pnokers@icloud.com) with `Security Vulnerability` in the subject so it
    gets triaged first.
-2. **Direct message**: Reach the maintainer (@pnoker) directly via a GitHub or Gitee private message.
+3. **Direct message**: Reach the maintainer (@pnoker) directly via a GitHub or Gitee private message.
 
 To help us reproduce and pin down the issue, include in your report: the affected version line, reproduction steps or a
 minimal repro, the impact (data leak / privilege escalation / command injection, etc.), and any fix ideas you have. Once

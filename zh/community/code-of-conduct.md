@@ -56,8 +56,11 @@ title: 行为准则
 
 辱骂、骚扰或其他不可接受的行为可以通过以下任一渠道举报：
 
-1. **邮件上报** — 发送邮件至 [pnokers@icloud.com](mailto:pnokers@icloud.com)，主题包含 `Code of Conduct` 字样便于优先分流。
-2. **私信上报** — 通过 GitHub 或 Gitee 的私信功能直接联系项目维护者（@pnoker）。
+1. **开 Issue / 联系维护者** — 在 [GitHub Issues](https://github.com/pnoker/iot-dc3/issues) 开一个 Issue 公开举报，或直接联系一位或多位项目维护者（与仓库根 `CODE_OF_CONDUCT.md` 的举报口径一致）。
+2. **邮件上报** — 发送邮件至 [pnokers@icloud.com](mailto:pnokers@icloud.com)，主题包含 `Code of Conduct` 字样便于优先分流。
+3. **私信上报** — 通过 GitHub 或 Gitee 的私信功能直接联系项目维护者（@pnoker）。
+
+涉及隐私或敏感事项的举报，建议优先走私密渠道（邮件/私信），避免在公开 Issue 中披露个人隐私细节——这是本站相比仓库原文的加严建议。
 
 所有举报将被**及时、公正**地审查和调查。处理结果会反馈给举报人（如举报人愿意提供联系方式），涉及隐私的部分不会公开。
 

@@ -55,24 +55,31 @@ Spring AI 运行在进程内——`ChatClient` 是一个 Spring Bean，工具调
 认证上下文通过与其他任何请求相同的 Spring Security 过滤器链流转。
 
 ```java
-// DC3 中的一个 @Tool 方法——纯 Java、类型安全、租户感知
-@Tool(description = "获取指定测点的最新值")
-public PointValueBO getLatestPointValue(
-        @ToolParam(description = "测点ID") Long pointId,
-        ToolContext toolContext) {
-    var tenantId = AgenticToolContextUtil.requireTenantId(toolContext);
-    return pointValueService.getLatestByPointId(pointId, tenantId);
+// DC3 工具类中的一个真实方法（节选自 PointValueTool）——纯 Java、类型安全、租户感知
+public Mono<AgenticToolResult<FacadePointValueBO>> getLatestPointValueReactive(
+        Long deviceId, Long pointId, ToolContext toolContext) {
+    return Mono.defer(() -> {
+        Long tenantId = AgenticToolContextUtil.requireTenantId(toolContext);
+        if (deviceId == null || pointId == null) {
+            return Mono.just(AgenticToolResult.invalid("Device ID and point ID are required."));
+        }
+        return pointValueFacade.lastValue(tenantId, deviceId, pointId)
+                .map(value -> AgenticToolResult.ok("Latest point value loaded", value));
+    });
 }
 ```
 
-无需跨语言的序列化，无需独立的认证流程，无需在 AI 和数据之间插入 gRPC 或 HTTP ——
-这是直接 Java 调用到服务层，租户隔离在方法级别执行。
+这段方法经 `ReactiveAgenticToolRegistry` 以工具名 `getLatestPointValue` 注册成编程式 `ToolDefinition`，模型调用的就是它。
+无需跨语言的序列化，无需独立的认证流程——从工具方法到平台 Facade 是普通 Java 调用（Facade 之后按配置走本地或 gRPC
+到对应中心），租户隔离在方法级别执行。
 
-### 2. 天生 OpenAI 兼容
+### 2. OpenAI 兼容，Anthropic 原生
 
-Spring AI 的 `ChatClient` 使用 OpenAI Chat Completions 协议。这意味着 DC3 可以与任何暴露 OpenAI
-兼容端点的模型提供商配合：OpenAI (GPT-4o, GPT-5)、Anthropic (通过兼容代理的 Claude)、DeepSeek、
-Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不断增长。
+智能中心对外暴露 OpenAI Chat Completions 协议，可以与任何暴露 OpenAI
+兼容端点的模型提供商配合：OpenAI (GPT-4o, GPT-5)、DeepSeek、
+Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不断增长。Claude 不必绕道兼容代理：
+`AgenticModelProviderTypeEnum.ANTHROPIC`（`provider_type=1`）经 spring-ai-anthropic 与官方 SDK 直连 Anthropic API
+（`ChatClientFactory` 直接构建 `AnthropicChatModel`）。
 
 对运维人员而言，这意味着选择自由：先用云端模型方便上手，再切换到自托管模型保证数据主权，
 或者采用混合方案，敏感查询留在本地。Agentic Center 的 `dc3_model_provider` 表支持配置多个提供商，
@@ -84,7 +91,8 @@ Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不�
 参数名的拼写错误就是运行时错误。而在 Spring AI 中，`@Tool` 和 `@ToolParam` 注解由 Java 编译器验证。
 如果你修改了方法签名中的参数名但忘了更新注解，IDE 会在编译之前就标记出来。
 
-当你拥有 10 个工具类、30+ 个工具方法以及一个贡献者团队时，这一点至关重要。
+当你拥有 12 个工具类、68 个工具（7 个 `@Tool` 方法 + 61 个编程式 `ToolDefinition`）以及一个贡献者团队时，这一点至关重要。
+编程式注册的工具定义（name / description / JSON Schema）集中在 `ReactiveAgenticToolRegistry` 一处，同样享受编译期检查。
 编译器成为了 Python 工具调用框架无法提供的安全网。
 
 ## 架构全景：一条聊天消息如何变成设备指令
@@ -101,34 +109,37 @@ Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不�
 
 2. **写入指令需要人工确认。** 模型可以*提议*写入，但无法直接执行写入。
    `PointValueTool.writePointValue()` 生成一个待确认的 `Action`，10 分钟有效期。
-   只有人工 `POST /action/confirm`（或同等的 UI 按钮点击）才能释放它。这不是建议——
+   只有人工 `POST /api/v3/agentic/action/confirm`（`action_id` 为 query 参数，或同等的 UI 按钮点击）才能释放它。这不是建议——
    而是在服务层强制执行，不仅限于 UI 层。
 
 3. **会话可跨重启持久化。** 每一轮——用户消息、工具调用、工具结果、助手回复——
-   都落入 `dc3_message` 表。即使 Agentic Center 重启，`MessageChatMemoryRepository`
-   会回放最近 30 轮（可配置），对话无缝恢复。这对跨小时的诊断会话至关重要。
+   都落入 `dc3_message` 表。即使 Agentic Center 重启，消息存储（`ReactiveMessageStore.loadHistory`）
+   会回放最近 30 条消息（约合 15 轮对话，`historyWindowSize` 可配置），对话无缝恢复。这对跨小时的诊断会话至关重要。
 
 4. **模型永远看不到其他租户的数据。** 租户 ID 由网关注入（来自 JWT），而非由模型指定。
    即使提示词说"显示所有设备"，工具的 SQL 查询中带有 `WHERE tenant_id = ?`，
    绑定到网关注入的值。模型无法绕过——不存在跨租户查询的 API。
 
-## 10 个内建工具：完整的运维操作面
+## 内建工具面：12 个工具类、68 个工具
 
-Agentic Center 出厂自带 10 个工具类，覆盖平台每个领域对象。每个工具方法包装已有的服务层方法——
-不存在重复的业务逻辑。
+Agentic Center 出厂自带 12 个工具类，覆盖平台每个领域对象。每个工具方法包装已有的服务层方法——
+不存在重复的业务逻辑。注册分两层：61 个响应式工具经 `ReactiveAgenticToolRegistry` 编程式注册，7 个上下文/系统类工具经
+`ChatClientConfig` 以 `@Tool` 注解注册。唯一的写工具 `writePointValue` 走两阶段确认（见 [Agentic 中心](./agentic)）。
 
-| 工具类              | 领域  | 关键方法                                                                                       | 风险等级       |
-|------------------|-----|--------------------------------------------------------------------------------------------|------------|
-| `TenantTool`     | 租户  | `getCurrentTenantInfo()`                                                                   | 低          |
-| `UserTool`       | 用户  | `getCurrentUserProfile()`                                                                  | 低          |
-| `DeviceTool`     | 设备  | `lookupDeviceById()`, `searchDevices()`                                                    | 低          |
-| `DriverTool`     | 驱动  | `lookupDriverById()`, `searchDrivers()`                                                    | 低          |
-| `ProfileTool`    | 模板  | `lookupProfileById()`, `searchProfiles()`                                                  | 低          |
-| `PointTool`      | 位号  | `lookupPointById()`, `searchPoints()`                                                      | 低          |
-| `PointValueTool` | 位号值 | `getLatestPointValue()`, `getPointValueHistory()`, `readPointValue()`, `writePointValue()` | **高 (写入)** |
-| `SystemTool`     | 系统  | `getSystemHealth()`                                                                        | 低          |
-| `CommandTool`    | 指令  | `lookupCommandById()`, `searchCommands()`                                                  | 低          |
-| `EventTool`      | 事件  | `lookupEventById()`, `searchEvents()`                                                      | 低          |
+| 工具类              | 领域  | 注册   | 关键方法                                                                                       |
+|------------------|-----|------|--------------------------------------------------------------------------------------------|
+| `TenantTool`     | 租户  | @Tool | `getCurrentTenantInfo()`                                                                   |
+| `UserTool`       | 用户  | @Tool | `getCurrentUserProfile()`                                                                  |
+| `SystemTool`     | 系统  | @Tool | `getSystemHealth()`, `getDeviceStatuses()`, `getDriverStatuses()`                          |
+| `DeviceTool`     | 设备  | 注册表  | `lookupDeviceById()`, `searchDevices()`, `getDeviceLatestPointValues()`                    |
+| `DriverTool`     | 驱动  | 注册表  | `lookupDriverById()`, `searchDrivers()`                                                    |
+| `ProfileTool`    | 模板  | 注册表  | `lookupProfileById()`, `searchProfiles()`, `listProfilesByDeviceId()`                      |
+| `PointTool`      | 位号  | 注册表  | `lookupPointById()`, `searchPoints()`, `listPointsByDevice()`                              |
+| `PointValueTool` | 位号值 | 注册表  | `getLatestPointValue()`, `getPointValueHistory()`, `readPointValue()`, `writePointValue()` |
+| `CommandTool`    | 命令  | 注册表  | `lookupCommandById()`, `searchCommands()`, `listCommandsByDeviceId()`                     |
+| `EventTool`      | 事件  | 注册表  | `lookupEventById()`, `searchEvents()`, `listEventsByDeviceId()`                           |
+| `InsightTool`    | 洞察  | 注册表  | `getAlertStats()`, `getTodayStats()`, `analyticsQueryHistory()` 等 25 个                     |
+| `HistoryTool`    | 历史  | 注册表  | `searchCommandHistories()`, `searchEventHistories()`                                      |
 
 工具方法刻意使用与 REST/gRPC 层不同的命名规范。REST 端点遵循项目的 `getXxx`/`listXxx` 约定；
 工具方法使用 `lookupXxx`/`searchXxx`。这种分离让模型能够区分"按 ID 获取一个"
@@ -168,9 +179,9 @@ Agentic Center 出厂自带 10 个工具类，覆盖平台每个领域对象。�
   将敏感的本地查询路由到本地 Ollama 实例。`dc3_model_provider` 表和按会话的模型选择
   已支持这一点——路由逻辑是下一层。
 
-- **MCP 外部 Agent 接入。** Agentic Center 面向人类操作员，而 MCP 端点 (OAuth 2.1 +
-  JSON-RPC 2.0) 让外部 AI Agent 访问同一工具面——即将推出的 MCP ↔ Agentic 桥接
-  将使对话可以从自动化 Agent 无缝升级到人类操作员。
+- **MCP ↔ Agentic 桥接。** MCP 外部 Agent 接入**已经上线**：网关 `POST /mcp` 的 OAuth 2.1 +
+  JSON-RPC 2.0 端点让外部 AI Agent 调用平台工具面（见 [AI Agent / MCP 集成](./mcp)）。待做的是把这条 MCP
+  工具面与 Agentic 对话链路桥接起来，让一次会话可以从自动化 Agent 无缝升级到人类操作员。
 
 ---
 

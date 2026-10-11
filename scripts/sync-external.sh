@@ -3,8 +3,8 @@
 # 手动同步上游 iot-dc3 仓库的 CHANGE.md / USAGE.md / DEPLOYMENT.md 到本仓库的独立快照。
 #
 # 背景:iot-dc3 每次发版由 `make changelog` 重新生成 dc3/doc/CHANGE.md，
-# USAGE.md 也在 iot-dc3 维护。本仓库为完全独立的文档仓库（build 不依赖网络），
-# 因此这两份文件以快照形式存在于 dc3/doc/ 下。iot-dc3 发版后手动运行本脚本刷新。
+# USAGE.md 与 DEPLOYMENT.md 也在 iot-dc3 维护。本仓库为完全独立的文档仓库（build 不依赖网络），
+# 因此这三份文件以快照形式存在于 dc3/doc/ 下。iot-dc3 发版后手动运行本脚本刷新。
 #
 # 用法:
 #   ./scripts/sync-external.sh                 # 默认从 iot-dc3 main 拉取

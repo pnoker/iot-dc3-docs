@@ -20,11 +20,16 @@ import {fileURLToPath} from 'node:url'
 import {resolve} from 'node:path'
 
 export interface VersionInfo {
-    /** Display version, e.g. "2026.5" (trimmed from POM patch version) */
+    /** Display version, e.g. "2026.9" (trimmed from the full patch version) */
     version: string
-    /** Full version including patch, e.g. "2026.5.22" */
+    /**
+     * Full version including patch. When resolved from public/versions.json
+     * this equals `latest` (versions.json carries display versions like
+     * "2026.9", no patch level); only the DC3_DOCS_VERSION env path (CI
+     * versioned builds) supplies a real patch version like "2026.9.22".
+     */
     fullVersion: string
-    /** Whether this build is the latest (main/release branch). Archived builds set DC3_DOCS_IS_LATEST=false */
+    /** Whether this build is the latest. Archived builds set DC3_DOCS_IS_LATEST=false */
     isLatest: boolean
 }
 
@@ -35,7 +40,7 @@ const VERSIONS_PATH = resolve(fileURLToPath(new URL('../public/versions.json', i
  *
  * Resolution order:
  *   1. DC3_DOCS_VERSION env var (set by CI for versioned/archived builds)
- *   2. `latest` field in public/versions.json (the version-switcher source of truth)
+ *   2. `latest` field in public/versions.json (feeds the VersionBanner meta)
  *   3. Fallback to "dev"
  *
  * The docs repo is standalone (decoupled from the Java platform), so the version
@@ -58,6 +63,10 @@ export function resolveVersion(): VersionInfo {
         const data = JSON.parse(readFileSync(VERSIONS_PATH, 'utf8'))
         const latest: string | undefined = data.latest
         if (latest) {
+            // fullVersion === version here: versions.json stores display versions
+            // (see VersionInfo.fullVersion). The `versions` array in that file has
+            // no runtime consumer since the VersionSwitcher component was removed
+            // (site-5) — it remains the upgrade log for archived doc deployments.
             return {version: latest, fullVersion: latest, isLatest: true}
         }
     } catch (_) {

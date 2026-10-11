@@ -61,11 +61,12 @@ AI 使用。
 驱动用 `host`、`port`、`database` 拼出 JDBC URL，形如
 `jdbc:mysql://host:port/database?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`。`host`、`port`、`database`、
 `username`、`password` 五项均为必填——配置校验（`validate()`）逐项检查，缺任一项都不通过。驱动按设备 ID 缓存一个 HikariCP
-连接池（一台设备一个池，最大 5 连接），连接超时取 `queryTimeout × 1000` 毫秒。
+连接池（一台设备一个池，最大 5 连接），连接池的 `connectionTimeout` 固定 `4000` 毫秒、与 `queryTimeout` 无关。
 
-::: tip queryTimeout 同时作用于建连与查询节奏
-`queryTimeout`（默认 30 秒）被设为连接池的 `connectionTimeout`：拿不到连接、或建连卡住超过这个时长就会失败。它与采集周期是两回事——慢
-SQL 若长期逼近或超过它，应优化 SQL 或加索引，而不是一味调大超时。
+::: tip queryTimeout 只作用于单条读/写 SQL 的执行
+`queryTimeout`（默认 30 秒）被设到每条读/写语句上（`PreparedStatement.setQueryTimeout`）：单条 SQL
+执行超过这个时长即失败。连接池的 `connectionTimeout` 是固定 `4000` 毫秒，与它无关。它与采集周期也是两回事——慢 SQL
+若长期逼近或超过它，应优化 SQL 或加索引，而不是一味调大超时。
 :::
 
 ### 位号属性（`point-attribute`）
@@ -104,7 +105,7 @@ SQL 若长期逼近或超过它，应优化 SQL 或加索引，而不是一味�
 MySQL 接入失败大多集中在连接、账号权限、查询定位、字段类型几类。按下面顺序排查：
 
 1. **连不上库（设备一直 offline）**。先确认 `host:port` 可达：`telnet <host> 3306` 或 `nc -vz <host> 3306`。健康检查通过
-   `conn.isValid(5)`（5 秒内能否拿到有效连接）判定在线，建连或心跳失败即报 offline。常见根因：库未监听公网/容器网络、防火墙拦截、
+   `conn.isValid(2)`（2 秒内能否拿到有效连接）判定在线，建连或心跳失败即报 offline。常见根因：库未监听公网/容器网络、防火墙拦截、
    `bind-address` 限制。
 
 2. **能连但被拒（账号/权限/SSL）**。确认 `username`/`password` 正确，且该账号被授权从驱动所在主机连接（MySQL 的账号是
@@ -139,7 +140,7 @@ SQL 里手动拼接值，也不要用 `${value}` 这类模板语法，那样既�
   的「✓ / ✓ / —」一致。
 - **采集周期**：默认 cron `0/30 * * * * ?`（每 30 秒读一轮），在驱动 `application.yml` 的 `schedule.read` 配置；另有一个
   `custom` 自定义调度默认 cron `0/5 * * * * ?`（每 5 秒），但基类的 `schedule()` 为空实现、数据库驱动不使用它。
-- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`；判定靠 `conn.isValid(5)`
+- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`；判定靠 `conn.isValid(2)`
   。在线状态机制见[设备](../introduction/concepts/device)。
 
 ::: info 实现状态：完整

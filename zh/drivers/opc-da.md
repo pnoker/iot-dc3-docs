@@ -18,7 +18,7 @@ Server，按位号上配置的分组（group）与标签（tag）周期性读取
 ## 协议背景
 
 OPC DA（OPC Data Access）是 Windows 平台上最经典的工业数据访问规范。它诞生于 PC 时代，把 Microsoft 的 COM/DCOM
-组件技术用于工业现场：SCADA、组态软件、PLC 网关大多内置一个 OPC DA Server，把底层 PLC、仪表的点位以"标签"
+组件技术用于工业现场：SCADA、组态软件、PLC 网关大多内置一个 OPC DA Server，把底层 PLC、仪表的数据以"标签"
 （item）的形式暴露出来，上位机用统一的 OPC DA 客户端去读写，而不必关心每个 PLC 的私有协议。常见版本是 OPC DA 2.0 / 3.0。
 
 在[物联网四层架构](../foundations/fieldbus)里，OPC DA 属于**网络层**——它是现场设备与上位系统之间的"通用翻译层"
@@ -112,8 +112,7 @@ OPC DA 接不上，绝大多数问题出在 DCOM 与命名，而不在驱动代�
 ::: warning 实现状态：代码完整，但运行依赖 Windows / DCOM 基础设施
 `OpcDaDriverCustomServiceImpl` 的 `read()` / `write()` 已基于内置的 OpenSCADA OPC DA 客户端库（J-Interop）**完整实现**
 ：连接通过 `Server.connect()` 建立并按设备缓存，读取调用 `item.read()` 并按 COM 变体类型转换，写入构造 `JIVariant` 调
-`item.write()`。源码类注释里残留一句"work-in-progress skeleton / 见 TODO 标记"的旧警告，但方法体内已无
-TODO，与当前实现不符——应以方法实现为准。真正的门槛不在代码，而在于必须有一台配好 DCOM 的 Windows OPC DA Server
+`item.write()`。真正的门槛不在代码，而在于必须有一台配好 DCOM 的 Windows OPC DA Server
 才能实际跑通；缺少该环境时无法验证。
 :::
 

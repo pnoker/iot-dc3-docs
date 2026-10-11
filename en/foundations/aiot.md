@@ -203,8 +203,9 @@ call to the admin endpoint `POST /mcp/tool/catalog/refresh` (or a rebuild after 
 
 **Alarms and notifications** pick up the "anomaly detection and smart alarming" engineering notes above.
 DC3's [alarms and notifications](../operation/alarms) use a rule engine for deterministic judgments, `dc3_rule_state` as
-a state machine (fire/recover/close) for debouncing, alarm grading (P0–P3) and multi-channel delivery (
-email/SMS/webhook) for noise reduction and dispatch — this is the "rules as the floor" half, complementing the "models
+a state machine (fire/recover/close) for debouncing, alarm grading (P0–P3) and multi-channel delivery (Feishu bot /
+webhook / email — email is currently a reserved placeholder that does not send yet) for noise reduction and dispatch —
+this is the "rules as the floor" half, complementing the "models
 for reinforcement" AI paths above: rules cover the hard constraints you can write down, AI helps people understand and
 act.
 

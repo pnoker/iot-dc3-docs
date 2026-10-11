@@ -44,8 +44,10 @@ uses the header/footer plus offset/length to "cut" the real data region out of t
 
 Serial configuration comes in three layers: **driver attributes** (`driver-attribute`, device-level) describe how the
 serial port is opened (line parameters); **point attributes** (`point-attribute`) describe what each collected point
-sends, how to slice the response, and what format to decode in; **command attributes** (`command-attribute`) describe
-where a writable point writes. The defaults and descriptions in the three tables below come from the driver
+sends, how to slice the response, and what format to decode in; **command attributes** (`command-attribute`) are
+reserved fields on the write command (currently placeholder declarations — the write template that actually takes
+effect lives on the point attribute `sendCommand`, see below). The defaults and descriptions in the three tables below
+come from the driver
 `application.yml`; for the three-layer origin of attributes
 see [Attribute and Config](../introduction/concepts/attribute-config).
 
@@ -91,28 +93,33 @@ region before the footer per `checksumType` (CRC16 takes 2 bytes, XOR takes 1); 
 checksum over the bytes from after the header to the end of the data region and compare it with the checksum bytes in
 the response, erroring on mismatch; ④ slice the data region by `dataLength` (0=up to the checksum region) and decode by
 `dataFormat`+`byteOrder`. The Point's data type (the `pointTypeFlag` of the [Point](../introduction/concepts/point))
-should match `dataFormat`: under `BINARY`/`FLOAT`, 1/2/4/8-byte regions are assembled into integers or floats per
-`byteOrder` (`FLOAT` uses 4 bytes single precision, 8 bytes double precision); a length not in 1/2/4/8 falls back to a
+should match `dataFormat`: under `BINARY`, 1/2/4/8-byte regions are assembled into integers per `byteOrder`, and
+`FLOAT` decodes 4-byte single / 8-byte double precision; other lengths (including 1/2-byte `FLOAT`) fall back to a
 HEX string.
 :::
 
 ### Command attributes (`command-attribute`)
 
-A writable Point sets these on the write command:
+`application.yml` declares the two attributes below under `command-attribute`, but they are currently **placeholder
+declarations**: `write()` only receives `pointConfig` (point attributes) in its signature — never command attributes —
+and this driver does not override `execute()`, so the write path does not read them:
 
 | Attribute    | code          | Type   | Default    | Description                                            |
 |--------------|---------------|--------|------------|--------------------------------------------------------|
 | Send Command | `sendCommand` | STRING | `${value}` | HEX command template with the `${value}` placeholder   |
 | Byte Order   | `byteOrder`   | STRING | `BIG`      | Byte order for encoding the written value: BIG, LITTLE |
 
-On write, the driver renders the command param into the `${value}` slot of the `sendCommand` template, parses the whole
-result as HEX into bytes, and sends the frame without reading a response.
+The write template that actually takes effect is the `sendCommand` **point attribute**: `write()` does a
+`sendCommand.replace("${value}", value)` string replace on it, parses the whole result as HEX into bytes, and sends the
+frame without reading a response.
 
-::: warning The write byteOrder is currently not applied during encoding
-`command-attribute` lists `byteOrder`, but `write()` only does a string replace `sendCommand.replace("${value}", value)`
-and then parses the whole result as HEX — `${value}` must already be valid HEX text, and `byteOrder` does no endianness
-conversion on it. To write a multi-byte numeric value, encode it into a correctly byte-ordered HEX string upstream and
-pass that as the command param.
+::: warning The write template lives on the point attributes; byteOrder is not applied during encoding
+`write()` takes its template from the **point attribute** `sendCommand`, not from the command attributes; the
+implementation only does a string replace `sendCommand.replace("${value}", value)` and then parses the whole result as
+HEX — `${value}` must already be valid HEX text, and `byteOrder` (whether filled on the command or the point) does no
+endianness conversion on it. To write a multi-byte numeric value, encode it into a correctly byte-ordered HEX string
+upstream and pass that in. If the point's `sendCommand` carries no `${value}`, a write just sends that command verbatim
+and the written value never reaches the device.
 :::
 
 ### Collection and health

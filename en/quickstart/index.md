@@ -28,7 +28,8 @@ build toolchain plus a container runtime.
   packaging.
 - **pnpm** — both the `dc3-web/` frontend and sibling `dc3-cli/` use pnpm (not npm or yarn). Skip this for backend-only
   work.
-- **Podman** — every container operation in this repository uses `podman` (`make` defaults to `podman compose`).
+- **Container runtime** — Docker or Podman both work. The Makefile's `COMPOSE` auto-detects: `docker compose` first
+  when available, then `podman compose`; you can also force it explicitly with `COMPOSE='podman compose'`.
 
 ## Developing in JetBrains IDEA
 
@@ -74,10 +75,12 @@ the EnvFile tab:
 
 ## Why the CLI five steps are in this order
 
-The shortest path to a running local stack is five steps. Each step produces a concrete artifact, and each depends on
-the previous one: you need the infrastructure up before you can load the environment variables that point at it; you
-need the jars built before you can start the dev stack; and only once the services are up does it make sense to run
-tests.
+The shortest path to a running local stack is five steps: start the infrastructure (containers) → load the environment
+variables that point at it → build → start the dev stack → run the tests. Note how the two routes divide the work:
+`make up-dev` brings up a **fully containerized** dev stack whose images build inside the container (Maven runs in the
+builder stage and does not consume the jars on your host), so the first launch builds everything and takes a while; the
+host-side `make package` in Step 3 serves the IDEA local-process route (semi-containerized) and fast compile checks — it
+runs parallel to the container route and is **not** a prerequisite for `up-dev`.
 
 <QuickstartIndexDiagram lang="en" />
 
@@ -105,8 +108,8 @@ The ports the containers publish to the host are fixed: PostgreSQL `localhost:35
 inside the containers they stay `5432` / `5672`). To verify:
 
 ```bash
-podman ps                          # you should see dc3-postgres and dc3-rabbitmq running
-podman exec dc3-postgres psql -U dc3 -d dc3 -c '\dt dc3_auth.*'   # if it lists the auth tables, it's ready
+make ps STACK=db                   # you should see dc3-postgres and dc3-rabbitmq running
+docker exec dc3-postgres psql -U dc3 -d dc3 -c '\dt dc3_auth.*'   # if it lists the auth tables, it's ready (Podman users: replace docker with podman)
 ```
 
 ::: tip Optional Observability Stack
@@ -143,7 +146,8 @@ To verify: `echo $POSTGRES_PORT` should print `35432`.
 make package                       # equivalent to mvn -s .mvn/settings.xml clean package
 ```
 
-The repository already has parallel builds, enforced JDK 21 / Maven 3.9+, and Spring Java Format validation set up. The
+The repository already has parallel builds, enforced JDK 21 / Maven 3.9+, and Spotless + Checkstyle format and style
+validation set up (run `make format-java` locally to format in one shot). The
 build produces the executable jar for each service module (for example, `dc3-gateway/target/dc3-gateway.jar`). This step
 only validates compilation and packaging — it doesn't depend on the containers from Step 1.
 
@@ -154,17 +158,34 @@ If you only want to confirm your changes compile, skip the full package and run
 
 ## Step 4: Start the Dev Stack
 
-With the jars built, bring the center services up with the dev stack. `make up STACK=dev` (or the shorthand
-`make up-dev`) starts the Gateway, Auth, Manager, Data, Agentic, and drivers in dependency order.
+Bring the center services up with the dev stack. `make up STACK=dev` (or the shorthand
+`make up-dev`) starts the Gateway, Auth, Manager, Data, Agentic, and drivers in dependency order. The dev stack's images
+build inside the container (they do not depend on the host-built jars from Step 3), so the first launch is slower.
+
+::: warning The container stack needs a "clean" shell: pass `RUNTIME_ENV_FILE=` to suppress local-process defaults
+The `localhost:35432` values in `dc3/env/dev.env` are meant for **local Java processes** (Step 2), but the Makefile
+auto-`include`s and `export`s that file, and `docker compose`'s `${VAR:-default}` interpolation then **injects them into
+the containers** — the center services try to reach host-side ports, fail with `Connection refused:
+localhost/127.0.0.1:35432`, and crash-loop until `make up-dev` ends with `dependency failed to start`. Suppress it when
+starting the container stack:
+
+```bash
+make up-dev RUNTIME_ENV_FILE=        # empty value skips the dev.env include; containers talk over in-network names like dc3-postgres:5432
+```
+
+Conversely, `source dc3/env/dev.env.sh` from Step 2 is only needed when the center services run as **local processes**
+(IDEA / half-container mode); the pure container route can skip Step 2. See
+[Troubleshooting](../guide/troubleshooting) for the mechanism and more symptoms.
+:::
 
 ::: code-group
 
 ```bash [Global Registry]
-make up-dev
+make up-dev RUNTIME_ENV_FILE=
 ```
 
 ```bash [China Mainland Registry]
-make up-dev-cn
+make up-dev-cn RUNTIME_ENV_FILE=
 ```
 
 :::
@@ -178,7 +199,8 @@ Why the ordering? Because the services depend on each other:
   are reachable, so it comes after its dependencies.
 
 ::: details Full Startup Order and Ports
-In distributed mode, calls go over gRPC by default (`DC3_FACADE_MODE=grpc`, already set in dev.env). Service ports:
+In distributed mode, calls go over gRPC by default (the facade mode defaults to `grpc` when unset — see
+[Facade modes](../architecture/facade-modes)). Service ports:
 
 | Service                                       | HTTP | gRPC |
 |-----------------------------------------------|------|------|
@@ -188,27 +210,31 @@ In distributed mode, calls go over gRPC by default (`DC3_FACADE_MODE=grpc`, alre
 | Data Center / `dc3-center-data`               | 8500 | 9500 |
 | Agentic Center / `dc3-center-agentic`         | 8600 | —    |
 
-Only the Gateway (the user entry) and listening-virtual's TCP 6270 / UDP 6271 (the device entry) are mapped to the host;
-all other backend ports are internal.
+Only the Gateway (the user entry) and listening-virtual's TCP 6270 / 6271 (the device entry; 6271 is intended as the UDP
+channel, but no published port currently declares `/udp`, so it is published as TCP — see
+[Deployment Modes and Image Sources](../guide/usage)) are mapped to the host; all other backend ports are internal.
 :::
 
 To verify: once the stack is up, run the login golden path against the gateway. Login takes two steps — first fetch the
 salt, then submit the plaintext password together with it for a 12-hour access token (the salt does not hash the password; verification is server-side):
 
 ```bash
-# 1) Fetch the salt (public endpoint; use within 5 minutes)
+# 1) Fetch the salt (public endpoint, valid for 5 minutes)
 curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3"}'      # returns the salt string (sample value)
+  -d '{"tenant":"default","name":"dc3"}'      # 2026.9 line: bare salt; 2026.10+ line: {"salt":"a1b2c3d4e5"}
 
 # 2) Submit the plaintext password together with the salt for a token (public endpoint, access token valid for 12 hours)
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"<salt from the previous step>","password":"<plaintext password>"}'
+# 2026.10 image line returns {"token":"eyJhbGciOiJIUzI1NiJ9..."}; the default 2026.9 line returns a bare text/plain token (an httpOnly cookie is also set)
 ```
 
-Once you have the token, every protected endpoint goes through the gateway with the three auth headers `X-Auth-Tenant`,
-`X-Auth-Login`, and `X-Auth-Token`. The full "create driver → create profile → create device → read/write point" loop is
+Once you have the token, every protected endpoint goes through the gateway with the three auth headers:
+`X-Auth-Tenant` (the tenant name), `X-Auth-Login` (the username), and `X-Auth-Token` (a JSON envelope
+`{"salt":"...","token":"..."}` carrying the salt from the salt-fetch step; a bare token is rejected by the gateway). The
+full "create driver → create profile → create device → read/write point" loop is
 covered in [First Device: End to End](./first-device).
 
 ## Step 5: Run the Tests
@@ -226,8 +252,8 @@ against unit-level regressions.
 - **Starting the services without `source dev.env.sh`** — the most common one. The local Java processes never see
   `localhost:35432` / `35672`, so they try the in-container DNS names and fail. Every new shell needs to `source`
   again — the variables only live in the current shell.
-- **Podman not running** — if `make up-db` says it can't reach the container runtime, first check the `podman` daemon or
-  machine is started (on macOS run `podman machine start`), then confirm with `podman ps`.
+- **Container runtime not running** — if `make up-db` says it can't reach the container runtime, first check the Docker
+  daemon or Podman machine is started (on macOS run `podman machine start`), then confirm with `make ps STACK=db`.
 - **Ports in use** — startup fails when `35432` / `35672` / `8000` and friends are taken by other processes. Free the
   occupying process, or override the Compose published ports in the root `.env` (this only affects the container side);
   override the local process ports with the service-level environment variables.

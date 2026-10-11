@@ -111,7 +111,8 @@ public class KnxDriverApplication {
 <parent>
   <groupId>io.github.pnoker</groupId>
   <artifactId>dc3-driver</artifactId>
-  <version>2026.9.22</version>
+  <!-- 与上游当前版本保持一致（复制模板后此版本已自带，通常无需手改） -->
+  <version>2026.10.9</version>
 </parent>
 
 <artifactId>dc3-driver-knx</artifactId>
@@ -140,14 +141,14 @@ dc3:
 
     schedule:
       read:                       # 读调度：周期采集位号值
-        enabled: true
+        enable: true
         cron: '0/30 * * * * ?'    # 每 30 秒一轮
       custom:                     # 自定义调度：驱动 schedule() 回调
-        enabled: true
+        enable: true
         cron: '0/5 * * * * ?'
     health:
       device:                     # 设备健康上报
-        enabled: true
+        enable: true
         cron: '0/15 * * * * ?'
         timeout: 45               # 设备状态租约 TTL（秒）
         timeout-unit: SECONDS
@@ -193,11 +194,22 @@ logging:
 | `default-value`       | 默认值                                                                                                          |
 | `remark`              | 说明文字，建议英文                                                                                                    |
 
-::: warning 开关字段名是 enabled
-调度开关字段名为 `enabled`：`DriverScheduleServiceImpl` 读取 `getRead().getEnabled()` / `getCustom().getEnabled()` /
-`device.getEnabled()`，绑定到 `DriverProperties` 内的 `private Boolean enabled`。Spring 宽松绑定不会把 `enable` 映射到
-`enabled`（属于不同属性名）。`dc3-driver-virtual` 模板里写的是 `enable`，该字段实际不会生效——新驱动请用 `enabled`。注意
-device health 的 `enabled` 默认为 `false`，需显式置 `true` 才启用。
+::: info 模板里的另外两组属性
+`dc3-driver-virtual` 的真实 `application.yml` 除上面用到的 `driver-attribute` / `point-attribute` 外，还注册了两组模板专用属性：
+
+- `command-attribute`：`payloadTemplate`（默认 `'${value}'`）与 `responseTemplate`（默认 `'{}'`），由 `DriverCommand.execute(...)`
+  消费——用命令参数渲染 payload 模板、产出模拟响应。实现自定义命令的驱动按需定义。
+- `event-attribute`：`eventCodePath`（默认 `$.eventCode`）与 `payloadPath`（默认 `$.payload`），两条 JSONPath，告诉 SDK
+  从设备上报的报文里解析事件码与事件载荷。
+
+这两组与 `DriverProperties` 的 `commandAttribute` / `eventAttribute` 字段一一对应；不做命令模拟或事件上报的协议驱动可以不加。
+:::
+
+::: warning 开关字段名是 enable
+调度与健康开关的字段名是 `enable`：`DriverScheduleServiceImpl` 读取 `getRead().getEnable()` / `getCustom().getEnable()` /
+`deviceHealth.getEnable()`，绑定到 `DriverProperties` 内的 `private Boolean enable`。Spring 宽松绑定不会把 `enabled` 映射到
+`enable`（属于不同属性名）——写成 `enabled` 的配置会被**静默忽略**，read/custom 调度不会启用。注意两个默认值方向相反：read/custom
+调度的 `enable` 默认为 `false`，需显式置 `true` 才启用；device health 的 `enable` 默认为 `true`，需显式置 `false` 才关闭。
 :::
 
 属性注册的链路是：`application.yml` 的 `dc3.driver` → SDK 解析为 `RegisterBO` → 经 gRPC 提交到管理中心。下图给出这条注册流的实体关系：
@@ -342,8 +354,8 @@ java -jar dc3-driver/dc3-driver-knx/target/dc3-driver-knx.jar
 
 :::
 
-开发环境下驱动会自动向管理中心注册。查看驱动日志确认出现类似 `Driver register succeeded` 的事件即表示注册成功（注册重试时会打印
-`Driver register failed on attempt n/30, retrying...`）。
+开发环境下驱动会自动向管理中心注册。注意日志语义：注册重试失败时会打印
+`Driver registration failed, attempt=n, maxAttempts=30, retryDelayMillis=...`（WARN）；**首试即成功不会打印任何"注册成功"日志**，要等注册、初始化与调度装配全部完成才出现一行 `Driver runtime initialized`（INFO）。判断注册成功最可靠的方式是管理中心的驱动列表里出现本驱动，且日志中没有上述重试告警。
 
 走通黄金路径做一次端到端冒烟（HTTP 路径与字段来自网关合约，示例值标注为示例）：
 
@@ -358,7 +370,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
-  -d '{"deviceId": 1, "pointId": 1, "page": {"current": 1, "size": 10}}'
+  -d '{"deviceId": 1, "pointId": 1, "offset": 0, "limit": 10}'
 ```
 
 4. 对可写位号下发写命令，确认 `write()` 被调用并回执：
@@ -369,14 +381,15 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H 'Content-Type: application/json' \
-  -d '{"deviceId": 1, "pointId": 1, "value": "42"}'
+  -d '{"deviceId": "1", "pointId": "1", "value": "42"}'
 ```
 
-接口返回 `commandId`，再用它查询命令历史看执行状态（`PointCommandHistoryVO` 的 `status` 取 `SUCCESS`/`FAILED` 等，写成功时
-`responseValue` 回显写入值）：
+接口返回 `202 Accepted`，body 是 `{"commandId":"...","statusUri":"..."}`（`Location` 头同带状态查询地址）。用 `commandId`
+查询命令历史看执行状态（`PointCommandHistoryVO` 的 `status` 取 `SUCCESS`/`FAILED` 等，写成功时 `responseValue`
+回显写入值；注意查询参数名是 `command_id`）：
 
 ```bash
-curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=<commandId>' \
+curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?command_id=<commandId>' \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
@@ -395,7 +408,7 @@ curl -X GET 'http://localhost:8000/api/v3/data/point_command_history/get_by_comm
 |---------------------------|---------------------------------------------------------------------------------------------------|
 | 驱动编码冲突                    | `dc3.driver.code` 重复——保持全局唯一且稳定，不要改已投产的 code                                                      |
 | `DriverCustomService` 未加载 | 实现类缺 `@Service`，或不在启动类组件扫描范围内                                                                     |
-| 注册一直重试不成功                 | 管理中心未就绪或 gRPC 不通——看 `Driver register failed on attempt n/30` 日志，确认 `CENTER_MANAGER_HOST` 和管理中心健康态 |
+| 注册一直重试不成功                 | 管理中心未就绪或 gRPC 不通——看 `Driver registration failed, attempt=n, maxAttempts=30` 日志，确认 `CENTER_MANAGER_HOST` 和管理中心健康态 |
 | `read` 返回空或异常             | 不要静默吞异常，让日志暴露协议错误；单点失败不应拖垮整轮采集                                                                    |
 | 设备频繁离线（flap）              | 状态 TTL 小于读/上报周期——增大 TTL 或缩短调度周期                                                                   |
 | 有读取但数据页无值                 | 检查 RabbitMQ 连通性、数据中心日志和租户上下文                                                                      |

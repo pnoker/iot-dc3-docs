@@ -21,7 +21,7 @@ Redis is an in-memory key/value store. This driver maps a Point to a key (and op
 | Attribute | code | Type | Default | Description |
 |-----------|------|------|---------|-------------|
 | Key Prefix | `keyPrefix` | STRING | (empty) | Key prefix: the actual key accessed = keyPrefix + the point's `key` |
-| (broker connection) | `spring.data.redis.*` | — | env | Configured via Spring Boot `spring.data.redis.*` properties |
+| (connection) | `spring.data.redis.*` | — | env | Configured via Spring Boot `spring.data.redis.*` properties |
 
 ### Point attributes (`point-attribute`)
 
@@ -30,6 +30,11 @@ Redis is an in-memory key/value store. This driver maps a Point to a key (and op
 | Key | `key` | STRING | (empty) | Redis key to read/write |
 | Data Type | `dataType` | STRING | `STRING` | STRING or HASH |
 | Field | `field` | STRING | (empty) | Hash field (required when `dataType=HASH`) |
+
+In addition, `application.yml` declares one **write-command attribute (`command-attribute`)**: `Data Type` (code
+`dataType`, STRING, default `STRING`). It is currently a placeholder declaration — `write()` only reads `dataType`
+from the point attributes and this driver does not override `execute()`, so filling it on a write command changes
+nothing.
 
 ## Collection and health
 

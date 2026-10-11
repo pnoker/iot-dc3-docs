@@ -55,9 +55,9 @@ make config STACK=db    # print the effective compose config; verify published p
 make logs STACK=db      # follow dependency container logs (last 200 lines)
 ```
 
-```bash [podman]
-podman ps               # list running containers and their port mappings
-podman exec dc3-postgres psql -U dc3 -d dc3 -c "select 1"   # connect directly to verify the database is available
+```bash [docker / podman]
+docker ps               # list running containers and their port mappings (podman has same-named commands)
+docker exec dc3-postgres psql -U dc3 -d dc3 -c "select 1"   # connect directly to verify the database is available
 ```
 
 :::
@@ -99,6 +99,23 @@ connections at the dependency ports Compose publishes on localhost. The three fi
 **Resolution**: Before starting from the command line or scripts, run `source dc3/env/dev.env.sh`. In the IDE, attach
 `dc3/env/dev.env` through the EnvFile plugin. For the full variable catalog and the host-to-in-container address
 mapping, see [Environment variables explained](../quickstart/environment).
+
+## Environment variables injected in reverse: the container stack crash-loops (`Connection refused: localhost:35432`)
+
+**Symptoms**: when `make up-dev` starts the container stack, `dc3-center-*` crash-loops on boot with
+`Connection refused: localhost/127.0.0.1:35432` (or other host-side ports like `5672`/`1883`) in the logs, and
+`make up-dev` finally ends with `dependency failed to start: container dc3-center-auth is unhealthy`.
+
+**Root cause**: the **reverse** of the previous section — the `localhost:35432` values in `dc3/env/dev.env` are meant
+for local Java processes, but the Makefile auto-`include`s `$(RUNTIME_ENV_FILE)` and `export`s everything, so
+`docker compose`'s `${VAR:-default}` interpolation **injects them into the containers**; in-container services then dial
+`localhost` host-side ports (where no dependencies exist inside the container), get refused, and fail their health
+checks. `.env.example` has no same-named variable to override it, so the dev.env values always win. Running
+`make up-dev` after `source dev.env.sh` triggers the same pollution.
+
+**Resolution**: suppress it explicitly when starting the container stack — `make up-dev RUNTIME_ENV_FILE=` (an empty
+value skips the dev.env include) — or run in a clean shell (without sourcing dev.env.sh). Conversely, Step 2's `source`
+is only needed for local Java processes. The two modes are mutually exclusive — don't mix them.
 
 ## Port in use: the process exits during the bind phase
 
@@ -176,7 +193,8 @@ driver.
 **Symptom**: Calling a protected endpoint through the gateway returns `401` (unauthenticated) or `403` (unauthorized).
 
 **Root cause**: The request doesn't carry a valid token, or the tenant/login/token trio is incomplete. Platform login is
-a two-step flow: fetch the salt first, then hash the password with the salt to exchange it for a token. Every subsequent
+a two-step flow: fetch the salt first, then submit the plaintext password together with the salt to exchange it for a
+token (the salt does not hash the password — verification happens server-side). Every subsequent
 protected request must carry the three headers `X-Auth-Tenant`, `X-Auth-Login`, and `X-Auth-Token`.
 
 **Diagnosis and resolution**: Log in to get a token first, then call the endpoint with the headers. The happy path uses
@@ -188,18 +206,18 @@ curl -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
 
-# 2) Hash the password with the salt, then exchange for a token (valid for 12 hours)
+# 2) Submit the plaintext password together with the salt for a token (valid for 12 hours; verification happens server-side)
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<salt returned in the previous step>","password":"<password hashed with the salt>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<salt returned in the previous step>","password":"<plaintext password>"}'
 
-# 3) Call the protected endpoint with the trio of headers
+# 3) Call the protected endpoint with the trio of headers (the X-Auth-Token header is JSON: {"salt","token"} - a bare token gets 401)
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <token returned in the previous step>' \
+  -H 'X-Auth-Token: {"salt":"<salt from step 1>","token":"<token from step 2>"}' \
   -H 'Content-Type: application/json' \
-  -d '{"current":1,"size":10}'
+  -d '{"deviceId": 1024, "pointId": 2048, "offset": 0, "limit": 10}'
 ```
 
 If the 401s cluster on the gateway-to-backend hop rather than being a user token problem, they're almost certainly about

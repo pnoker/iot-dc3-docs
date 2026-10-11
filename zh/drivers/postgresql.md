@@ -35,7 +35,7 @@ Modbus、OPC UA 这类驱动面对的是"物理量在线"——寄存器实时�
 ### 驱动属性（设备级 `driver-attribute`）
 
 把一个 PostgreSQL 库接进来时，在[设备](../introduction/concepts/device)
-上填这些[属性](../introduction/concepts/attribute-config)。它们决定连到哪个库、用什么账号、连接超时多久：
+上填这些[属性](../introduction/concepts/attribute-config)。它们决定连到哪个库、用什么账号、查询超时多久：
 
 | 属性            | code           | 类型     | 默认值         | 说明                                             |
 |---------------|----------------|--------|-------------|------------------------------------------------|
@@ -44,7 +44,7 @@ Modbus、OPC UA 这类驱动面对的是"物理量在线"——寄存器实时�
 | Database      | `database`     | STRING | （空）         | 要连接的数据库名                                       |
 | Username      | `username`     | STRING | `root`      | 连接账号                                           |
 | Password      | `password`     | STRING | （空）         | 账号密码                                           |
-| Query Timeout | `queryTimeout` | INT    | `30`        | 连接获取超时（秒），同时作为 Hikari 连接池的 `connectionTimeout` |
+| Query Timeout | `queryTimeout` | INT    | `30`        | SQL 查询超时（秒），作用于每条读/写语句执行                         |
 
 驱动用 `host`、`port`、`database` 拼出 JDBC URL（形如 `jdbc:postgresql://host:port/database`）。设备配置校验（`validate()`
 ）会逐项检查 `host`、`port`、`database`、`username`、`password` 五项是否填写——任一为空都不通过；`queryTimeout` 非必填，缺省按
@@ -85,7 +85,7 @@ Modbus、OPC UA 这类驱动面对的是"物理量在线"——寄存器实时�
 - **采集周期**：默认 cron `0/30 * * * * ?`（每 30 秒读一轮）。
 - **自定义周期**：驱动还有一个 custom 调度，默认 cron `0/5 * * * * ?`（每 5 秒）；JDBC 数据库驱动的 `schedule()`
   为空实现，该调度当前不做任何事。
-- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`。健康检查通过从连接池取一条连接、`conn.isValid(5)`
+- **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`。健康检查通过从连接池取一条连接、`conn.isValid(2)`
   判断库是否可达——连不上则设备置为离线。在线状态机制见[设备](../introduction/concepts/device)。
 
 ## 故障排查
@@ -93,7 +93,7 @@ Modbus、OPC UA 这类驱动面对的是"物理量在线"——寄存器实时�
 数据库桥接接入失败，多半不在协议本身，而在连接参数、SQL 形态或上游库的状态。以下按出现频率排列：
 
 ::: warning 设备一直离线 / 连接池建不起来
-健康检查靠 `conn.isValid(5)` 判定。若设备始终离线，先确认 `host`/`port` 可达（容器内连宿主机别用 `localhost`）、`database`
+健康检查靠 `conn.isValid(2)` 判定。若设备始终离线，先确认 `host`/`port` 可达（容器内连宿主机别用 `localhost`）、`database`
 名大小写正确、账号 `username`/`password` 有该库的登录权限。PostgreSQL 默认还受 `pg_hba.conf` 约束——来源 IP
 或认证方式不被允许时会直接拒连，这类错误不在驱动侧，要去库端放行。
 :::
@@ -117,7 +117,8 @@ PostgreSQL 对不加引号的标识符会折叠成小写，加双引号则按字
 :::
 
 ::: tip 查询超时 / 慢 SQL
-`queryTimeout`（默认 30 秒）被用作 Hikari 连接池的 `connectionTimeout`，即"取不到连接时的等待上限"。涉及大表或慢 SQL 时，应优化
+`queryTimeout`（默认 30 秒）被设到每条读/写语句上（`PreparedStatement.setQueryTimeout`），是单条 SQL
+的执行上限；Hikari 连接池的 `connectionTimeout` 固定 `4000` 毫秒，与它无关。涉及大表或慢 SQL 时，应优化
 SQL、加索引、缩小 `WHERE` 范围，而不是一味调大超时——慢查询会占住连接池（仅 5 条连接），拖累整批位号的采集。
 :::
 

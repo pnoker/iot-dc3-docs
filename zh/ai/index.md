@@ -10,11 +10,12 @@ import AiIndexDiagram from '../../.vitepress/theme/components/AiIndexDiagram.vue
 
 IoT DC3 把大语言模型接进了运营流程，让模型不只"看数据"，还能"动设备"。AI 栏目覆盖两种让 LLM 驱动操作的方式，区别在于谁来发起、怎么约束：
 
-- **Agentic 中心**——平台内建的对话式 AI 辅助运营。基于 Spring AI，内置 10 个 `@Tool`，通过 Tool-Calling 让 LLM
-  查设备、读写位号、执行命令；兼容 OpenAI API 标准，可接 GPT、Claude、DeepSeek、通义千问等主流模型。适合想要一个有界面、可多轮对话的
+- **Agentic 中心**——平台内建的对话式 AI 辅助运营。基于 Spring AI，内置 68 个工具（61 个编程式注册的响应式工具 + 7 个
+  `@Tool` 方法），通过 Tool-Calling 让 LLM 查设备、读写位号、执行命令；兼容 OpenAI API 标准，并原生支持 Anthropic
+  API，可接 GPT、Claude、DeepSeek、通义千问等主流模型。适合想要一个有界面、可多轮对话的
   AI 运营助手。
-- **MCP**——把平台工具安全暴露给外部 AI Agent。网关在 `POST /mcp` 提供 JSON-RPC 2.0 的 MCP Resource Server，工具目录由四个中心的
-  OpenAPI 自动聚合（约 330+ 个），走 OAuth 2.1 + 工具白名单 + 风险分级。适合自己搭 Agent、让模型自主决策用哪个工具。
+- **MCP**——把平台工具安全暴露给外部 AI Agent。网关在 `POST /mcp` 提供 JSON-RPC 2.0 的 MCP Resource Server，工具目录由服务注册表与四个中心的
+  OpenAPI 构建期快照聚合（约 340+ 个），走 OAuth 2.1 + 工具白名单 + 风险分级。适合自己搭 Agent、让模型自主决策用哪个工具。
 
 - **为什么选 Spring AI** — DC3 AI 辅助运维背后的设计决策。详见 [为什么选 Spring AI](./spring-ai-deep-dive)
   ，涵盖架构深潜、工具调用机制和技术路线图。
@@ -42,7 +43,7 @@ IoT DC3 把大语言模型接进了运营流程，让模型不只"看数据"，�
 
 ## 延伸阅读
 
-- [Agentic 中心](./agentic) — 对话式 AI 运营、10 个内置工具、会话持久化与高风险确认
+- [Agentic 中心](./agentic) — 对话式 AI 运营、68 个内置工具、会话持久化与高风险确认
 - [AI Agent / MCP 集成](./mcp) — OAuth 2.1 + MCP，把工具安全接给外部 Agent
 - [为什么选 Spring AI](./spring-ai-deep-dive) — DC3 选用 Spring AI 的架构考量、工具调用原理与路线图
 - [自动化（dc3 CLI）](../automation/cli) — 不用 AI，用命令行脚本驱动平台

@@ -42,6 +42,7 @@ Device business object `DeviceBO` (table `dc3_device`). Field names and types ar
 | `deviceExt`  | DeviceExt      | JSON extension holding protocol-agnostic custom configuration   |
 | `enableFlag` | EnableFlagEnum | Enable/disable flag, see below                                  |
 | `tenantId`   | Long           | The owning [Tenant](./tenant), for multi-tenant isolation       |
+| `signature` / `version` | String / Integer | Data signature and version (common audit fields)                |
 
 Common fields inherited from `BaseBO`: `id`, `remark` (description), `creatorId`/`creatorName`, `operatorId`/
 `operatorName`, `createTime`/`operateTime`.

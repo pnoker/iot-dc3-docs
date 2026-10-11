@@ -84,9 +84,11 @@ see [Environment Variables Explained](../quickstart/environment).
 A contribution starts with a focused branch and ends with a focused PR. Keep unrelated refactors, formatting cleanups,
 and behavior changes separate so review can move quickly.
 
-- Unless a maintainer says otherwise, branch your feature or fix off the latest `main`.
+- Unless a maintainer says otherwise, branch your feature or fix off the latest `main` (production fixes use
+  `hotfix/<scope>`, also targeting `main`).
 - Give branches semantic names, like `feature/<name>/<topic>` or `fix/<name>/<topic>`.
-- Submit PRs against the `develop` branch.
+- Submit PRs against the `main` branch: the repository is trunk-based and `main` is the single integration and
+  production trunk. The legacy `develop` and `release` branches are archived — do not open pull requests against either.
 - Keep the PR focused: don't mix refactors, formatting churn, and behavior changes into one PR unless they're all
   required for the same fix.
 - Reference the relevant Issue in the PR description.
@@ -106,7 +108,7 @@ subject has to be specific and readable. The format is fixed:
 - Add a scope for any change that isn't a tiny root-level one.
 - Skip weak subjects like `update`, `fix`, `misc`, `wip`, or `.` — they make release notes unreadable.
 
-The repo ships a `.husky/commit-msg` hook (type whitelist, optional scope, a 10–100 char lowercase imperative English description) that rejects non-conforming commits locally; merges, reverts and fixups pass through.
+The repo ships a `.husky/commit-msg` hook (type whitelist, optional scope, a 10–100 char lowercase imperative English description) that rejects non-conforming commits locally; merges, reverts, fixups and squashes pass through.
 
 Real examples:
 
@@ -178,11 +180,11 @@ Before tagging a release, generate a categorized changelog from git history:
 make changelog
 ```
 
-By default it reads the current version from `pom.xml`, compares `HEAD` against the nearest reachable `dc3.release.*`
+By default it reads the current version from `pom.xml`, compares `HEAD` against the nearest reachable `v*` (semver)
 tag, and updates `dc3/doc/CHANGE.md`. You can override the range or version when needed:
 
 ```bash
-make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.9.22
+make changelog FROM=v2026.9.22 TO=HEAD VERSION=2026.10.9
 ```
 
 ::: info Changelog-Only Commits

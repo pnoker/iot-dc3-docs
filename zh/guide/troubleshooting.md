@@ -41,9 +41,9 @@ make config STACK=db    # 打印生效的 compose 配置，核对发布端口
 make logs STACK=db      # 跟随依赖容器日志（最近 200 行）
 ```
 
-```bash [podman]
-podman ps               # 列出运行中的容器与端口映射
-podman exec dc3-postgres psql -U dc3 -d dc3 -c "select 1"   # 直连验证库可用
+```bash [docker / podman]
+docker ps               # 列出运行中的容器与端口映射（podman 同名命令）
+docker exec dc3-postgres psql -U dc3 -d dc3 -c "select 1"   # 直连验证库可用
 ```
 
 :::
@@ -78,6 +78,20 @@ RabbitMQ 单独排查时，核对这几个变量与容器实际一致（默认�
 
 **处理**：命令行/脚本启动前先 `source dc3/env/dev.env.sh`；IDE 里用 EnvFile 插件挂 `dc3/env/dev.env`。完整变量目录、host
 与容器内地址的对应关系，见 [环境变量详解](../quickstart/environment)。
+
+## 环境变量被反向注入：容器栈崩溃重启（`Connection refused: localhost:35432`）
+
+**症状**：`make up-dev` 起容器栈时，`dc3-center-*` 一启动就崩溃重启，日志里反复出现
+`Connection refused: localhost/127.0.0.1:35432`（或 `5672`/`1883` 等宿主侧端口），最终
+`make up-dev` 报 `dependency failed to start: container dc3-center-auth is unhealthy`。
+
+**根因**：上一节的**反向问题**——`dc3/env/dev.env` 的 `localhost:35432` 是给本地 Java 进程的，但 Makefile 会自动
+`include $(RUNTIME_ENV_FILE)` 并整体 `export`，这些值再经 `docker compose` 的 `${VAR:-default}` 插值灌进**容器**；
+容器内的服务就去连 `localhost` 的宿主侧端口（容器 localhost 里没有依赖），连接被拒、健康检查不过。`.env.example`
+里没有同名变量覆盖它，所以 dev.env 的值必然生效。`source dev.env.sh` 之后再跑 `make up-dev` 也会触发同样的污染。
+
+**处理**：起容器栈时显式抑制——`make up-dev RUNTIME_ENV_FILE=`（空值即不 include dev.env）；或在干净 shell 里跑
+（不 source dev.env.sh）。反过来，跑本地 Java 进程才需要第二步的 source。两者互斥，别混用。
 
 ## 端口被占用：进程绑定阶段就退出
 
@@ -141,7 +155,7 @@ Stop-Process -Id <PID>        # 核实后结束占用进程
 
 **症状**：通过网关访问受保护接口返回 `401`（未认证）或 `403`（无权限）。
 
-**根因**：请求没有携带有效 token，或租户/登录名/token 三件套不齐。平台登录是两步：先取盐、再用盐哈希密码换 token；后续每个受保护请求要带上
+**根因**：请求没有携带有效 token，或租户/登录名/token 三件套不齐。平台登录是两步：先取盐、再连同盐提交明文密码换 token（盐不参与密码哈希，校验在服务端完成）；后续每个受保护请求要带上
 `X-Auth-Tenant`、`X-Auth-Login`、`X-Auth-Token` 三个请求头。
 
 **定位与处理**：先走登录拿 token，再带头访问。下面是黄金路径的真实接口（示例值需替换为你环境的实际值）：
@@ -152,18 +166,18 @@ curl -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
 
-# 2) 用盐哈希密码后换 token（12 小时有效）
+# 2) 连同盐提交明文密码换 token（12 小时有效；校验在服务端完成）
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"<上一步返回的盐>","password":"<明文密码>"}'
 
-# 3) 带三件套访问受保护接口
+# 3) 带三件套访问受保护接口（X-Auth-Token 头是 JSON：{"salt","token"}，裸 token 会 401）
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'X-Auth-Tenant: default' \
   -H 'X-Auth-Login: dc3' \
-  -H 'X-Auth-Token: <上一步返回的 token>' \
+  -H 'X-Auth-Token: {"salt":"<第 1 步返回的盐>","token":"<第 2 步返回的 token>"}' \
   -H 'Content-Type: application/json' \
-  -d '{"current":1,"size":10}'
+  -d '{"deviceId": 1024, "pointId": 2048, "offset": 0, "limit": 10}'
 ```
 
 若 401 集中出现在网关到后端这一跳（而非用户 token 问题），多半与 HMAC 签名有关。网关会用 `AUTH_HMAC_SECRET` 对注入的

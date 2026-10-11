@@ -219,6 +219,18 @@ const socialLinks = (lang: Lang) => [
 type SidebarItem = { text: string; link: string }
 type SidebarGroup = { text: string; collapsed?: boolean; items: SidebarItem[] }
 
+// ── Edit-link pattern ──
+// VitePress resolves per-page theme data via resolveSiteDataByRoute, which
+// SHALLOW-spreads the locale themeConfig over the root one:
+//   themeConfig: {...siteData.themeConfig, ...siteData.locales[locale].themeConfig}
+// A locale-level `editLink: {text}` therefore REPLACES the root
+// `editLink: {pattern}` object wholesale — the pattern is lost, useEditLink
+// falls back to pattern '' and VPLink renders a non-clickable <span>
+// (exactly the 2026-10-11 audit finding site-1). The pattern must live in
+// the SAME editLink object as the locale text. Do not move it back to the
+// root themeConfig without re-testing a built page for <a class="edit-link-button">.
+const EDIT_LINK_PATTERN = 'https://github.com/pnoker/iot-dc3-docs/edit/main/:path'
+
 const linkOf = (lang: Lang, code: string) => {
     const p = lang === 'en' ? '/en' : '/zh'
     return code.includes('/') ? `${p}/${code}` : `${p}/${code}/`
@@ -309,8 +321,11 @@ function localeThemeConfig(lang: Lang) {
         sidebar: sidebars[lang],
         siteTitle: NAV_SITE_TITLE[lang],
         socialLinks: socialLinks(lang),
-        editLink: {text: u.editLinkText},
-        footer: {message: u.footerMessage, copyright: 'Copyright © 2017-2026 pnoker'},
+        // pattern must sit next to text here — see EDIT_LINK_PATTERN note above
+        editLink: {text: u.editLinkText, pattern: EDIT_LINK_PATTERN},
+        // "2016-present" matches the file headers across this repo and upstream
+        // iot-dc3 (site-7: the old "2017-2026" start year had no source of truth)
+        footer: {message: u.footerMessage, copyright: 'Copyright © 2016-present pnoker & IoT DC3 Contributors'},
         outline: {level: [2, 3], label: u.outlineLabel},
         lastUpdated: {
             text: u.lastUpdatedText,
@@ -374,17 +389,27 @@ export default defineConfig({
         // Preconnect to analytics origins so the first request isn't blocked on a cold DNS/TLS handshake
         ['link', {rel: 'preconnect', href: 'https://www.googletagmanager.com'}],
         ['link', {rel: 'preconnect', href: 'https://hm.baidu.com'}],
-        // Version meta — read at runtime by VersionSwitcher and VersionBanner
+        // Version meta — read at runtime by VersionBanner (archived-build banner).
+        // dc3-doc-full-version was removed with the dead VersionSwitcher component
+        // (site-5): no runtime consumer ever read it.
         ['meta', {name: 'dc3-doc-version', content: versionInfo.version}],
-        ['meta', {name: 'dc3-doc-full-version', content: versionInfo.fullVersion}],
         ['meta', {name: 'dc3-doc-is-latest', content: String(versionInfo.isLatest)}],
         ['meta', {name: 'dc3-doc-latest-url', content: 'https://docs.dc3.site'}],
-        // Google Analytics (GA4)
-        ['script', {async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-0S37KX68Y3'}],
+        // Google Analytics (GA4) — same localhost/127.0.0.1/[::1] exemption as
+        // Baidu Tongji below, so local dev/preview traffic never pollutes the
+        // production reports (site-4: the loader previously ran unconditionally)
         ['script', {}, `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
+if(!/^(localhost|127\\.0\\.0\\.1|\\[::1\\])$/.test(location.hostname)){
+(function() {
+var s = document.createElement("script");
+s.async = true;
+s.src = "https://www.googletagmanager.com/gtag/js?id=G-0S37KX68Y3";
+document.head.appendChild(s);
+})();
 gtag('js', new Date());
-gtag('config', 'G-0S37KX68Y3');`],
+gtag('config', 'G-0S37KX68Y3');
+}`],
         // Baidu Tongji (百度统计) — skip on localhost/127.0.0.1 so local dev traffic
         // never pollutes the production reports
         ['script', {}, `if(!/^(localhost|127\\.0\\.0\\.1|\\[::1\\])$/.test(location.hostname)){var _hmt = _hmt || [];
@@ -419,11 +444,11 @@ s.parentNode.insertBefore(hm, s);
     },
 
     themeConfig: {
-        logo: '/images/logo.svg',
-
-        editLink: {
-            pattern: 'https://github.com/pnoker/iot-dc3-docs/edit/main/:path'
-        }
+        logo: '/images/logo.svg'
+        // NOTE: editLink (text + pattern) lives per-locale in localeThemeConfig.
+        // resolveSiteDataByRoute shallow-merges locale themeConfig over this
+        // object, so anything defined both here and there is fully replaced by
+        // the locale copy — see EDIT_LINK_PATTERN above.
     },
 
     markdown: {

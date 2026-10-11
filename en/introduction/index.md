@@ -95,8 +95,8 @@ currently onboard RTSP/H.264 video streams. If video is your core requirement, e
 
 ## Tech Stack at a Glance
 
-Java 21 · Spring Boot 4.0.6 · Spring Cloud 2025.1.1 · Spring AI 2.0.0 · PostgreSQL (+ TimescaleDB / AGE / pgvector) ·
-RabbitMQ · gRPC / Protobuf · MyBatis-Plus (Snowflake ID).
+Java 21 · Spring Boot 4.1.1 · Spring Cloud 2025.1.3 · Spring AI 2.0.1 · PostgreSQL (+ TimescaleDB / AGE / pgvector) ·
+RabbitMQ · gRPC / Protobuf · R2DBC reactive data access.
 
 ## System Panorama
 

@@ -58,13 +58,14 @@ on detail):
 
 ## How to run it locally
 
-Backend commands go through the Makefile under `iot-dc3/`. The four most common:
+Backend commands go through the Makefile under `iot-dc3/`. The most common:
 
 ```bash
 make test                 # Unit tests (Surefire)
 make test-it              # Integration tests (Failsafe + Testcontainers; needs a container runtime)
 make test-e2e             # E2E: equivalent to DC3_E2E=true mvn -s .mvn/settings.xml -pl dc3-e2e -am -Pe2e verify
 make coverage             # Aggregated JaCoCo report (dc3-coverage -am verify)
+make validate-annotations # x-dc3-ai annotation gate (the five AnnotationGateTests: Controller/Manager/Data/Agentic/Auth)
 ```
 
 `make test-e2e` already sets `DC3_E2E=true` and runs `-Pe2e` only on the `dc3-e2e` module, so you don't need to export
@@ -74,9 +75,9 @@ the environment variable by hand. To run a single module or a single case, call 
 # Unit tests for a specific module
 mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-manager
 
-# A single test class / a single test method
+# A single test class / a single test method (class and method names follow each module's src/test)
 mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-manager -Dtest=DeviceControllerTest
-mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-public -Dtest="RTest#testOkWithData"
+mvn -s .mvn/settings.xml test -pl dc3-common/dc3-common-public -Dtest="PasswordUtilTest#verifyMatchesEncodedPassword"
 ```
 
 After `make coverage` finishes, the aggregated report lands at:
@@ -164,8 +165,8 @@ in-process channel for gRPC, and don't open a real socket.
 
 | Metric          | Current threshold                      |
 |-----------------|----------------------------------------|
-| Line coverage   | `coverage.line.minimum = 0.20` (20%)   |
-| Branch coverage | `coverage.branch.minimum = 0.15` (15%) |
+| Line coverage   | `coverage.line.minimum = 0.24` (24%)   |
+| Branch coverage | `coverage.branch.minimum = 0.20` (20%) |
 
 The thresholds are deliberately modest for now, to keep progress moving while the test suite is still expanding. The
 check looks only at the static minimum — any metric below the table above blocks the change, with no comparison against
@@ -174,13 +175,19 @@ number.
 
 ## CI workflows
 
-PRs and pushes run tests across three GitHub Actions workflows, one-to-one with the local commands:
+The repository's `.github/workflows/` holds nine workflows, each owning a slice of the change surface:
 
-| Workflow   | Trigger                                          | Main task                   |
-|------------|--------------------------------------------------|-----------------------------|
-| `ci.yml`   | push / PR to develop, release, main              | Fast compile                |
-| `test.yml` | push / PR to develop, release, main              | Unit, integration, coverage |
-| `e2e.yml`  | push to develop, release, main or manual trigger | E2E                         |
+| Workflow             | Trigger                                             | Main task                                                    |
+|----------------------|-----------------------------------------------------|--------------------------------------------------------------|
+| `ci-backend.yml`     | push / PR to develop, main                          | Audit chain (controller permissions, PostgreSQL init, R2DBC migration, formatting and Javadoc gates) + fast compile |
+| `ci-web.yml`         | PR / push touching `dc3-web/**`                     | Frontend quality checks (Vitest / Playwright)                |
+| `ci-cli.yml`         | PR / push touching `dc3-cli/**`, or manual          | CLI quality checks                                           |
+| `test.yml`           | push / PR to develop, main (reusable workflow)      | Unit, integration, coverage                                  |
+| `e2e.yml`            | PR to develop, main, or manual trigger              | E2E                                                          |
+| `codeql.yml`         | push / PR to develop, main + weekly Wednesday run   | CodeQL code scanning                                         |
+| `security.yml`       | push / PR to develop, main + weekly Monday / manual | dependency-review, Scorecard                                 |
+| `docker-ci.yml`      | push of a `v*` tag, or manual                      | Verify, build, and publish images plus the GitHub Release    |
+| `deploy-ghpages.yml` | push to main touching `dc3-web/**`                  | Build and deploy the web demo to GitHub Pages                |
 
 Before merging, confirm: the unit and integration jobs pass; coverage isn't below the `dc3-coverage/pom.xml`
 thresholds (below blocks); and for behavior changes, the description states what's been verified and what risks remain.

@@ -26,7 +26,7 @@ RabbitMQ。这套技术栈决定了下面三条不可绕过的约定：CRUD 动�
 
 平台没有自由命名空间：每个 CRUD 形态的方法、HTTP 路径、gRPC RPC、以及前端 API 函数，**动词必须反映返回结果的基数**——查单条用
 `get`，查集合用 `list`。这条约定横跨 Service 接口、ServiceImpl、Controller、Local/gRPC Facade、gRPC server 与 `.proto` 里的
-RPC 名，前后端两个仓库一致执行。它的价值是：看到一个方法名或一条路径，不用读实现就知道它返回一条还是一批。
+RPC 名，后端与 `dc3-web/` 前端一致执行。它的价值是：看到一个方法名或一条路径，不用读实现就知道它返回一条还是一批。
 
 | 动作  | Java 方法        | HTTP 路径     | gRPC RPC  | 前端函数             |
 |-----|----------------|-------------|-----------|------------------|
@@ -36,26 +36,27 @@ RPC 名，前后端两个仓库一致执行。它的价值是：看到一个方�
 | 更新  | `update(BO)`   | `/update`   | n/a       | `updateXxx(...)` |
 | 删除  | `delete(Long)` | `/delete`   | n/a       | `deleteXxx(...)` |
 
-`add`/`delete`/`update`/`getById`/`list(Q)` 这五个基础方法由 `BaseService<B, Q>` 继承而来；子接口只在需要按维度查询时追加
-`getByXxx`/`listByXxx`，且动词仍要匹配基数。`DeviceController` 是一个现成范本——它的端点恰好是 `/add`、`/delete`、`/update`、
-`/get_by_id`（查单条）、`/list_by_ids`、`/list_by_profile_id`、`/list`（查集合），动词与基数严格对齐。
+`add`/`delete`/`update`/`getById`/`list(Q)` 这五个基础动作在每个领域的 Service 接口上成套出现（如 `ReactiveDeviceService`）；
+需要按维度查询时追加 `getByXxx`/`listByXxx`，且动词仍要匹配基数。`DeviceController` 是一个现成范本——它的端点恰好是 `/add`、
+`/delete`、`/update`、`/get_by_id`（查单条）、`/list_by_ids`、`/list_by_profile_id`、`/list`（查集合），动词与基数严格对齐。
 
-::: warning 三个保留动词不要混用
+::: warning 保留动词不要混用
 
-- `select*` 只用于 `*ManagerImpl` 里对 MyBatis Mapper 的原始调用，**不出现**在 Service/Controller/Facade 上。
-- `remove*` 只用于 MyBatis-Plus 继承来的 Manager 方法（`removeById`、`remove(wrapper)`）；业务删除一律用 `delete*`。
+- `select*` 一族在代码库中并不存在——存储层（`dc3-db-*` 的 `R2dbc*Store`）的原生存取同样用 `get`/`list`/`insert`/`update`/`delete` 动词（作用于 DO）；Service/Controller/Facade 上也不要发明 `select*` 方法名。
+- 业务删除一律用 `delete*`；没有 `remove*` 一族。
 - `find*`、`query*`、`fetch*` 不作为主 CRUD 动词。
   :::
 
-## 分层调用：Controller(VO) → Service(BO) → Manager(DO) / Facade(跨服务)
+## 分层调用：Controller(VO) → Service(BO) → Store(DO) / Facade(跨服务)
 
-请求进来要穿过三层，每层只认一种数据表示。Controller 接收和返回 **VO**（API 形态）；Service 接口继承 `BaseService<B, Q>`，**只在
-BO 类型上工作**（业务语义，用领域枚举如 `EnableFlagEnum`）；Manager/Mapper 操作 **DO**（数据库形态，flag 用 `Byte`）。三种表示之间由
-MapStruct 的 `*Builder` 转换，DO 的 flag 绝不直接泄漏到业务或响应模型。
+请求进来要穿过三层，每层只认一种数据表示。Controller 接收和返回 **VO**（API 形态）；Service 接口（如 `ReactiveDeviceService`）
+**只在 BO 类型上工作**（业务语义，用领域枚举如 `EnableFlagEnum`）；存储层（`dc3-db-*` 的 `R2dbc*Store`）操作 **DO**（数据库形态，flag
+用 `Byte`）。三种表示之间由 MapStruct 的 `*Builder` 转换，DO 的 flag 绝不直接泄漏到业务或响应模型。
 
 这里有一条硬边界：**当业务代码需要别的服务的数据时，不能直连传输细节，必须经过 facade 接口**。Controller 和 Service 类不绑定
 gRPC 或 REST 的任何细节——它们只调用 `dc3-common-facade-api` 里的契约接口，由部署形态决定背后是 gRPC 实现（
-`dc3-common-facade-grpc`）还是同进程实现（`dc3-common-facade-local-*`）。分布式部署默认走 `grpc`（`DC3_FACADE_MODE=grpc`）。
+`dc3-common-facade-grpc`）还是同进程实现（`dc3-common-facade-local-*`）。分布式部署默认走 `grpc`（`dc3.facade.{auth,manager,data}.mode`
+缺省即 `grpc`，见 [Facade 模式](../architecture/facade-modes)）。
 
 <DevIndexDiagram lang="zh" />
 
@@ -71,7 +72,7 @@ gRPC 或 REST 的任何细节——它们只调用 `dc3-common-facade-api` 里�
 
 ```text [分层落点]
 1. VO/BO/DO     在 dc3-common-model 或对应模块补字段（若需要），MapStruct *Builder 同步
-2. Manager      *ManagerImpl 里用 select* 调 Mapper（仅此处可用 select*）
+2. Store        持久化落 dc3-db-* 的 R2dbc*Store（用 get/list/insert/update/delete 操作 DO）
 3. Service      在 Service 接口加 getCountByDriverId(...)，ServiceImpl 实现，只碰 BO
 4. 跨服务?      若要拿别的中心的数据，走 *Facade 接口，不直连 gRPC
 5. Controller   GET /get_count_by_driver_id —— 查单值用 get 动词
@@ -118,7 +119,8 @@ docs(env): explain JetBrains IDEA environment variables
 - AI 协作代理**未经明确确认不得创建提交**；提交前需展示拟用的 commit message 与纳入的文件，等待批准。
 - 不要把无关改动塞进一个提交——按意图拆分（功能、修复、重构各自成提交）。
 - 发布说明专用提交固定为 `docs(release): update generated changelog`，且 `CHANGE.md` 单独提交。
-- 提交前对照上面的格式与真实示例自查 commit message；不合规格式会被 CI 拦在合并前。
+- 提交前对照上面的格式与真实示例自查 commit message；格式由本地 `.husky/commit-msg` 钩子校验（type 白名单、小写英文祈使句
+  10–100 字符，Merge/Revert/fixup 直通）——CI 不检查提交信息，不要依赖它兜底。
   :::
 
 ## 常用 Maven 命令速查
@@ -152,10 +154,10 @@ VM options 添加 `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address
 | 改认证/租户/RBAC   | `dc3-center/dc3-center-auth`            |
 | 改位号值存储/命令分发   | `dc3-center/dc3-center-data`            |
 | 改 AI 对话/工具调用  | `dc3-center/dc3-center-agentic`         |
-| 改网关路由/过滤器     | `dc3-gateway`                           |
+| 改网关路由/过滤器     | `dc3-common/dc3-common-gateway`（路由在 `src/main/resources/application-gateway.yml`，`Authentic` 等过滤器也在该模块）；`dc3-gateway` 只放端口/profile 等环境配置 |
 | 新加协议驱动        | `dc3-driver/`，从 `dc3-driver-virtual` 复制 |
 | 改 gRPC proto  | `dc3-api/`，改完重新 `mvn -s .mvn/settings.xml compile`           |
-| 改前端页面         | `dc3-web/`（独立 pnpm 项目）                  |
+| 改前端页面         | `dc3-web/`（仓库内独立 pnpm 子项目）              |
 
 ## 延伸阅读
 

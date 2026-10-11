@@ -34,7 +34,7 @@ BACnet 的寻址是一套三层结构，理解它就理解了位号怎么配：
 <BacnetIpDiagram lang="zh" />
 
 一台物理设备由唯一的**设备实例号**标识；设备内含若干**对象**（如 `ANALOG_INPUT`、`BINARY_OUTPUT`），每个对象由"对象类型 +
-对象实例号"定位；对象又有若干**属性**，最常用的是 `PRESENT_VALUE`（当前值）。读写一个测点，本质就是定位"远端设备 → 对象 →
+对象实例号"定位；对象又有若干**属性**，最常用的是 `PRESENT_VALUE`（当前值）。读写一个位号，本质就是定位"远端设备 → 对象 →
 属性"这条路径。
 
 - **驱动名 / code**：`BACnet IP Driver` / `BacnetIpDriver`
@@ -77,12 +77,15 @@ ID 缓存连接（一台设备一个 `LocalDevice`），底层传输超时取 `t
 | Property ID      | `propertyId`     | STRING | `PRESENT_VALUE` | 属性标识               |
 
 `remoteDeviceId` 是要读的那台远端设备的实例号，驱动先按它广播发现设备，再按 `objectType` + `objectInstance` 定位对象、按
-`propertyId` 取属性。`objectType` 与 `propertyId` 都是按**精确的大写枚举名**
+`propertyId` 取属性。`objectType` 与 `propertyId` 都是按**枚举名**（不区分大小写，建议用大写）
 匹配的，取值来源于代码里固定的映射表（详见下方易错点与"在 IoT DC3 中如何落地"）。配置校验（`validatePoint`）会要求这四项全部非空。
 
 ### 写命令属性（`command-attribute`）
 
-可写位号还要在写命令上填一组，结构与位号属性一致，但默认指向可写的输出对象：
+这组属性已在驱动注册时声明，但**当前写路径（`write()`）未被消费**——`write()` 读取的是位号属性（`point-attribute`
+），写入目标由位号上的 `objectType` + `objectInstance` + `propertyId` 决定；`command-attribute` 只经自定义指令
+`DriverCommand.execute(commandConfig, …)` 这条路传入，而本驱动未覆写 `execute()`（用默认空实现）。下表如实记录 yml
+里的声明（默认指向可写的输出对象），仅作注册面参考：
 
 | 属性               | code             | 类型     | 默认值             | 说明                |
 |------------------|------------------|--------|-----------------|-------------------|
@@ -91,10 +94,10 @@ ID 缓存连接（一台设备一个 `LocalDevice`），底层传输超时取 `t
 | Object Instance  | `objectInstance` | INT    | `0`             | 对象实例号             |
 | Property ID      | `propertyId`     | STRING | `PRESENT_VALUE` | 属性标识              |
 
-写值会按目标对象类型自动编码（见下方"写值编码"提示）。
+写值会按**位号上**的目标对象类型自动编码（见下方"写值编码"提示）。
 
-::: warning Object Type / Property ID 必须用精确的大写枚举名，否则静默回退
-`objectType` 和 `propertyId` 按精确的大写名匹配。填错或拼错**不会报错**——驱动的 `resolveObjectType()` /
+::: warning Object Type / Property ID 拼错会静默回退（匹配不区分大小写）
+`objectType` 和 `propertyId` 按枚举名匹配（大小写不敏感，建议用大写）。填错或拼错**不会报错**——驱动的 `resolveObjectType()` /
 `resolvePropertyIdentifier()` 会**静默回退**到 `ANALOG_INPUT` / `PRESENT_VALUE`，于是你可能读到的是另一个对象的值却毫无察觉。
 
 - `objectType` 代码支持 **10** 种：`ANALOG_INPUT`、`ANALOG_OUTPUT`、`ANALOG_VALUE`、`BINARY_INPUT`、`BINARY_OUTPUT`、
@@ -145,7 +148,8 @@ BACnet/IP 接入失败大多集中在广播发现、对象寻址、写值编码�
 - **`dc3.driver.code`**：`BacnetIpDriver`（类型 `DRIVER_CLIENT`，主动发现并访问远端设备）。这是稳定的路由标识，不要随意改。
 - **读能力**：✓ 已实现。按 `remoteDeviceId` 广播发现设备，按 `objectType` + `objectInstance` + `propertyId`
   读对象属性，结果以字符串形态回传。
-- **写能力**：✓ 已实现。按对象类型自动编码写值（见上方"写值编码"提示）。
+- **写能力**：✓ 已实现。写入寻址取自位号属性（`objectType` + `objectInstance` + `propertyId`），按对象类型自动编码写值
+  （见上方"写值编码"提示）。
 - **订阅/上报**：— 不支持。BACnet 是主从轮询模型，本驱动只主动读写、不被动接收推送（未实现 COV
   订阅）。这与[驱动能力矩阵](./matrix)中 BACnet/IP 的「✓ / ✓ / —」一致。
 - **采集周期**：默认 cron `0/30 * * * * ?`（每 30 秒读一轮），在驱动 `application.yml` 的 `schedule.read` 配置。
@@ -172,8 +176,8 @@ BACnet/IP 接入失败大多集中在广播发现、对象寻址、写值编码�
 2. 给设备绑定的[模板](../introduction/concepts/profile)加一个温度[位号](../introduction/concepts/point)（`READ_ONLY`
    ），point 属性填 `remoteDeviceId=9001`、`objectType=ANALOG_INPUT`、`objectInstance=1`、`propertyId=PRESENT_VALUE`。
 3. 启动驱动，30 秒内就能在[位号值](../introduction/concepts/point-value)里看到该对象的 `PRESENT_VALUE`。
-4. 若该位号需可写，给它配写[命令](../introduction/concepts/command)，把 `objectType` 显式设为可写的输出对象（如
-   `ANALOG_OUTPUT`），写值按对象类型规则传（模拟量传数字、开关量传 `1`/`true`）。
+4. 若该位号需可写，把**位号上的** `objectType` 显式设为可写的输出对象（如 `ANALOG_OUTPUT`）——写路径读的是位号属性
+   （写命令上的 `command-attribute` 不会被 `write()` 消费，见上文写命令属性），写值按对象类型规则传（模拟量传数字、开关量传 `1`/`true`）。
 
 ::: tip 一个驱动实例可接多台设备
 同一个 BACnet/IP 驱动进程可服务多台设备，每台按设备 ID 各持一个缓存的 `LocalDevice`，由位号里的 `remoteDeviceId` 区分目标远端设备。

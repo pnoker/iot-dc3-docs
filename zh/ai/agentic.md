@@ -34,8 +34,9 @@ AI 能力不是设备接入的前置条件。建议先跑通设备、位号、�
 
 智能中心对外只有一个核心入口，形态和 OpenAI 的 Chat Completions 一致，方便任何 OpenAI 客户端直接对接：
 
-- 路径：经网关对外为 `POST /api/v3/agentic/chat/completions`（网关 `StripPrefix=2` 去掉 `/api/v3` 后转发到智能中心的
-  `/chat/completions`）。
+- 路径：经网关对外为 `POST /api/v3/agentic/chat/completions`（网关 `StripPrefix=2` 去掉 `/api/v3` 后，转发到智能中心的
+  `/agentic/chat/completions`——服务 `spring.webflux.base-path=/agentic` 叠加控制器映射 `/chat/completions`，直连
+  `:8600/chat/completions` 会 404）。
 - 两种返回：`stream=true` 时走 **SSE** 流式逐字返回；否则返回一次性 **JSON**。
 - 权限：`@PreAuthorize("@perm.can('chat', 'list')")`，调用方需带平台鉴权头 `X-Auth-Tenant` / `X-Auth-Login` /
   `X-Auth-Token`。
@@ -50,7 +51,7 @@ curl -X POST http://localhost:8000/api/v3/agentic/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-Auth-Tenant: <tenant>" \
   -H "X-Auth-Login: <login>" \
-  -H "X-Auth-Token: <token>" \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -d '{
         "model": "gpt-4o",
         "stream": false,
@@ -91,51 +92,60 @@ access token，详见[第一个设备：端到端](../quickstart/first-device)�
 
 关键链路上的事实锚点：
 
-- 工具是 Spring AI 的原生 `@Tool` 方法，由 `ChatClientConfig` 注册成 `ToolCallbackProvider`，并包了一层
-  `AgenticToolTracingCallbackProvider` 做调用追踪。
+- 工具分两层注册：`ReactiveAgenticToolRegistry` 用编程式 `ToolDefinition`（name + description + inputSchema）注册 61 个
+  响应式工具（实现返回 `Mono`，全程不阻塞事件循环）；`ChatClientConfig` 再把 3 个 `@Tool` 工具类（租户/用户/系统）经
+  `MethodToolCallbackProvider` 注册成 `ToolCallbackProvider`，外包一层 `AgenticToolTracingCallbackProvider` 做调用追踪。OpenAI
+  兼容链路把两层合并暴露给模型（68 个）；Anthropic 原生链路（Spring AI 运行时）当前只挂 `@Tool` 层。
 - 每个工具方法进来第一件事就是 `AgenticToolContextUtil.requireTenantId(toolContext)` 取出当前租户 ID，所有查询都带租户作用域——模型
   **看不到也碰不到别的租户**的数据。
 - 写类动作（命令下发）由智能中心经 `PointCommandFacade`（gRPC 实现 `PointCommandGrpcFacade` / 本地
   `PointCommandLocalFacade`）下发到**数据中心**的命令平面，并非调用 HTTP `POST /point_command/write` 端点（那是数据中心面向
   Web/CLI 的另一调用面，终点命令平面相同）。命令本身有 10 秒 TTL（`PointCommandDTO.expireAt` 默认 `now+10s`），过期不再执行。
 
-## 十个内置工具
+## 内置工具：两层注册，68 个工具
 
-平台内置 **10** 个工具类，覆盖从租户、用户到设备、命令的完整读取面，少数涉及写入。工具方法主要用 `lookup*`（按 ID 取单条/批量）与
-`search*`（分页查询）动词，辅以 `list*ByXxxId`（按归属枚举），并非 REST 层那套 `getXxx`/`listXxx`——这是工具给模型用的语义化命名，与对外
+平台给模型准备的工具面共 **12 个工具类、68 个工具**，分两层注册：
+
+- **响应式工具（61 个）**：`ReactiveAgenticToolRegistry` 以编程式 `ToolDefinition` 注册 9 个工具类——设备、驱动、模板、位号、位号值、命令、事件 7 个业务域，外加洞察（告警/看板/聚合分析/命令状态，25 个）与历史（命令/事件执行记录，4 个）。
+- **`@Tool` 工具（7 个）**：`ChatClientConfig` 经 `MethodToolCallbackProvider` 注册 `TenantTool`、`UserTool`、`SystemTool` 三个类，覆盖租户/用户上下文、系统健康与设备/驱动在线态。
+
+工具方法主要用 `lookup*`（按 ID 取单条/批量）与 `search*`（分页查询）动词，辅以 `list*ByXxxId`（按归属枚举）与洞察类的
+`get*` / `analytics*` / `page*`，并非 REST 层那套 `getXxx`/`listXxx`——这是工具给模型用的语义化命名，与对外
 HTTP CRUD 约定相互独立。
 
 先按域理解它们各自能干什么，再看表：模型拿到一个问题后，会把它拆成"先查模板有哪些位号 → 再查这些位号的最新值 →
 最后判断要不要下命令"这样的工具序列，自动编排。
 
-| 工具类              | 域   | 代表方法                                                                                          | 典型用途                 |
-|------------------|-----|-----------------------------------------------------------------------------------------------|----------------------|
-| `TenantTool`     | 租户  | `getCurrentTenantInfo()`                                                                      | 确认当前租户上下文            |
-| `UserTool`       | 用户  | `getCurrentUserProfile()`                                                                     | 查当前用户信息              |
-| `DeviceTool`     | 设备  | `lookupDeviceById()` / `searchDevices()`                                                      | 查某台设备、按条件检索、查在线态与最新值 |
-| `DriverTool`     | 驱动  | `lookupDriverById()` / `searchDrivers()`                                                      | 查协议驱动接入情况、设备在线统计     |
-| `ProfileTool`    | 模板  | `lookupProfileById()` / `searchProfiles()`                                                    | 查模板及其能力              |
-| `PointTool`      | 位号  | `lookupPointById()` / `searchPoints()`                                                        | 查位号、读写方向、按设备/模板列位号   |
-| `PointValueTool` | 位号值 | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | 读实时值、查历史曲线、下发读/写命令   |
-| `SystemTool`     | 系统  | `getSystemHealth()`                                                                           | 看平台健康度               |
-| `CommandTool`    | 命令  | `lookupCommandById()` / `searchCommands()`                                                    | 查自定义命令、按设备/模板列命令     |
-| `EventTool`      | 事件  | `lookupEventById()` / `searchEvents()`                                                        | 查设备上报事件              |
+| 工具类              | 域   | 注册   | 代表方法                                                                                          | 典型用途                 |
+|------------------|-----|------|-----------------------------------------------------------------------------------------------|----------------------|
+| `TenantTool`     | 租户  | @Tool | `getCurrentTenantInfo()`                                                                      | 确认当前租户上下文            |
+| `UserTool`       | 用户  | @Tool | `getCurrentUserProfile()`                                                                     | 查当前用户信息              |
+| `SystemTool`     | 系统  | @Tool | `getSystemHealth()` / `getDeviceStatuses()` / `getDriverStatuses()`                           | 看平台健康度、设备/驱动在线态      |
+| `DeviceTool`     | 设备  | 注册表  | `lookupDeviceById()` / `searchDevices()` / `getDeviceLatestPointValues()`                     | 查某台设备、按条件检索、设备最新值快照 |
+| `DriverTool`     | 驱动  | 注册表  | `lookupDriverById()` / `searchDrivers()`                                                      | 查协议驱动接入情况            |
+| `ProfileTool`    | 模板  | 注册表  | `lookupProfileById()` / `searchProfiles()` / `listProfilesByDeviceId()`                       | 查模板及其能力、按设备列模板       |
+| `PointTool`      | 位号  | 注册表  | `lookupPointById()` / `searchPoints()` / `listPointsByDevice()`                               | 查位号、读写方向、按设备/模板列位号   |
+| `PointValueTool` | 位号值 | 注册表  | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | 读实时值、查历史曲线、下发读/写命令   |
+| `CommandTool`    | 命令  | 注册表  | `lookupCommandById()` / `searchCommands()` / `listCommandsByDeviceId()`                      | 查自定义命令、按设备/模板列命令     |
+| `EventTool`      | 事件  | 注册表  | `lookupEventById()` / `searchEvents()` / `listEventsByDeviceId()`                            | 查设备上报事件              |
+| `InsightTool`    | 洞察  | 注册表  | `getAlertStats()` / `getTodayStats()` / `analyticsQueryHistory()`（共 25 个）                    | 告警统计、看板指标、聚合分析、命令状态  |
+| `HistoryTool`    | 历史  | 注册表  | `searchCommandHistories()` / `searchEventHistories()`                                        | 查命令/事件执行记录           |
 
 ::: info 风险元数据标在 REST 端点上，不在工具方法上
-`x-dc3-ai` 风险元数据（`riskLevel` / `destructive` / `idempotent` / `openWorld`）是在 Controller 的 `@Operation` 扩展里**手工标注**的（如 `ChatController` 的聊天端点），供 OpenAPI / MCP 目录消费。智能中心的 10 个工具方法本身只带
-`@AgenticToolMetadata(domain, title)`（仅 `domain()` 与 `title()` 两个字段），并不携带风险等级——别把端点上的风险元数据当成每个工具方法的属性。
+`x-dc3-ai` 风险元数据（`riskLevel` / `destructive` / `idempotent` / `openWorld`）是在 Controller 的 `@Operation` 扩展里**手工标注**的（如 `ChatController` 的聊天端点），供 OpenAPI / MCP 目录消费。智能中心的工具方法不带风险等级：`@Tool` 方法只带
+`@AgenticToolMetadata(domain, title)`（仅 `domain()` 与 `title()` 两个字段），注册表工具的 `ToolDefinition` 里只有 name / description / inputSchema——别把端点上的风险元数据当成每个工具方法的属性。
 :::
 
 ## 会话不是内存里的，而是落库的
 
 很多 AI 服务把会话上下文放在内存里，进程一重启就丢。智能中心不是——它把每一轮对话**持久化在 `dc3_agentic` schema** 里，
-`MessageChatMemoryRepository` 适配器按 `conversation_id` 从 `dc3_message` 读回历史。换句话说，会话能跨重启续上，也能被审计。
+`ReactiveMessageStore.loadHistory` 按 `conversation_id` 从 `dc3_message` 读回最近 `historyWindowSize` 条消息。换句话说，会话能跨重启续上，也能被审计。
 
 三张表的关系如下：
 
 <AgenticErDiagram lang="zh" />
 
-- 取回历史的窗口大小由 `dc3.agentic.historyWindowSize`（默认 `30`）控制：只把最近若干轮喂给模型，既省 token 又保留上下文。
+- 取回历史的窗口大小由 `dc3.agentic.historyWindowSize`（默认 `30`）控制：只把最近 30 条消息（user/assistant 各占一条，约合 15 轮对话）喂给模型，既省 token 又保留上下文。
 - `dc3_session.session_ext` 是一段 JSON，存这次会话的模型选择、温度、`maxTokens` 等偏好，下一轮沿用。
 - 附件上传后落到 `AGENTIC_ATTACHMENT_STORAGE_PATH` 指向的目录，元数据记在 `dc3_attachment`。
 
@@ -154,13 +164,14 @@ Spring AI 的记忆表结构；如需自动建表，预期做法是首次临时�
 1. 模型调用 `writePointValue` 时，服务调用 `ActionService.createWritePointValueAction(...)` 生成一个待确认 **Action**（
    `actionId` 为 UUID），状态置为 `AgenticActionStatusEnum.PENDING`，过期时间为 `now + 10 分钟`；工具结果带
    `pendingConfirmation=true` 与该 `actionId`，并不下发命令。
-2. 用户看清动作内容后，携带 `action_id` 调 `POST /action/confirm` 确认（或 `POST /action/reject` 拒绝）；确认通过后服务才经
+2. 用户看清动作内容后，携带 `action_id` 调 `POST /api/v3/agentic/action/confirm` 确认（或 `POST /api/v3/agentic/action/reject`
+   拒绝；`action_id` 是 query 参数）；确认通过后服务才经
    `PointCommandFacade.submitWrite(...)` 真正执行。
 
 这条机制保证"AI 提议、人来拍板"，把不可逆的物理世界动作留在人工授权之内。
 
 ::: info 这是 Agentic 自己的 Action 机制，不是 MCP 网关的风险门控
-确认流用的是 `actionId` + `POST /action/confirm|reject`，**不是** `CONFIRM_REQUIRED` / `confirmId`，也不是按
+确认流用的是 `actionId` + `POST /api/v3/agentic/action/confirm|reject`，**不是** `CONFIRM_REQUIRED` / `confirmId`，也不是按
 `riskLevel=HIGH` 的通用风险策略门控——后者属于 [MCP 网关](./mcp)的 `dc3_mcp_tool_confirmation` 子系统，与这里的聊天链路是两套实现，别混用。
 :::
 
@@ -185,16 +196,16 @@ Spring AI 的记忆表结构；如需自动建表，预期做法是首次临时�
 | `AGENTIC_FALLBACK_OPENAI_TEMPERATURE` | `0.7`                          | 采样温度（0.0–2.0）                                     |
 | `AGENTIC_FALLBACK_OPENAI_MAX_TOKENS`  | `2048`                         | 最大输出 token                                        |
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         | 是否启用工具调用                                          |
-| `AGENTIC_MEMORY_ENABLED`              | `false`                        | 是否启用持久化会话记忆                                       |
+| `AGENTIC_MEMORY_ENABLED`              | `true`                         | 是否启用持久化会话记忆                                       |
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           | 单会话窗口最大消息数                                        |
 | `AGENTIC_MEMORY_SCHEMA_INIT`          | `never`                        | 记忆表结构初始化（`always`/`never`/`create_if_not_exists`） |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` | 附件存储目录                                            |
 
 ::: tip 默认值以 compose / `dev.env` 为准
-上表默认值取自 compose / `dev.env` 注入值，与 `application-agentic.yml` 里的 Spring 裸默认值**不一致**：如
-`AGENTIC_MEMORY_ENABLED` 的 Spring 默认是 `true`（compose 注入 `false`）、`AGENTIC_ATTACHMENT_STORAGE_PATH` 的 Spring 默认是
+上表默认值取自 compose / `dev.env` 注入值，与 `AgenticProperties` 的 Spring 裸默认值**不完全一致**：`AGENTIC_MEMORY_ENABLED`
+的 Spring 默认与 compose 注入一致（都是 `true`），但 `AGENTIC_ATTACHMENT_STORAGE_PATH` 的 Spring 默认是
 `dc3/data/upload/agentic/attachment`（compose 注入 `dc3/data/agentic/attachments`）。经 compose / `make up-*` 启动时以上表为准；若在
-IDE 里直接跑 Spring 而不经过 compose，则用的是 yml 裸默认值。
+IDE 里直接跑 Spring 而不经过 compose，则用的是 Spring 裸默认值。
 :::
 
 完整环境变量说明见 [环境变量](../quickstart/environment)。

@@ -42,9 +42,8 @@ IoT DC3 的解法是把"认证身份"和"信任身份"分开：
 
 - `POST /api/v3/auth/token/salt`：传 `tenant`、`name`，先确认租户存在，返回一个随机盐（UUID 形态），响应文案建议 **5 分钟内使用
   **（服务端不存储盐、不强制过期，"5 分钟"只是客户端使用提示）。
-- `POST /api/v3/auth/token/generate`：传 `tenant`、`name`、`salt`、**明文 `password`**（盐不参与密码哈希，仅用于与服务端密钥拼接给
-  token 签名），校验通过返回 access token，**有效期
-  12 小时**（`TOKEN_CACHE_TIMEOUT = 12` 小时）。
+- `POST /api/v3/auth/token/generate`：传 `tenant`、`name`、`salt`、**明文 `password`**（校验在服务端完成；盐既不参与密码哈希，也不参与令牌签名，只装进 `X-Auth-Token` 信封随请求回传），校验通过返回 access token，**有效期
+  12 小时**。
 
 `generateToken` 内部按固定顺序逐项校验，任一不过都返回同一个"无可用认证"错误，不泄露是哪一步失败：
 
@@ -57,8 +56,8 @@ IoT DC3 的解法是把"认证身份"和"信任身份"分开：
    bcrypt）。失败会记录一次失败登录。
 6. **密码过期 / 强制改密**：`password_expire_time` 已过或 `require_password_change=1` 时，抛"需改密"而非签发令牌。
 
-全部通过后才用 `KeyUtil.generateToken(principalId, salt, tenantId)` 签出 JWT——令牌绑定的是 **principal_id + tenant_id**
-，不是用户名。注销时把 `(tenantCode:principalId)` 写入 Caffeine 注销名单（denylist），后续带旧令牌的请求即便签名合法，也会因签发时间落在注销点之前而被判失效。
+全部通过后才用 `KeyUtil.generateToken(principalId, tenantId)` 签出 JWT——令牌绑定的是 **principal_id + tenant_id**
+，不是用户名，签名密钥只由 `DC3_SECURITY_KEY` 派生（盐不参与）。注销时把 `(loginName:tenantCode)` 写入 Caffeine 注销名单（denylist），后续带旧令牌的请求即便签名合法，也会因签发时间落在注销点之前而被判失效。
 
 ```bash [curl 登录黄金路径]
 # 1) 取盐
@@ -162,14 +161,14 @@ curl -s -X POST http://localhost:8000/api/v3/manager/device/add \
 ## 租户隔离：接口层校验
 
 RBAC 决定"能不能做这类操作"，租户隔离决定"能不能碰这条数据"。两者正交，缺一不可——有 `device:get` 权限不代表你能 get
-别家租户的设备。隔离落在接口层（数据库查询层当前不做自动租户裁剪，`MybatisPlusConfig` 只注册了分页插件）：
+别家租户的设备。隔离落在接口层（R2DBC 数据访问层当前不做自动租户裁剪，也没有数据库层的租户拦截器）：
 
 **控制器层 `BaseController.requireTenant()`**：按 ID 查到实体后，比对实体的 `tenantId` 与调用方租户。不一致（或实体不存在）就抛
 `NotFoundException`，对外返回 **404**——刻意用"不存在"而非"无权限"，避免泄露"某个跨租户资源是否存在"。批量查询走
 `filterTenant()`，把不属于本租户的条目直接剔除。
 
 ::: warning 没有数据库层的自动租户兜底
-不要以为忘了写租户条件也会被 SQL 层补上——当前实现**没有** MyBatis-Plus 租户行拦截器，隔离完全靠控制器层的
+不要以为忘了写租户条件也会被 SQL 层补上——当前实现**没有**数据库层租户拦截器（R2DBC 无 MyBatis-Plus 式插件层），隔离完全靠控制器层的
 `requireTenant` / `filterTenant`。新增单条或批量查询时，务必主动调用这两个方法带上租户校验，否则查询不会自动按租户裁剪。
 :::
 
@@ -195,7 +194,7 @@ default <T extends TenantOwned> T requireTenant(Long tenantId, T entity) {
 | 项         | 取值 / 行为                                                               | 来源                               |
 |-----------|-----------------------------------------------------------------------|----------------------------------|
 | 盐有效期      | 建议客户端 5 分钟内使用（服务端不强制过期）                                               | `POST /api/v3/auth/token/salt`   |
-| 令牌有效期     | 12 小时                                                                 | `TOKEN_CACHE_TIMEOUT=12` 小时      |
+| 令牌有效期     | 12 小时                                                                 | `TokenTtl`（12 小时）              |
 | JWT 绑定    | `principal_id` + `tenant_id`                                          | `generateToken`                  |
 | HMAC 密钥   | `AUTH_HMAC_SECRET` / `dc3.auth.hmac.secret`，默认 `io.github.pnoker.dc3` | `HmacAuthConfig`                 |
 | HMAC 生产校验 | `pre`/`pro` 下为空或等于默认值即启动失败                                            | `HmacAuthConfig`                 |

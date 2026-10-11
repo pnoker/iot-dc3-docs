@@ -58,6 +58,7 @@ DC3 有两条独立的下行链路，初学者最容易混淆：
 | `profileId`       | Long            | 归属的[模板](./profile)                                   |
 | `enableFlag`      | EnableFlagEnum  | 启停状态                                                 |
 | `tenantId`        | Long            | 归属[租户](./tenant)                                     |
+| `signature` / `version` | String / Integer | 数据签名与版本（通用审计字段）                     |
 
 指令参数 `CommandParamBO`（声明指令的输入/输出参数，归属指令定义）：
 

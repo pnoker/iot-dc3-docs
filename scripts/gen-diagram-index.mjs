@@ -50,7 +50,9 @@ function scan(lang) {
         const {url, title, md} = parsePage(file, lang)
         let lastHeading = ''
         let lastHeadingText = ''
-        for (const line of md.split('\n')) {
+        // CRLF-safe: `.` in JS regex does not match `\r`, so a trailing CR
+        // would defeat the heading regex below — split it away first
+        for (const line of md.split(/\r?\n/)) {
             const h = line.match(/^(#{1,4})\s+(.+)$/)
             if (h) {
                 lastHeadingText = headingText(h[2])

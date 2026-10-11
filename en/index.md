@@ -85,7 +85,7 @@ For how each hop works and why it's designed that way, see [Architecture](/en/ar
 
 - **Language & frameworks
   **: [Java 21](https://www.java.com) · [Spring Boot 4](https://spring.io/projects/spring-boot) · [Spring Cloud 2025](https://spring.io/projects/spring-cloud) · [Spring AI 2.0.0](https://spring.io/projects/spring-ai)
-- **Data, cache & scheduling**: PostgreSQL (+ TimescaleDB / AGE / pgvector) · Caffeine · MyBatis-Plus · Quartz
+- **Data, cache & scheduling**: PostgreSQL (+ TimescaleDB / AGE / pgvector) · Caffeine · R2DBC · Quartz
 - **Messaging**: RabbitMQ · gRPC · MQTT (Paho + EMQX) · Protobuf
 - **Security**: Spring Security · JWT · BouncyCastle
 - **Frontend**: Vue 3 · TypeScript 6 · Vite 8 · Element Plus · AntV G2/G6 (source in `dc3-web/` directory of this repo;

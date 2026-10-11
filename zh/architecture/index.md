@@ -44,8 +44,9 @@ IoT 四层参考架构的体系化讲解，见 [物联网技术总览](../founda
 
 ## 三层结构：接入、平台、存储与消息
 
-平台不是一个大单体，而是按职责切开的一组服务。从调用方视角看进去，请求只有一个入口——网关 `dc3-gateway`（HTTP `8000`），它是唯一对外的
-HTTP 端口；其余中心服务的 HTTP/gRPC 端口都只在内部网络可达。网关把请求路由到四个中心服务，它们彼此之间不走 HTTP，而是通过
+平台不是一个大单体，而是按职责切开的一组服务。从调用方视角看进去，请求只有一个入口——网关 `dc3-gateway`（HTTP `8000`），它是逻辑上唯一的
+API 聚合入口（app 栈下 `8000` 不发布到宿主机，外部经 Web 前端 `8080` 反代触达，见[服务与拓扑](./services)）；其余中心服务的 HTTP/gRPC
+端口都只在内部网络可达。网关把请求路由到四个中心服务，它们彼此之间不走 HTTP，而是通过
 gRPC facade 跨进程协作。
 
 南向是另一套节奏：现场设备由协议驱动（`dc3-driver-*`，共 36 个）接入，驱动与数据中心之间**不直接调用**，而是经 RabbitMQ
@@ -58,7 +59,7 @@ gRPC facade 跨进程协作。
 
 ::: info 单体与分布式两种部署形态
 上图是默认的分布式形态（四个中心独立进程）。平台也支持把中心合并为单一进程（`dc3-center-single`
-）跑在一台机器上——这只是部署拓扑的选择，不改变业务链路。切换由 `DC3_FACADE_MODE` 决定，详见 [Facade 模式](./facade-modes)。
+）跑在一台机器上——这只是部署拓扑的选择，不改变业务链路。切换由 `dc3.facade.{auth,manager,data}.mode` 一组开关决定，详见 [Facade 模式](./facade-modes)。
 :::
 
 ## gRPC facade：中心之间如何互相调用
@@ -67,17 +68,19 @@ gRPC facade 跨进程协作。
 URL 去调对方，服务边界会被传输细节污染，单体/分布式两种部署也无法共用同一套代码。
 
 IoT DC3 的解法是 **facade 接口**：跨服务调用统一面向 `dc3-common-facade-api` 里的契约接口编程，业务代码只认接口、不认传输。运行时由
-`DC3_FACADE_MODE` 决定接口背后的实现：
+**按目标中心分开的三个开关** `dc3.facade.{auth,manager,data}.mode` 决定接口背后的实现：
 
-- `grpc`（分布式默认）—— 实现来自 `dc3-common-facade-grpc`，调用走 gRPC 跨进程到目标中心；
-- `local`（单进程）—— 实现来自 `dc3-common-facade-local-*`，调用在进程内直接方法调用，不过网络。
+- `grpc`（缺省值，分布式各中心显式声明它）—— 实现来自 `dc3-common-facade-grpc`，调用走 gRPC 跨进程到目标中心；
+- `local`（单进程）—— 实现来自 `dc3-common-facade-local-{auth,manager,data}`，调用在进程内直接方法调用，不过网络；
+- `disabled` —— 本进程自己就是该中心（如 manager 进程的 `dc3.facade.manager.mode`），不装配任何实现。
 
-也就是说，"分布式还是单体"是一个部署开关，而非两套代码。同一份业务逻辑，换 `DC3_FACADE_MODE` 即可在两种形态间切换。
+也就是说，"分布式还是单体"是一个部署开关，而非两套代码。同一份业务逻辑，改这组开关即可在两种形态间切换。
 
 ::: warning facade 模式的默认值要看清
-分布式各中心默认 `grpc`：管理中心 `application.yml` 声明 `dc3.facade.mode: ${DC3_FACADE_MODE:grpc}`，`dc3/env/dev.env` 也设
-`DC3_FACADE_MODE=grpc`。鉴权中心基础 `application.yml` 里有一行 `dc3.facade.mode: local`，那是单进程场景的本地覆盖，不代表分布式默认是
-local——以环境变量与 Manager 的声明为准。完整辨析见 [Facade 模式](./facade-modes)。
+缺省即 `grpc`：gRPC 自动配置带 `matchIfMissing = true`，不写这个属性就装配 gRPC 实现。分布式各中心的 `application.yml`
+按目标显式声明（如管理中心 `dc3.facade.auth.mode: grpc` / `dc3.facade.data.mode: grpc`、自身置 `disabled`）；鉴权中心基础
+`application.yml` 写的是 `dc3.facade.auth.mode: local`（自己调自己，进程内直达），`dc3-center-single` 则三个开关全 `local`
+。判断某个服务实际用哪种模式，以它自己的 `application.yml` 与装配条件为准。完整辨析见 [Facade 模式](./facade-modes)。
 :::
 
 ## RabbitMQ 异步解耦：驱动与数据中心为什么不直连
@@ -109,8 +112,7 @@ ID、批量查询都经控制器层校验，跨租户访问被挡下。
 落地上有几个强制点：
 
 - **接口层（单条按 ID）**：`BaseController.requireTenant()` 查到实体后比对 `tenantId`，跨租户访问返回 404（而非泄露数据）。
-- **接口层（批量）**：`BaseController.filterTenant()` 在批量结果里剔除别家租户记录。数据库查询层当前不做自动租户裁剪（
-  `MybatisPlusConfig` 只注册了分页插件），隔离施加在控制器层。
+- **接口层（批量）**：`BaseController.filterTenant()` 在批量结果里剔除别家租户记录。数据库查询层（R2DBC）当前不做自动租户裁剪，隔离施加在控制器层。
 - **跨服务**：gRPC facade 调用在契约支持时携带租户 ID，缓存键也带租户上下文。
 
 这意味着写新查询、新 gRPC 调用、新缓存键时，都必须保留租户作用域——这是硬要求，不是可选优化。隔离怎么一层层落实、与 RBAC
@@ -133,12 +135,11 @@ principal 头。
 
 ## 一致性与可扩展性
 
-四个中心服务本身**无状态**——会话、令牌denylist、最新值等热数据放在 Caffeine
-缓存或数据库里，请求不黏在某个实例上。因此每个中心都可以水平扩展：在网关后面多挂几个同类实例即可分担负载，无需共享内存。
+四个中心服务的**业务数据**是无状态的——最新值等热数据放在共享数据库（位号最新值在 `dc3_point_latest` 投影表里，任何副本都能读能写），请求不黏在某个实例上，业务层面每个中心都可以水平扩展。但有一个**例外要知道**：令牌 denylist 是鉴权中心**进程内**的 Caffeine 缓存——注销记录只落在处理那次注销的副本里，而网关每个请求都要找 auth 验签；auth 跑多副本加负载均衡时，注销后的旧令牌在其他副本仍可能被判有效。要么对 auth 做粘性路由、要么把 denylist 换成共享存储，注销才能全局生效。
 
-数据中心的吞吐瓶颈在消费侧，而消费并发是可调的：`PointValueReceiver` 用默认监听容器（并发 2–8）消费 `dc3.q.value.point`
-，按入站速率在"即时落库"与"`PointValueJob` 批量落库"之间切换；批量阈值由 `POINT_BATCH_SPEED`（默认 100 条）/
-`POINT_BATCH_INTERVAL`（默认 5 秒）控制，谁先满足谁先刷盘。面对采集洪峰，先由 RabbitMQ 削峰，再靠并发消费与批量写入消化。
+数据中心的吞吐瓶颈在消费侧，而消费参数是可调的：`PointValueReceiver` 以**批量消费**模式消费 `dc3.q.value.point`
+——攒满一批（`POINT_BATCH_SIZE`，默认 500 条）或等待窗口到时（`POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`，默认 100 毫秒）就整批走一次响应式落库；消费并发由
+`POINT_CONCURRENT_CONSUMERS`（默认 4，上限 `POINT_MAX_CONCURRENT_CONSUMERS` 默认 16）与 `POINT_PREFETCH_COUNT`（默认 1000）控制，失败按指数退避重试（默认 3 次）后进死信。面对采集洪峰，先由消息队列削峰，再靠并发消费与批量写入消化。
 
 ::: info 强一致与最终一致并存
 租户隔离、权限判定、命令状态机这些在请求路径上的环节是强一致的（同步校验、即时拒绝）；而位号值的上行落库是经 MQ

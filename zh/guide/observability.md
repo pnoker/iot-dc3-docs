@@ -117,7 +117,7 @@ GF_SERVER_ROOT_URL="https://ops.example.com/grafana" make up-optional
 ```
 
 Prometheus 自身不对宿主机发布端口，通常通过 Grafana 间接查询；要直接看 Prometheus，可临时在 compose 里为其加一个端口映射，或用
-`podman exec` 进容器排查。
+`docker exec` / `podman exec` 进容器排查。
 
 ## 约束与边界
 

@@ -11,40 +11,45 @@ import FacadeModesDiagram from '../../.vitepress/theme/components/FacadeModesDia
 Inter-center calls between center services — the Data Center asking the Manager Center for devices, the Agentic Center
 asking the Data Center for point values — can run one of two ways. In `grpc` mode each service runs as its own process
 and calls happen cross-process. In `local` mode all centers collapse into a single process and calls are direct,
-in-process method invocations. This page explains that the `dc3.facade.mode` switch controls **deployment topology**,
-not transport protocol — and why business code never has to change when you flip it.
+in-process method invocations. This page explains that the `dc3.facade.{auth,manager,data}.mode` switch group controls
+**deployment topology**, not transport protocol — and why business code never has to change when you flip it.
 
 > You are here: you've read the [System Architecture Overview](./) and [Services and Topology](./services), and want to
 > understand how the centers actually interconnect.
 
 ## A topology switch, not a protocol choice
 
-First, the common misreading: `dc3.facade.mode` is not a "gRPC vs REST" transport pick. It's a choice about how many
+First, the common misreading: this switch group is not a "gRPC vs REST" transport pick. It's a choice about how many
 processes the center services **run as**.
 
-Business code never touches the other side's gRPC stubs or protobuf classes directly. It depends on a set of **protocol-neutral `*Facade` interfaces** — contracts defined in `dc3-common-facade-api` (16 interfaces such as
+Business code never touches the other side's gRPC stubs or protobuf classes directly. It depends on a set of **protocol-neutral `*Facade` interfaces** — contracts defined in `dc3-common-facade-api` (19 interfaces such as
 `DeviceFacade`, `PointValueFacade`, `TenantFacade`, `PermissionFacade`, and so on). Each interface has two
-implementations, and one is selected and wired at startup based on the value of `dc3.facade.mode`:
+implementations, and one is selected and wired at startup based on **the per-target switches** (`dc3.facade.auth.mode` /
+`dc3.facade.manager.mode` / `dc3.facade.data.mode`):
 
-- `grpc` mode wires the gRPC implementation (`dc3-common-facade-grpc`, e.g. `DeviceGrpcFacade`). It makes a
+- `grpc` wires the gRPC implementation (`dc3-common-facade-grpc`, e.g. `DeviceGrpcFacade`). It makes a
   cross-process gRPC call to reach the independently running target center.
-- `local` mode wires the in-process implementation (`dc3-common-facade-local-*`, e.g. `DeviceLocalFacade`). It calls the
-  target Service inside the same process directly, **with no network overhead**.
+- `local` wires the in-process implementation (`dc3-common-facade-local-{auth,manager,data}`, e.g. `DeviceLocalFacade`).
+  It calls the target Service inside the same process directly, **with no network overhead**.
+- `disabled` wires neither — the process itself is that center (e.g. `dc3.facade.manager.mode` inside the manager
+  process); there is no facade for "calling yourself".
 
-The Javadoc on the `DeviceFacade` interface itself says as much:
+The Javadocs on `DeviceFacade`'s two implementations say as much:
 
-> `DeviceLocalFacade` — in-process call into `DeviceService`, selected when `dc3.facade.mode=local` (single deployment).
-> `DeviceGrpcFacade` — gRPC call against Manager Center, selected when `dc3.facade.mode=grpc` (distributed deployment,
-> default).
+> `DeviceLocalFacade` — in-process call into `DeviceService`, selected when `dc3.facade.manager.mode=local`.
+> `DeviceGrpcFacade` — gRPC call against Manager Center, selected when `dc3.facade.manager.mode=grpc` (or unset — grpc
+> is the default).
 
 Both implementations satisfy the same interface and return the same BO/Page types, so **switching modes changes not a
 single line of business code** — it only swaps the injected Bean.
 
 ## How the two modes are wired
 
-Wiring relies on Spring Boot's `@ConditionalOnProperty`. The gRPC auto-configuration takes effect when
-`dc3.facade.mode=grpc` or when the property is absent (`matchIfMissing = true`); the local auto-configuration takes
-effect only when `dc3.facade.mode=local`. For any given `*Facade` interface, the switch alone decides which
+Wiring relies on Spring Boot's `@ConditionalOnProperty`, and it is **per target center**: `dc3.facade.auth.mode`
+governs only the interfaces that call Auth, `dc3.facade.manager.mode` only those that call Manager, and
+`dc3.facade.data.mode` only those that call Data. On each switch, the gRPC auto-configuration takes effect when the
+value is `grpc` or absent (`matchIfMissing = true`); the local auto-configuration takes effect only on `local`; and
+`disabled` wires nothing at all. For any given `*Facade` interface, the switch for its target alone decides which
 implementation gets wired.
 
 <FacadeModesDiagram lang="en" />
@@ -82,46 +87,51 @@ directly.
   `local`, run `dc3-center-single`.
 - You're doing a distributed deployment, scaling centers independently, or this is production → use `grpc` (the
   default), with each center as its own process.
-- When in doubt, use the default `grpc`: it's the established value for distributed envs; only the monolithic scenario
-  needs an explicit switch to `local`.
-  :::
+- When in doubt, use the default `grpc`: leaving the switches unset is exactly that; only the monolithic scenario needs
+  an explicit switch to `local`.
+
+:::
 
 ## Where the default lives, and who overrides whom
 
-The default differs by **deployment shape**, and this is the part to get right — otherwise a literal value in some
-`application.yml` can mislead you:
+The configuration lives in **each deployable unit's own `application.yml`**, declared per target — there is no global
+environment variable for it (the `DC3_FACADE_MODE` entry in `.env.example` is a leftover; current code does not consume
+it):
 
-- **Distributed centers** (such as the Manager Center): `application.yml` says
-  `dc3.facade.mode: ${DC3_FACADE_MODE:grpc}`, and the distributed orchestration explicitly sets the environment variable
-  `DC3_FACADE_MODE=grpc` (see `.env.example` and `dc3/env/dev.env`). So the distributed default is `grpc`.
-- **Monolithic service** `dc3-center-single`: `application.yml` defaults to
-  `dc3.facade.mode: ${DC3_FACADE_MODE:local}` — a monolith runs in a single process, so it naturally takes the
-  in-process facade.
+- **Distributed centers** declare `grpc` for the targets they call and `disabled` for themselves. The Manager Center,
+  for example, sets `dc3.facade.auth.mode: grpc`, `dc3.facade.manager.mode: disabled` (it *is* the manager), and
+  `dc3.facade.data.mode: grpc`; the Data Center sets `auth: grpc` / `manager: grpc` / `data: disabled`.
+- **The Auth Center** writes `dc3.facade.auth.mode: local` — it only ever calls itself, in-process. That's the normal
+  configuration for the distributed shape, not a misconfiguration.
+- **The monolithic service** `dc3-center-single`: all three switches `local` — all four centers share one process, so
+  everything is a direct call.
 
-::: warning The Auth Center's application.yml says local — don't be misled
-The base `application.yml` of the Auth Center `dc3-center-auth` writes `dc3.facade.mode` directly as `local` (a local
-override). But **under distributed deployment**, the orchestration-injected `DC3_FACADE_MODE=grpc` overrides it — Auth
-actually runs as `grpc` in a distributed setup. To determine which mode a service actually uses, **trust the injected
-environment variable**, not the literal value in some yml.
-:::
+To determine which mode a service actually uses, **go by its own `application.yml` and the wiring conditions**.
 
-Switching modes means changing only this one switch; business code and interface signatures stay put:
+Switching modes means changing only this group of switches; business code and interface signatures stay put:
 
 ::: code-group
 
-```bash [Environment variable]
-# Distributed (default): each center as a separate process, cross-process gRPC
-DC3_FACADE_MODE=grpc
-
-# Monolithic: all centers in one process, in-process direct calls
-DC3_FACADE_MODE=local
-```
-
-```yaml [application.yml]
+```yaml [Distributed center (manager as the example)]
 dc3:
   facade:
-    mode: ${DC3_FACADE_MODE:grpc}   # distributed centers default to grpc
-    # mode: ${DC3_FACADE_MODE:local} # monolithic dc3-center-single defaults to local
+    auth:
+      mode: grpc        # calling the Auth Center: cross-process gRPC
+    manager:
+      mode: disabled    # this process IS the Manager Center — no facade needed
+    data:
+      mode: grpc        # calling the Data Center: cross-process gRPC
+```
+
+```yaml [Monolith dc3-center-single]
+dc3:
+  facade:
+    auth:
+      mode: local
+    manager:
+      mode: local
+    data:
+      mode: local
 ```
 
 :::
@@ -129,9 +139,10 @@ dc3:
 ## Constraints and boundaries
 
 - `grpc` and `local` are two implementations of the same set of `*Facade` interfaces, **not** two transport protocols;
-  `local` is not a "facade over REST" tier. The environment-variables page calls `DC3_FACADE_MODE` the "facade protocol
-  mode", but what it actually switches is which implementation gets wired — that is, the deployment topology. The code's
-  `@ConditionalOnProperty` is the source of truth.
+  `local` is not a "facade over REST" tier. What the switches pick is which implementation gets wired — that is, the
+  deployment topology. The code's `@ConditionalOnProperty` is the source of truth.
+- The switches are **per target** (three properties: auth/manager/data) taking `grpc` / `local` / `disabled`; targets
+  can be mixed, though the distributed and monolithic shapes usually set the whole group to one value.
 - The default is `grpc`: the gRPC auto-configuration carries `matchIfMissing = true`, so without explicit configuration
   the gRPC implementation is wired by default.
 - `local` mode requires the target Service being called to live in the same process — it's designed for

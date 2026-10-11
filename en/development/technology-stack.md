@@ -4,8 +4,9 @@ title: Technology Stack
 
 # Technology Stack
 
-This page summarizes the main technologies IoT DC3 currently runs on and recommends for local development. Treat
-`pom.xml`, `dc3-web/package.json`, and `docs/package.json` as the source of truth for exact versions; the README keeps
+This page summarizes the main technologies IoT DC3 currently runs on and recommends for local development. Treat the
+upstream repository's `pom.xml` and `dc3-web/package.json` (the frontend source now lives in the iot-dc3 repository
+under `dc3-web/`), plus this site's own `package.json`, as the source of truth for exact versions; the README keeps
 only a short reader-facing summary.
 
 ## Backend and Center Services
@@ -24,7 +25,7 @@ only a short reader-facing summary.
 |----------------------------|------------------------------|-------------------------------------------------------------------------------------------------------|
 | Primary storage            | PostgreSQL                   | Business data, tenants, resources, device models, and runtime data                                    |
 | Time-series and extensions | TimescaleDB · AGE · pgvector | Point history, graph capabilities, and vector capabilities                                            |
-| ORM / data access          | MyBatis-Plus                 | Persistence access and paginated queries at the DO layer                                              |
+| Data access                | Spring Data R2DBC            | Reactive persistence access (`dc3-db-*`) and offset pagination                                        |
 | Message bus                | RabbitMQ                     | Asynchronous point value reports, command dispatch, and buffering between drivers and the data center |
 | Cache and scheduling       | Caffeine · Quartz            | In-process caching, scheduled jobs, and task orchestration                                            |
 
@@ -32,10 +33,10 @@ only a short reader-facing summary.
 
 | Area                 | Technologies                                 | Purpose                                                                    |
 |----------------------|----------------------------------------------|----------------------------------------------------------------------------|
-| Web frontend         | Vue 3 · TypeScript 6 · Vite 8 · Element Plus | Management console under `dc3-web/`                                        |
+| Web frontend         | Vue 3 · TypeScript 5.9 · Vite 8 · Element Plus | Management console under `dc3-web/`                                        |
 | Visualization        | AntV G2/G6                                   | Dashboard charts and relationship visualizations                           |
 | Docs site            | VitePress                                    | The current `docs/` site, architecture diagrams, and flow diagrams (custom Vue diagram components) |
-| CLI automation       | TypeScript · pnpm · Vitest                   | Sibling `dc3-cli/` project, a Gateway-oriented command-line client         |
+| CLI automation       | TypeScript · pnpm · Vitest                   | In-repo `dc3-cli/` subproject, a Gateway-oriented command-line client      |
 | Container deployment | Podman · Docker Compose                      | Local dependencies, dev stack, app stack, and optional observability stack |
 
 ## Continue Reading

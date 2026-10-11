@@ -27,11 +27,18 @@ IoT DC3 把整个平台的 HTTP 能力自动聚合成一份 MCP（Model Context 
 这条链路有三个角色：**鉴权中心（Auth Center / `dc3-center-auth`）** 兼做 OAuth 2.1 授权服务器，负责发 token、做内省、聚合工具目录；
 **网关（Gateway / `dc3-gateway`）** 是 MCP Resource Server，承载 `POST /mcp`，每次调用都重新校验权限并签名转发到后端；后端的**管理中心 / 数据中心 / 智能中心**才真正执行业务。Agent 只跟前两者打交道。
 
-## 工具目录怎么来：自动聚合，稳定 tool_id
+## 工具目录怎么来：注册表 × 构建期快照，稳定 tool_id
 
-工具目录不是手写的。鉴权中心的 `McpOpenApiAggregator` 在运行期拉取 auth / manager / data / agentic 四个中心的 OpenAPI，与
-`dc3_api`（`api_code` / `api_name`）和 `dc3_resource`（`resource_code` / `permission_code`）合并，为每个接口生成一条工具记录，落库到
-`dc3_mcp_tool_catalog`。规模约 **330+ 个工具**，由四个中心 **330+ 个 OpenAPI 操作**自动生成。
+工具目录不是手写的，由两部分拼成：
+
+- **工具集**来自服务注册：resource-registrar 在各中心启动时扫描 HTTP 端点，登记进 `dc3_api`（`api_code` / `api_name`）与
+  `dc3_resource`（`resource_code` / `permission_code`）；
+- **描述与 schema** 来自构建期静态快照：鉴权中心打包了四份 OpenAPI 快照（`classpath*:openapi/openapi-*.json`，auth / manager /
+  data / agentic 合计 **347 个操作**，`make openapi` 重新生成）。`McpOpenApiAggregator` 解析快照，为每个接口补齐描述、
+  `x-dc3-ai` 风险标注与合并后的 `inputSchema`，与注册表 join 后为每个接口生成一条工具记录，落库到 `dc3_mcp_tool_catalog`。
+
+选构建期快照而非运行期拉取，是为了让鉴权中心不依赖四个中心同时可达、也不必在生产暴露 `/v3/api-docs`（见
+`McpOpenApiAggregator` 的 javadoc）。规模约 **340+ 个工具**。
 
 每个工具有一个**稳定的 `tool_id`**（等于 `dc3_api.api_code`），格式是 `{service_name}:{HTTP_METHOD}:{api_path}`，其中
 `service_name` 是完整服务名 `dc3-center-<x>`（来自 `spring.application.name`），例如：
@@ -50,10 +57,14 @@ dc3-center-data:POST:/point_value/latest
 `read_only_hint` 由 HTTP 方法推导（`GET` → 1，`POST` → 0）。这些标注连同 `destructive_hint` / `idempotent_hint` /
 `open_world_hint` 一起写进 `dc3_mcp_tool_catalog`，来源是接口上的 `x-dc3-ai` OpenAPI 扩展（见文末）。
 
-::: info 目录如何刷新：当前只有手动端点
-工具目录的唯一刷新入口是管理员手动调用的 HTTP 端点（`McpManagementController.refreshToolCatalog` →
-`OAuthMcpRuntimeServiceImpl.refreshToolCatalog`）重新聚合落库。**没有定时刷新、也没有事件驱动自动刷新**：代码中不存在
-`@Scheduled` 刷新任务，也不存在 `McpToolCatalogChangedEvent` 之类的提交后触发。所以新增接口后，需要管理员手动触发一次刷新，工具目录才会更新。
+::: info 目录如何刷新：手动端点 + 重建快照
+工具目录的唯一刷新入口是管理员手动调用的 HTTP 端点：`POST /api/v3/auth/mcp/tool/catalog/refresh`
+（`McpManagementController.refreshToolCatalog` → `ReactiveOAuthMcpRuntimeServiceImpl.refreshToolCatalog`，权限点
+`mcp:update`）。**没有定时刷新、也没有事件驱动自动刷新**：代码中不存在 `@Scheduled` 刷新任务，也不存在
+`McpToolCatalogChangedEvent` 之类的提交后触发。刷新会按 `dc3_api` / `dc3_resource` 的当前内容重建工具集，但描述与 schema
+只能来自 auth 服务里打包的 OpenAPI 快照——**新增或修改接口后，光刷新目录还不够**：快照里没有对应记录的工具会被保守标为
+`riskLevel=HIGH`、`destructive=true`，且缺少描述与 `inputSchema`。要让新接口完整生效，需 `make openapi` 重新生成快照、重建
+auth 镜像，再触发一次刷新。
 :::
 
 ## 访问控制：四道闸门决定一个工具可见可调
@@ -116,6 +127,12 @@ fail-fast，详见 [鉴权 · 租户 · RBAC](../architecture/auth-rbac)。
 `POST /mcp` 是 JSON-RPC 2.0（Streamable HTTP），由网关的 `McpGatewayController` 处理，支持的方法：`initialize`、
 `notifications/initialized`、`ping`、`tools/list`、`tools/call`。
 
+工具的 **`name`**（`tools/call` 里引用的名字）由 SQL 规则生成：`lower(service_name || '_' || api_name)`。其中
+`service_name` 是完整 `spring.application.name`（如 `dc3-center-data`，连字符原样保留），`api_name` 取自端点
+`@PreAuthorize` 的权限点 `domain:action`（如 `point_value:list`，冒号同样保留）。所以 `dc3-center-data:POST:/point_value/latest`
+（`@perm.can('point_value', 'list')`）对应的 `name` 是 `dc3-center-data_point_value:list`——不是想象中的短名
+`data_point_value_latest`。Agent 作者不要凭空拼工具名，以 `tools/list` 实际返回为准。
+
 一次 `tools/list` 请求：
 
 ::: code-group
@@ -132,16 +149,25 @@ curl -X POST http://localhost:8000/mcp \
   }'
 ```
 
-```json [响应形态（示例）]
+```json [响应形态（字段有节选）]
 {
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
     "tools": [
       {
-        "name": "data_point_value_latest",
-        "description": "查询设备最新位号值",
-        "inputSchema": { "type": "object", "properties": { "deviceId": {"type":"string"} } }
+        "name": "dc3-center-data_point_value:list",
+        "title": "List Latest Point Values",
+        "description": "Return the most recent reading for each point under a device for the current tenant, paged by the request query. Use to read near-real-time snapshots; results are ordered by collection time.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "deviceId": { "type": "integer", "format": "int64" },
+            "pointId": { "type": "integer", "format": "int64" },
+            "offset": { "type": "integer", "format": "int64", "minimum": 0 },
+            "limit": { "type": "integer", "format": "int32", "minimum": 1, "maximum": 200 }
+          }
+        }
       }
     ]
   }
@@ -158,8 +184,8 @@ curl -X POST http://localhost:8000/mcp \
   "id": 2,
   "method": "tools/call",
   "params": {
-    "name": "data_point_value_latest",
-    "arguments": { "deviceId": "1839...", "pointId": "1840...", "current": 1, "size": 10 }
+    "name": "dc3-center-data_point_value:list",
+    "arguments": { "deviceId": 1839, "pointId": 1840, "offset": 0, "limit": 10 }
   }
 }
 ```

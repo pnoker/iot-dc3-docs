@@ -23,8 +23,8 @@ You want to know what it is and whether it's worth your time. Read in this order
 1. [Platform Positioning](./) — the problems it solves and how it compares to similar projects
 2. [Core Concepts](./concepts) — the object model and mental model
 3. [System Architecture Overview](../architecture/) — the whole picture in one diagram
-4. Run a demo: bring up the stack from [Quick Start](../quickstart/), then import the sample data
-   `iot-dc3/dc3/dependencies/postgres/demo/iot-dc3-demo.sql` to see real data flow.
+4. Run a demo: bring up the stack from [Quick Start](../quickstart/), then walk
+   [Your First Device: End to End](../quickstart/first-device) with the virtual driver to see real data flow.
 
 ## I need to onboard devices and run day-to-day operations
 

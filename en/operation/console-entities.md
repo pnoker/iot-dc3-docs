@@ -14,20 +14,21 @@ Open **Profile Management**. The layout mirrors device management: toolbar (sear
 
 **Adding a profile**: fill in the name and code (`profileCode`, unique per tenant) and save — the profile itself is just the shell; its capabilities come from the point / command / event definitions below.
 
-**Profile detail** has four tabs:
+**Profile detail** has five tabs:
 
 | Tab | Content |
 |-----|---------|
-| Profile info | Name, code, enable status and other base fields |
+| Profile info | Name, point/command/event/device counts, create/operate times, and other base fields |
 | Related points | The points this profile defines (read/write attributes, unit, type) |
 | Related commands | Device-level custom command definitions |
 | Related events | Event definitions (externally reported events) |
+| Related devices | The devices using this profile; jump to device management from here |
 
 Disabling a profile (thing-model switch off) stops its capability definitions from participating in collection and command validation for the devices under it — cheaper than disabling devices one by one when pausing a whole class.
 
 ## Point management
 
-Open **Points** (from the profile detail's related-points tab, or directly from the navigation). The toolbar searches by device / profile / name and filters by enable status; card actions: **edit**, enable/disable, delete, detail.
+Open **Points** — point management lives inside the profile detail's related-points tab and has **no standalone top-level navigation entry** (the top-level "Point Data" page queries point *values*, not point definitions — don't confuse the two). The toolbar searches by device / profile / name and filters by enable status; card actions: **edit**, enable/disable, delete, detail.
 
 **Key fields when adding / editing a point**:
 
@@ -45,7 +46,7 @@ Read/write semantics for point values (latest/list endpoints, command polling) a
 | UI action | API (via gateway, manager center) | Semantics |
 |-----------|-----------------------------------|-----------|
 | Profile search | `POST …/profile/list` | Paginated query, tenant-isolated |
-| Add profile | `POST …/profile/add` | Creates the profile (no ID returned) |
+| Add profile | `POST …/profile/add` | Creates the profile (returns the new entity with id) |
 | Profile enable/disable | `POST …/profile/update` (enableFlag) | Thing-model switch |
 | Point search | `POST …/point/list` | Filters by device / profile supported |
 | Add / edit point | `POST …/point/add` / `…/point/update` | Attribute config submitted together |

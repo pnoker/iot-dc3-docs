@@ -51,7 +51,7 @@ MQTT 驱动的配置分两层：**broker 连接**是部署级的（整台驱动�
 | 用户名 / 密码  | `MQTT_USERNAME` / `MQTT_PASSWORD`              | `dc3` / 空（docker-compose 栈注入 `dc3dc3dc3`）     | 认证凭据（认证类型支持 `NONE` / `USERNAME` / `CLIENT_ID` / `X509`）；密码应用级回退为空，随部署注入     |
 | 保活间隔      | 无 env 绑定（`dc3.driver.mqtt.keep-alive`）         | `15`（秒）                                       | 客户端心跳间隔，硬编码默认                                                               |
 | 完成超时      | 无 env 绑定（`dc3.driver.mqtt.completion-timeout`） | `3000`（毫秒）                                    | 发布操作的等待超时，硬编码默认                                                             |
-| 批量阈值      | `MQTT_BATCH_SPEED` / `MQTT_BATCH_INTERVAL`     | `100` / `5`                                   | 上报批量：满 100 条或满 5 秒先到先发                                                      |
+| 批量阈值      | `MQTT_BATCH_SPEED` / `MQTT_BATCH_INTERVAL`     | `100` / `5`                                   | 上报批处理：速率低于 100 条/秒逐条即时处理，达到后进入批量队列、每 5 秒整批刷出                                                |
 
 ::: info broker 默认是 RabbitMQ 的 MQTT 插件
 默认的 MQTT broker 是 **RabbitMQ 的 MQTT 插件**（`dc3-rabbitmq`），由 `MQTT_BROKER_HOST` / `MQTT_BROKER_PORT`
@@ -107,8 +107,8 @@ broker 打交道：
 <MqttDiagram lang="zh" />
 
 报文要被收成[位号值](../introduction/concepts/point-value)，须能解析出 `deviceId` 与 `pointId`（否则该条被跳过）；解析失败只记一条
-warn 日志、不影响其他消息。批量消息走 `receiveValues()` 合并发送，命中批量阈值（`MQTT_BATCH_SPEED` / `MQTT_BATCH_INTERVAL`
-）即刷出。
+warn 日志、不影响其他消息。入站消息按**速率**分流：接收速率低于 `MQTT_BATCH_SPEED`（默认 100 条/秒）时逐条即时处理、不攒批；达到阈值后消息进入批量队列，由定时作业每
+`MQTT_BATCH_INTERVAL`（默认 5 秒）经 `receiveValues()` 整批合并发送。
 
 ## 故障排查
 
@@ -139,7 +139,8 @@ warn 日志、不影响其他消息。批量消息走 `receiveValues()` 合并�
 
 ::: info 实现状态：数据接收、命令下发与健康检查已实现，`initial()` 为骨架
 据 `MqttDriverCustomServiceImpl` 与 `MqttReceiveServiceImpl` 源码：**数据接收**（解析为位号值并转发、事件上报与主题匹配）、**写命令**（`write()` / `execute()` 发布报文、QoS 回退、模板渲染）、**`health()` 健康检查**（监听 `MqttSubscribedEvent` /
-`MqttConnectionFailedEvent`，实时反映 broker 连接态）均已实现；`read()` 按 pub/sub 语义恒返回 `null`
+`MqttConnectionFailedEvent`，实时反映 broker 连接态；未配置订阅主题 `receive-topics`
+的纯下发部署没有连接事件可监听，此时降级为带诊断说明的在线）均已实现；`read()` 按 pub/sub 语义恒返回 `null`
 （数据靠订阅被动到达，非缺陷）。仍为参考桩的是 `initial()` 空的初始化模板。
 :::
 

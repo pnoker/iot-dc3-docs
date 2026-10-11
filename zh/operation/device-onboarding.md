@@ -9,9 +9,9 @@ import DeviceOnboardingFlowDiagram from '../../.vitepress/theme/components/Devic
 
 # 设备接入
 
-把一台现场设备接入 IoT DC3，本质是五步：按协议选一个驱动 → 建模板与位号 → 建设备并绑定模板和驱动 →
-为设备填位号属性的具体值 → 启用后确认设备在线、数据可查。读完这页，你能用内置的 `dc3-driver-virtual`
-跑通一次完整接入，并把同样的步骤套到真实协议上。
+把一台现场设备接入 IoT DC3，本质是六步：按协议选一个驱动 → 建模板与位号 → 建设备并绑定模板和驱动 →
+为设备填位号属性的具体值 → 为设备填驱动属性的具体值 → 启用后确认设备在线、数据可查。读完这页，你能用内置的
+`dc3-driver-virtual` 跑通一次完整接入，并把同样的步骤套到真实协议上。
 
 > 你在这里：已了解 [核心概念](../introduction/concepts)（驱动/模板/设备/位号、三层配置），现在动手接入第一台设备。更快的"
 > 复制粘贴"上手版见 [第一个设备](../quickstart/first-device)。
@@ -80,11 +80,16 @@ code 必须唯一且稳定。
 | 驱动编码重复                     | 保持 `dc3.driver.code` 唯一且稳定           |
 | RabbitMQ 未就绪               | 等健康检查通过后重启驱动                         |
 
-## 第 1–4 步：黄金路径接入
+## 第 1–5 步：黄金路径接入
 
 下面用网关 HTTP 接口走一遍。所有写接口都经网关 `:8000` 转发，受保护接口需带鉴权头 `X-Auth-Tenant` / `X-Auth-Login` /
 `X-Auth-Token`（先 `POST /api/v3/auth/token/salt` 取盐，再 `POST /api/v3/auth/token/generate` 取 token，有效期 12
-小时，详见黄金路径登录流程）。以下 `$TOKEN` 即登录拿到的访问令牌；示例里的 ID、名称为示例值。
+小时，详见黄金路径登录流程）。注意 `X-Auth-Token` 的值必须是 **JSON 信封** `{"salt":"...","token":"..."}`（盐与令牌都来自
+登录响应）——直接传裸 token 会被网关判 401。先把它定义成变量，后续示例统一引用；示例里的 ID、名称为示例值。
+
+```bash
+H_TOKEN='X-Auth-Token: {"salt":"<登录返回的盐>","token":"<登录返回的令牌>"}'
+```
 
 ### 1. 建模板（Profile）
 
@@ -92,11 +97,11 @@ code 必须唯一且稳定。
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/profile/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"profileName":"virtual-motor","profileShareFlag":"TENANT","enableFlag":true}'
-# 响应：R.ok(SuccessCode.ADD)，即 "Added successfully"；add 不回传新建实体 id
-# 后续步骤需要 profileId 时，调 POST /api/v3/manager/profile/list 按 profileName 查回
+  -d '{"profileName":"virtual-motor","profileShareFlag":"TENANT","enableFlag":"ENABLE"}'
+# 响应：新建的 ProfileVO，直接含 id（后续步骤的 profileId 就取它）
+# 想核对时可调 POST /api/v3/manager/profile/list 按 profileName 查回
 ```
 
 `profileShareFlag` 取 `ProfileShareTypeEnum`（`TENANT` / `DRIVER` / `USER`），决定模板的共享范围。
@@ -108,11 +113,12 @@ curl -X POST http://localhost:8000/api/v3/manager/profile/add \
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/point/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"pointName":"temperature","pointTypeFlag":"DOUBLE","rwFlag":"READ_WRITE",
-       "profileId":"<上一步的 profileId>","valueDecimal":2,"unit":"celsius","enableFlag":true}'
-# 响应：R.ok(SuccessCode.ADD)；add 不回传 id，需要 pointId 时调 /api/v3/manager/point/list 按 pointName 查回
+       "profileId":"<上一步的 profileId>","valueDecimal":2,"unit":"celsius","enableFlag":"ENABLE"}'
+# 响应：新建的 PointVO，直接含 id（后续步骤的 pointId 就取它）
+# 想核对时可调 /api/v3/manager/point/list 按 pointName 查回
 ```
 
 `pointTypeFlag` 取 `PointTypeEnum`（`STRING` / `BYTE` / `SHORT` / `INT` / `LONG` / `FLOAT` / `DOUBLE` / `BOOLEAN`，共 8
@@ -124,11 +130,12 @@ curl -X POST http://localhost:8000/api/v3/manager/point/add \
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/device/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"deviceName":"motor-01","driverId":"<virtual 驱动 id>",
-       "profileId":"<profileId>","enableFlag":true}'
-# 响应：R.ok(SuccessCode.ADD)；add 不回传 id，需要 deviceId 时调 /api/v3/manager/device/list 按 deviceName 查回
+       "profileId":"<profileId>","enableFlag":"ENABLE"}'
+# 响应：HTTP 201 + 新建的 DeviceVO，直接含 id（后续步骤的 deviceId 就取它）
+# 想核对时可调 /api/v3/manager/device/list 按 deviceName 查回
 ```
 
 设备创建后，驱动通过元数据事件（`DriverMetadataListener.event(...)` 收 ADD/UPDATE/DELETE）感知变更并刷新缓存，多数情况无需重启驱动。
@@ -153,11 +160,11 @@ curl -X POST http://localhost:8000/api/v3/manager/device/add \
 
 ```bash
 curl -X POST http://localhost:8000/api/v3/manager/point_attribute_config/add \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"attributeId":"<驱动注册的位号属性 id>","deviceId":"<deviceId>",
-       "pointId":"<pointId>","configValue":"40001","enableFlag":true}'
-# 响应：R.ok(SuccessCode.ADD)；add 统一返回成功码，不回传新建记录 id
+       "pointId":"<pointId>","configValue":"40001","enableFlag":"ENABLE"}'
+# 响应：新建的配置实体（含 id），直接取用即可
 ```
 
 `attributeId` 来自驱动注册的属性列表；`configValue` 是这台设备实例填的值。每个驱动声明的属性集不同——virtual
@@ -170,7 +177,33 @@ curl -X POST http://localhost:8000/api/v3/manager/point_attribute_config/add \
 
 :::
 
-## 第 5 步：启用后确认设备在线、数据可查
+### 5. 为设备配置驱动属性（设备级 Config）
+
+位号属性之外，驱动**自身**声明的属性（`DriverAttribute`，如连接的 host/port）同样要**逐设备**填值——这是容易漏掉的一步。
+调用 `POST /api/v3/manager/driver_attribute_config/add`：
+
+```bash
+curl -X POST http://localhost:8000/api/v3/manager/driver_attribute_config/add \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"attributeId":"<驱动注册的驱动属性 id>","deviceId":"<deviceId>",
+       "configValue":"localhost","enableFlag":"ENABLE"}'
+# 响应：新建的配置实体（含 id），直接取用即可
+```
+
+virtual 驱动注册了 `host` / `port` 两个驱动属性（默认值 `localhost` / `18600`，照抄即可）；真实协议驱动填真实连接参数（如
+Modbus 的 IP 与端口）。`attributeId` 来自驱动注册的属性列表，可用 `GET /api/v3/manager/driver_attribute/list_by_driver_id`
+按驱动查回。控制台里这一步对应设备编辑页的驱动信息表单。
+
+::: warning 不填驱动属性，设备既不会被读取、也不会上线
+
+驱动的调度读取与健康上报都有**设备级驱动属性门禁**：读取任务只调度驱动属性配置非空的设备，健康任务在该配置为空时直接跳过上报
+——设备会一直停在离线。而建设备（`device/add`）**不会**自动生成任何驱动属性配置，必须显式走上面这一步。virtual 的 host/port
+虽是占位值，也照样要填：门禁只看"有没有配置"，不看值是什么。
+
+:::
+
+## 第 6 步：启用后确认设备在线、数据可查
 
 接入的终点是确认链路打通。启用设备后等待一个采集周期，按"状态 → 数据 → 日志"的顺序确认。
 
@@ -180,16 +213,16 @@ curl -X POST http://localhost:8000/api/v3/manager/point_attribute_config/add \
 
 ```bash [curl]
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
-  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "X-Auth-Token: $TOKEN" \
+  -H "X-Auth-Tenant: default" -H "X-Auth-Login: dc3" -H "$H_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"deviceId":"<deviceId>","current":1,"size":20}'
+  -d '{"deviceId":"<deviceId>","offset":0,"limit":20}'
 ```
 
 ```json [响应形态 (示例值)]
 {
   "data": {
-    "current": 1, "size": 20, "total": 1,
-    "records": [
+    "offset": 0, "limit": 20, "total": 1, "hasNext": false,
+    "items": [
       {
         "deviceId": "...", "pointId": "...", "driverId": "...", "tenantId": "...",
         "rawValue": "23.71", "calValue": "23.71", "numValue": 23.71,
@@ -203,29 +236,33 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
 
 :::
 
-`POST /api/v3/data/point_value/latest` 返回 `Page<PointValueVO>`（每条含 `deviceId` / `pointId` / `driverId` /
+`POST /api/v3/data/point_value/latest` 返回偏移分页的 `OffsetPage<PointValueVO>`（分页字段是平铺的 `offset` / `limit`，
+默认 `limit=50`、上限 200；每条含 `deviceId` / `pointId` / `driverId` /
 `tenantId` / `rawValue` 原始值 / `calValue` 工程值 / `numValue` 数值投影（可空）/ `hasLatestValue` / `createTime` /
-`operateTime`，时间为本地日期时间）；要按时间窗翻历史值用 `POST /api/v3/data/point_value/list`
-。完整的读写命令链路见 [数据与命令](./data-commands)。
+`operateTime`，时间为本地日期时间）；要按时间窗翻历史值用 `POST /api/v3/data/point_value/list`（游标分页，翻页把响应里的
+`nextCursor` 回填到下一次请求的 `cursor`）。完整的读写命令链路见 [数据与命令](./data-commands)。
 
 **没数据时，按这条链路反向排查**，每一跳都对应上面那张数据走向图：
 
-1. **驱动状态**：驱动是否在线？设备健康状态是否 `ONLINE`？注意驱动上报的状态 TTL **必须大于读取周期**（如 30 秒 cron，TTL 至少
-   25 秒），否则设备会反复掉线。
+1. **驱动状态**：驱动是否在线？设备健康状态是否 `ONLINE`？注意设备状态租约由健康任务按 `dc3.driver.health.device.cron`
+   （默认 `0/15`，即 15 秒心跳）续期，租约超时 TTL（`timeout`，默认 45 秒）**必须大于心跳周期**（出厂范式即 3× 心跳）；TTL
+   短于心跳间隔，设备就会在两次上报之间被判离线。
 2. **驱动日志**：有没有协议连接错误（连不上 host/port、寄存器越界、认证失败）。
 3. **RabbitMQ**：队列是否有积压或绑定异常，说明驱动发出去了但数据中心没消费。
 4. **数据中心**：是否收到该设备的位号值消息。
 5. **租户一致性**：设备、模板、位号、属性配置的 `tenantId` 是否一致；跨租户访问会返回 404 而非数据。
-6. **属性配置**：`configValue` 是否缺失或格式不符合驱动期望（如地址填了非法字符串）。
+6. **属性配置**：分两级查——**驱动属性**配置是否缺失（缺失则设备根本不会被读取、也不上报在线，见第 5 步的门禁说明）；
+   **位号属性**的 `configValue` 是否缺失或格式不符合驱动期望（如地址填了非法字符串）。
 
-::: warning 设备一直显示离线？先查状态 TTL
+::: warning 设备一直显示离线？先查状态 TTL 与驱动属性
 
-最常见的"启用了却查不到值"是状态 TTL 配小了：驱动按读取周期上报心跳，TTL 短于周期就会在两次上报之间过期，设备被判离线。把
-TTL 配成略大于读取周期即可。
+最常见的"启用了却查不到值"有两个原因：一是驱动属性配置没填——健康任务直接跳过该设备，设备永远不上报在线（见上文门禁）；
+二是状态 TTL 配小了——租约按心跳周期（默认 15 秒）续期，TTL（默认 45 秒）短于心跳间隔就会在两次上报之间过期，设备被判离线。
+保持 TTL 不小于心跳周期的 2–3 倍即可。
 
 :::
 
-跑通虚拟驱动这一遍后，把同样的五步套到真实协议上：唯一变化的是第 0 步选的驱动模块、以及第 4 步每个驱动声明的属性集不同。
+跑通虚拟驱动这一遍后，把同样的六步套到真实协议上：唯一变化的是第 0 步选的驱动模块、以及第 4/5 步每个驱动声明的位号/驱动属性集不同。
 
 ## 延伸阅读
 

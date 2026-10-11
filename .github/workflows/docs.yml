@@ -39,6 +39,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Fact source for the drift scanner: upstream iot-dc3 main branch
+      # (MAINTAINING.md §1/§3). Cloned into RUNNER_TEMP — OUTSIDE the docs
+      # workspace — so VitePress never sees upstream *.md files as pages.
+      # Without this clone the scanner would only run its forbidden-string
+      # checks inside CI.
+      - name: Clone upstream iot-dc3 (fact source)
+        run: git clone --depth 1 https://github.com/pnoker/iot-dc3.git "${RUNNER_TEMP}/iot-dc3"
+
+      # Gate: fail before the (expensive) build when facts drift — legacy
+      # narrative variants, docs-vs-upstream tag/variable/command-face drift
+      - name: Fact-drift scan (scan-facts)
+        run: node scripts/scan-facts.mjs --ci --upstream "${RUNNER_TEMP}/iot-dc3"
+
       - name: Build with VitePress
         run: pnpm run build
 

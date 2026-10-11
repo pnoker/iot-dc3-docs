@@ -50,7 +50,8 @@ ID、字节切分、可选请求帧），以及可写位号的 `command-attribut
 ### 位号属性（`point-attribute`）
 
 每个采集[位号](../introduction/concepts/point)上填以下属性。前五项决定"
-匹配哪一帧、从载荷哪几个字节、按什么格式和字节序解析"；后两项 `requestCanId`/`requestData` 是可选的"先请求后应答"
+匹配哪一帧、从载荷哪几个字节取值"；其中 `dataOffset`/`dataLength` 已参与切片，`dataFormat`/`byteOrder`
+的解析尚未接通（见下方告警）。后两项 `requestCanId`/`requestData` 是可选的"先请求后应答"
 机制，留空则纯被动监听。
 
 | 属性             | code           | 类型     | 默认值      | 说明                         |
@@ -68,9 +69,10 @@ ID、字节切分、可选请求帧），以及可写位号的 `command-attribut
 `cansend` 发一帧请求（形如 `cansend can0 <requestCanId>#<requestData>`），再监听 `canId` 匹配的应答帧；两者留空则纯被动监听总线上周期广播的帧。
 :::
 
-::: warning dataOffset / dataLength / byteOrder 当前未参与解析
-按源码，`read()` 实际只用到 `interfaceName`、`canId`、`requestCanId`、`requestData`，把 `candump` 抓到的那一帧载荷字段原样返回为采集值；
-`dataOffset`、`dataLength`、`dataFormat`、`byteOrder` 这几项尚未在读取路径里用于切分/转换字节（属骨架待补部分）。配置项已就位，行为以后续实现为准。
+::: warning dataFormat / byteOrder 当前未参与解析（dataOffset / dataLength 已参与切片）
+按源码，`read()` 用 `interfaceName`、`canId`、`requestCanId`/`requestData` 抓帧后，会按 `dataOffset` /
+`dataLength` 从载荷里切出一段字节、以连续十六进制串作为采集值返回；但 `dataFormat`、`byteOrder`
+尚未在读取路径里做类型转换/字节序处理——不管填 `INT`/`UINT` 还是 `HEX`，拿到的都是该切片的十六进制原文（属骨架待补部分）。配置项已就位，行为以后续实现为准。
 :::
 
 ### 写命令属性（`command-attribute`）
@@ -83,7 +85,7 @@ ID、字节切分、可选请求帧），以及可写位号的 `command-attribut
 里**没有** `data`（`data` 只声明在 `command-attribute` 下），而 `command-attribute` 仅经
 `DriverCommand.execute(commandConfig, …)` 这条路传入——CAN 驱动并未覆写 `execute()`（用默认空实现），所以写路径根本读不到
 `command-attribute`。结果是 `data` 恒取默认空串、`frameData` 恒为空，`${value}` 模板不会被渲染，`cansend` 发出的载荷为空（形如
-`cansend can0 <canId>#`）。这与 `dataOffset`/`dataLength` 同属"骨架待补"部分，下发的写值当前不会真正落到帧载荷里。
+`cansend can0 <canId>#`）。这与 `dataFormat`/`byteOrder` 同属"骨架待补"部分，下发的写值当前不会真正落到帧载荷里。
 :::
 
 | 属性     | code    | 类型     | 默认值        | 说明                                       |
@@ -132,25 +134,26 @@ ID、字节切分、可选请求帧），以及可写位号的 `command-attribut
 ## 在 IoT DC3 中如何落地
 
 - **`dc3.driver.code`**：`CanDriver`（驱动名 `CAN Bus Driver`，类型 `DRIVER_CLIENT`，主动在总线上收发帧）。这是稳定的路由标识，不可随意更改。
-- **读能力**：✓ 支持。`read()` 通过 `candump` 抓取匹配 `canId` 的单帧并返回载荷字段，可选先用 `cansend` 发请求帧。
+- **读能力**：✓ 支持。`read()` 通过 `candump` 抓取匹配 `canId` 的单帧，按 `dataOffset`/`dataLength` 切出载荷切片（十六进制串）
+  返回，可选先用 `cansend` 发请求帧。
 - **写能力**：桩/部分实现。`write()` 已能调 `cansend` 把帧发上总线，但 `data` 帧数据模板当前未接通（`data` 取自
   `pointConfig` 却只声明于 `command-attribute`、`execute()` 未实现），故 `${value}` 不被渲染、当前发出的是空载荷帧（详见上方"
   写命令属性"告警）。
 - **订阅能力**：— 不支持。CAN 在本驱动里是请求-响应式的定时主动读，并非把订阅推送接进 DC3。以上与[驱动能力矩阵](./matrix)中
   CAN 行（✓ 读 / — 写 / — 订阅）一致。
 
-::: warning 实现状态：骨架（WIP），底层走 can-utils
+::: warning 实现状态：骨架（读已可用、写未接通），底层走 can-utils
 该驱动是一个起步模板。`read()`/`write()` 通过 `ProcessBuilder` 调用 Linux `can-utils`（`candump`/`cansend`）完成收发，
 `health()` 用 `ip link show` 检查接口——这些调用路径在装了 can-utils 的 Linux + 真实 SocketCAN 接口上能真正执行，而非抛"
-未实现"。但源码自身标注为 WIP 骨架，仍有未接通处：
+未实现"。但仍有未接通处：
 
-- **读路径**：位号属性里的 `dataOffset`/`dataLength`/`dataFormat`/`byteOrder` 尚未参与字节切分与类型转换，`read()`
-  把抓到的载荷字段原样返回。
+- **读路径**：`dataOffset`/`dataLength` 已参与字节切片（返回连续十六进制串）；`dataFormat`/`byteOrder`
+  尚未参与类型转换与字节序处理，读到的始终是切片的十六进制原文。
 - **写路径**：`write()` 的 `data` 帧数据模板渲染当前未真正接通——`data` 取自 `pointConfig` 但仅声明于 `command-attribute`
-  ，且 `execute()` 未实现，故 `${value}` 不被渲染、当前发出的是空载荷帧。与 `dataOffset` 等同属待补骨架，**不要把 write
+  ，且 `execute()` 未实现，故 `${value}` 不被渲染、当前发出的是空载荷帧。与 `dataFormat` 等同属待补骨架，**不要把 write
   当作已可写值**。
-- `TODO` 标注计划用原生 SocketCAN JNI 替换每次起进程的 `ProcessBuilder` 方案以降延迟。生产前需补齐字节解析、写值模板渲染与原生
-  I/O 集成。
+- 原生 SocketCAN JNI 曾被评估但**有意不采用**：每次起进程的开销相对本驱动低频工业采样场景可接受，引入 JNI
+  交叉编译不划算（源码类注释为据）。生产前仍需补齐格式/字节序解析与写值模板接通。
   :::
 
 ## 延伸阅读

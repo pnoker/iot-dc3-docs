@@ -94,14 +94,18 @@ collected [Point](../introduction/concepts/point):
 
 `remoteDeviceId` is the instance number of the remote device to read; the driver first discovers the device by broadcast
 using it, then locates the object by `objectType` + `objectInstance` and fetches the property by `propertyId`. Both
-`objectType` and `propertyId` are matched by their **exact uppercase enum name**, drawn from a fixed mapping table in
+`objectType` and `propertyId` are matched by their **enum name** (case-insensitive; uppercase is recommended), drawn from a fixed mapping table in
 the code (see the pitfall below and "How it lands in IoT DC3"). Config validation (`validatePoint`) requires all four to
 be non-empty.
 
 ### Write Command Attributes (`command-attribute`)
 
-Writable points also need one set on the write command, with the same structure as the point attributes but defaulting
-to a writable output object:
+These attributes are declared when the driver registers, but the **current write path (`write()`) does not consume
+them** — `write()` reads the point attributes (`point-attribute`), and the write target is decided by `objectType` +
+`objectInstance` + `propertyId` on the Point; `command-attribute` is passed only through custom commands via
+`DriverCommand.execute(commandConfig, …)`, and this driver does not override `execute()` (it uses the default empty
+implementation). The table below faithfully records the yml declarations (defaulting to a writable output object) and
+is a registration-surface reference only:
 
 | Attribute        | code             | Type   | Default         | Description                          |
 |------------------|------------------|--------|-----------------|--------------------------------------|
@@ -110,10 +114,10 @@ to a writable output object:
 | Object Instance  | `objectInstance` | INT    | `0`             | Object instance number               |
 | Property ID      | `propertyId`     | STRING | `PRESENT_VALUE` | Property identifier                  |
 
-The written value is auto-encoded by the target object type (see the "Write value encoding" tip below).
+The written value is auto-encoded by the target object type **on the Point** (see the "Write value encoding" tip below).
 
-::: warning Object Type / Property ID must use the exact uppercase enum name, or it silently falls back
-`objectType` and `propertyId` are matched by their exact uppercase names. A wrong or misspelled value **raises no error
+::: warning Object Type / Property ID silently falls back on a typo (matching is case-insensitive)
+`objectType` and `propertyId` are matched by enum name (case-insensitive; uppercase is recommended). A wrong or misspelled value **raises no error
 ** — the driver's `resolveObjectType()` / `resolvePropertyIdentifier()` **silently falls back** to `ANALOG_INPUT` /
 `PRESENT_VALUE`, so you may read the value of a different object without noticing.
 
@@ -178,7 +182,8 @@ timeout (see Troubleshooting item 2 above).
   is a stable routing identifier — do not change it casually.
 - **Read**: ✓ implemented. Discovers the device by broadcast using `remoteDeviceId`, reads the object property by
   `objectType` + `objectInstance` + `propertyId`, and returns the result as a string.
-- **Write**: ✓ implemented. Auto-encodes the written value by object type (see the "Write value encoding" tip above).
+- **Write**: ✓ implemented. Write addressing comes from the point attributes (`objectType` + `objectInstance` +
+  `propertyId`); the value is auto-encoded by object type (see the "Write value encoding" tip above).
 - **Subscribe/report**: — not supported. BACnet is a master/slave polling model; this driver only actively reads/writes
   and never passively receives pushes (COV subscription is not implemented). This matches the "✓ / ✓ / —" for BACnet/IP
   in the [driver capability matrix](./matrix).
@@ -214,8 +219,9 @@ Onboard the temperature object of a BACnet/IP device whose device instance numbe
    `objectType=ANALOG_INPUT`, `objectInstance=1`, `propertyId=PRESENT_VALUE`.
 3. Start the driver, and within 30 seconds the object's `PRESENT_VALUE` appears in
    the [PointValue](../introduction/concepts/point-value).
-4. If the Point must be writable, configure a write [Command](../introduction/concepts/command) for it, set `objectType`
-   explicitly to a writable output object (e.g. `ANALOG_OUTPUT`), and send the value per the object-type rules (a number
+4. If the Point must be writable, set `objectType` **on the Point** explicitly to a writable output object (e.g.
+   `ANALOG_OUTPUT`) — the write path reads the point attributes (the `command-attribute` set on a write command is not
+   consumed by `write()`, see "Write Command Attributes" above) — and send the value per the object-type rules (a number
    for analog, `1`/`true` for binary).
 
 ::: tip One driver instance can serve multiple devices

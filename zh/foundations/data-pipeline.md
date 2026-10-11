@@ -95,9 +95,7 @@ IoT DC3 的[数据平面](../architecture/data-plane)就是上面这条通用管
 ——高吞吐工厂存在，默认未启用。高吞吐工厂需要时给 `@RabbitListener` 显式加 `containerFactory`。
 :::
 
-**批量落库：按入站速率二选一。** 数据中心消费时不是无脑逐条写库。它按入站速率分流——速率低于 `POINT_BATCH_SPEED`（默认 `100`
-）时即时落库；超过阈值时改交 Quartz 定时任务批处理，由 `POINT_BATCH_INTERVAL`（默认 `5`，单位**秒**）参与速率计算。这正是"
-写入侧用批处理摊薄 I/O、低峰时用即时写保实时"的工程取舍。
+**批量落库：攒批或超时，先到先走。** 数据中心消费时不是无脑逐条写库。消息监听器按批拉取——攒满一批（`POINT_BATCH_SIZE`，默认 `500` 条）或等待窗口到时（`POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`，默认 `100` 毫秒），先到者触发整批走一次响应式落库。这正是"写入侧用批处理摊薄 I/O、低峰时批小也保实时"的工程取舍。
 
 **时序存储：TimescaleDB 超表 `dc3_point_value`。** 位号值落在 TimescaleDB **超表** `dc3_point_value`（位于 `dc3_history`
 schema）。它实践了上文的分区思想——按时间维 `create_time` **每 1 天一个 chunk**、按设备维 `device_id` **16 个哈希桶**

@@ -178,8 +178,8 @@ x-logging: &default-logging
 
 ::: code-group
 
-```bash [podman]
-podman logs -f --tail 200 dc3-center-data
+```bash [docker / podman]
+docker logs -f --tail 200 dc3-center-data
 ```
 
 ```bash [make]

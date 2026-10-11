@@ -32,13 +32,13 @@ Data Center / `dc3-center-data`)，落进 TimescaleDB 的 `dc3_point_value` 超�
 
 ## 看数据：查最新值与历史
 
-数据中心暴露两个读接口，都是 `POST`（请求体携带分页与过滤条件），返回 `Page<PointValueVO>`，每条值含 `deviceId`、`pointId`、
+数据中心暴露两个读接口，都是 `POST`（请求体携带分页与过滤条件），返回分页的 `PointValueVO` 列表，每条值含 `deviceId`、`pointId`、
 `rawValue`（原始值）、`calValue`（工程值）、`numValue`（数值投影，可空），以及 `createTime`、`operateTime`。两者都按租户(`tenantId`)
 隔离，权限码 `point_value:list`。受保护接口需带鉴权头 `X-Auth-Tenant`、`X-Auth-Login`、`X-Auth-Token`
 （如何取见 [API 文档](../development/api-documentation)）。
 
-`/api/v3/data/point_value/latest` 拿每个位号的当前值，`deviceId`、`pointId` 可选——只给 `deviceId` 就是这台设备所有位号的最新值。分页字段嵌在
-`page` 对象里：
+`/api/v3/data/point_value/latest` 拿每个位号的当前值，`deviceId`、`pointId` 可选——只给 `deviceId` 就是这台设备所有位号的最新值。分页字段是平铺的
+`offset` / `limit`（默认 `limit=50`、上限 200）：
 
 ::: code-group
 
@@ -47,32 +47,36 @@ Data Center / `dc3-center-data`)，落进 TimescaleDB 的 `dc3_point_value` 超�
 curl -X POST http://localhost:8000/api/v3/data/point_value/latest \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
-  -d '{"deviceId": 1001, "page": {"current": 1, "size": 20}}'
+  -d '{"deviceId": 1001, "offset": 0, "limit": 20}'
 ```
 
 ```bash [list 历史区间]
-# 用 rangeKey (today/24h/7d/30d) 或 createTimeFrom / rangeHours 圈定时间窗
+# 用 rangeKey (today/24h/7d/30d) 或 createTimeFrom / rangeHours 圈定时间窗；游标翻页
+# 下一页把响应里的 nextCursor 回填到请求的 cursor 字段
 curl -X POST http://localhost:8000/api/v3/data/point_value/list \
   -H 'Content-Type: application/json' \
   -H 'X-Auth-Tenant: <租户>' -H 'X-Auth-Login: <账号>' -H 'X-Auth-Token: {"salt":"<示例盐>","token":"<登录返回的 token>"}' \
   -d '{"deviceId": 1001, "pointId": 2001,
        "rangeKey": "24h",
-       "page": {"current": 1, "size": 100}}'
+       "limit": 100}'
 ```
 
 :::
 
 `/api/v3/data/point_value/list` 比 `latest` 多 `createTimeFrom`、`rangeHours`、`rangeKey`（`today`/`24h`/`7d`/`30d`
-）等时间过滤字段，用于翻历史。响应大致是这个形态（示例值）：
+）等时间过滤字段，用于翻历史。两个接口的分页形态不同：`latest` 是偏移分页（响应为 `{items, offset, limit, total, hasNext}`），
+`list` 是**游标分页**（响应为 `{items, nextCursor, hasNext}`，翻页把 `nextCursor` 回填到下一次请求的 `cursor`）。响应大致是这个形态（示例值
+）：
 
 ```json
 {
   "data": {
-    "current": 1, "size": 20, "total": 1,
-    "records": [
+    "items": [
       { "deviceId": 1001, "pointId": 2001, "rawValue": "26.5", "calValue": "26.5",
         "numValue": 26.5, "createTime": "2026-06-22T11:59:58" }
-    ]
+    ],
+    "nextCursor": "示例-下一页游标",
+    "hasNext": false
   }
 }
 ```
@@ -178,7 +182,7 @@ curl 'http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?
 | 现象                             | 优先排查                                                                 |
 |--------------------------------|----------------------------------------------------------------------|
 | 有设备但 `/point_value/latest` 返回空 | 租户/`deviceId`/`pointId` 是否对、采集周期、驱动协议日志、RabbitMQ 是否积压                |
-| 历史值有缺口或延迟                      | 批处理阈值(`POINT_BATCH_SPEED`/`POINT_BATCH_INTERVAL`)、RabbitMQ 积压、数据中心日志 |
+| 历史值有缺口或延迟                      | 批处理参数(`POINT_BATCH_SIZE`/`POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`)、RabbitMQ 积压、数据中心日志 |
 | 命令长期停在 `PENDING`/`SENT`        | 目标驱动是否在线、是否监听了 `dc3.q.point_command.{serviceName}`                   |
 | 命令变 `EXPIRED`                  | 设备/驱动离线或响应慢，10 秒 `expireAt` 已过                                       |
 | 写命令返回 `FAILED`                 | 位号 `rwFlag` 是否允许写、写入值类型/范围、协议返回码                                     |

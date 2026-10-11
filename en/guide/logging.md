@@ -202,8 +202,8 @@ At the defaults, each container uses at most about `10M × 20 = 200M` of disk. T
 
 ::: code-group
 
-```bash [podman]
-podman logs -f --tail 200 dc3-center-data
+```bash [docker / podman]
+docker logs -f --tail 200 dc3-center-data
 ```
 
 ```bash [make]

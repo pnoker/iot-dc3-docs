@@ -30,7 +30,6 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // into its own srcExclude so the build skip-list and the orphan-check
 // skip-list below can never drift apart.
 export const SRC_EXCLUDE: readonly string[] = [
-    'superpowers/**',
     'README.md',
     'dc3/doc/**',
     'dc3/blog/**',
@@ -38,7 +37,11 @@ export const SRC_EXCLUDE: readonly string[] = [
     // zh tree, zero inbound links) — intentionally not part of the public site
     'zh/frontend/frontend-testing-guardrails.md',
     // maintainer guide — not a site page
-    'MAINTAINING.md'
+    'MAINTAINING.md',
+    // 2026-10-11 full-audit report (findings + fix log) — maintainer-internal
+    // material, not a site page; its raw <token> placeholders also break the
+    // Vue SFC compiler if ever treated as a page
+    'AUDIT-REPORT.md'
 ]
 
 // Supports the two shapes used in SRC_EXCLUDE: '<prefix>/**' and exact paths.

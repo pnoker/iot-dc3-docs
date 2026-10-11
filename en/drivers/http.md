@@ -198,7 +198,8 @@ request headers don't currently take effect.
 Onboard an endpoint that returns `{"data":{"temperature":25.6}}`:
 
 1. Create a [Device](../introduction/concepts/device) with `HTTP REST Client Driver`, and set the driver attributes
-   `baseUrl=https://api.example.com`, `method=GET`, `timeout=5000`.
+   `baseUrl=https://api.example.com` and `timeout=5000` (the driver-level `method` is not consumed — see the warning
+   above, no need to set it).
 2. Add a temperature [Point](../introduction/concepts/point) (`pointTypeFlag=FLOAT`, `READ_ONLY`) to
    the [Profile](../introduction/concepts/profile) bound to the device, and set the point attributes
    `path=/api/v1/sensor/1`, `method=GET`, `responsePath=$.data.temperature`.

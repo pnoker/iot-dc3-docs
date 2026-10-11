@@ -14,9 +14,9 @@ RabbitMQ. This page covers what those units are, how they fit together, and why 
 once and every `depends_on` in `docker-compose.yml` will make sense — and you'll be able to debug "why won't the gateway
 come up" on your own.
 
-> You are here: you've read the [System Architecture Overview](./) and want to map "five centers + drivers" onto actual
-> processes, ports, and startup order. Next, read [Facade Modes](./facade-modes) to see how services call each other, or
-> jump to the [Quick Start](../quickstart/) to get the stack running.
+> You are here: you've read the [System Architecture Overview](./) and want to map "gateway + four centers + drivers"
+> onto actual processes, ports, and startup order. Next, read [Facade Modes](./facade-modes) to see how services call
+> each other, or jump to the [Quick Start](../quickstart/) to get the stack running.
 
 ## Why Split Into So Many Units
 
@@ -38,12 +38,12 @@ process:
 - **Data Center (`dc3-center-data`)** — point-value persistence, command dispatch and acknowledgment, and the alarm
   engine.
 - **Agentic Center (`dc3-center-agentic`)** — Spring AI conversations, tool calls, and chat persistence.
-- **Protocol Drivers (`dc3-driver-*`)** — the driver catalog has 36 protocol adapters; `docker-compose.yml` ships all 36 drivers by
-  default (the 6 not included — `ble`/`iec104`/`lwm2m`/`sl651`/`zigbee`/`can` — can be started on demand). Southbound
-  they
-  connect to devices; northbound they're decoupled from the data center through RabbitMQ.
-- **Single Monolith (`dc3-center-single`)** — folds all four centers into one process, wired in-process via
-  `dc3.facade.mode: local`. Good for local development and lightweight deployments (see [Facade Modes](./facade-modes)).
+- **Protocol Drivers (`dc3-driver-*`)** — the driver catalog has 36 protocol adapters; `docker-compose.yml` ships all
+  36 driver containers by default. Southbound they connect to devices; northbound they're decoupled from the data
+  center through RabbitMQ.
+- **Single Monolith (`dc3-center-single`)** — folds all four centers into one process, wired in-process via the
+  `dc3.facade.{auth,manager,data}.mode: local` switches. Good for local development and lightweight deployments (see
+  [Facade Modes](./facade-modes)).
 
 ::: info First mention of a center gives "English name + identifier"
 The rest of this page follows that glossary: "Data Center" means `dc3-center-data`, "Gateway" means `dc3-gateway`, and
@@ -54,7 +54,7 @@ the full names aren't repeated.
 
 Each unit may expose an HTTP port (an external or internal REST entry) and a gRPC port (for facade calls between
 centers). **Key constraint: the gateway is the only external API entry point, but its HTTP `8000` isn't published to the
-host under the app stack** — `docker-compose.yml` maps only the web frontend's `8080/8443` and the listening-virtual
+host under the app stack** — `docker-compose.yml` maps only the web frontend's `8080` (HTTP) and the listening-virtual
 driver's device inbound ports to the host. External requests go through the web frontend's nginx reverse proxy to
 `dc3-gateway:8000` inside the container network. The gateway's `8000` — like the HTTP ports of the other centers — is
 reachable only inside that network. Only the dev stack (`docker-compose-dev.yml`) publishes the gateway's `8000` (and
@@ -76,7 +76,7 @@ mappings in the app stack (`docker-compose.yml`):
 
 | Unit                                | HTTP            | gRPC   | Published to host (app stack)                                                                            | Environment variable (published port)        |
 |-------------------------------------|-----------------|--------|----------------------------------------------------------------------------------------------------------|----------------------------------------------|
-| Web frontend `dc3-web`              | `8080` / `8443` | —      | **Yes (the app stack's only HTTP entry; nginx reverse-proxies to the gateway)**                          | `DC3_WEB_HTTP_PORT` / `DC3_WEB_HTTPS_PORT`   |
+| Web frontend `dc3-web`              | `8080`          | —      | **Yes (the app stack's only HTTP entry; nginx reverse-proxies to the gateway)**                          | `DC3_WEB_HTTP_PORT`                          |
 | Gateway `dc3-gateway`               | `8000`          | —      | No (reachable only inside the container network; published via `DC3_GATEWAY_PORT` only in the dev stack) | `DC3_GATEWAY_PORT`                           |
 | Auth Center `dc3-center-auth`       | `8300`          | `9300` | No                                                                                                       | `DC3_AUTH_PORT` / `DC3_AUTH_GRPC_PORT`       |
 | Manager Center `dc3-center-manager` | `8400`          | `9400` | No                                                                                                       | `DC3_MANAGER_PORT` / `DC3_MANAGER_GRPC_PORT` |
@@ -87,11 +87,12 @@ mappings in the app stack (`docker-compose.yml`):
 ::: warning Backend HTTP ports are not published to the host in the app stack
 In `docker-compose.yml` (the app stack), the gateway and auth/manager/data/agentic have **no** `ports:` mappings —
 they're reachable only inside the `dc3net` container network. The only things mapped to the host are the web frontend's
-`8080/8443` (`DC3_WEB_HTTP_PORT` / `DC3_WEB_HTTPS_PORT`) and the listening-virtual driver's device inbound ports, TCP
+`8080` (`DC3_WEB_HTTP_PORT`) and the listening-virtual driver's device inbound ports, TCP
 `6270` / UDP `6271` (`DC3_LISTENING_VIRTUAL_TCP_PORT` / `..._UDP_PORT`). So under the app stack, business API calls from
 outside go through the web frontend's `8080`, which nginx reverse-proxies to `dc3-gateway:8000` inside the container;
-the host can't reach `8000` directly. Only the dev stack (`docker-compose-dev.yml`) publishes the gateway's `8000` (and
-the center ports) to the host for direct connection.
+the host can't reach `8000` directly. HTTPS termination has been removed from the `dc3-web` image (nginx listens on 80
+only) — do TLS at your reverse proxy / load balancer when you need it. Only the dev stack (`docker-compose-dev.yml`)
+publishes the gateway's `8000` (and the center ports) to the host for direct connection.
 :::
 
 ## In What Order Do They Start
@@ -144,7 +145,7 @@ make up-db
 make up STACK=app
 
 # Follow logs to confirm each service's readiness passes in turn
-make logs
+make logs STACK=app
 ```
 
 ```bash [podman compose (low-level)]
@@ -187,7 +188,7 @@ unchanged. See [Facade Modes](./facade-modes) for details.
 ## Constraints and Boundaries
 
 - **The gateway is the only external API entry point, but the host entry differs by stack.** In the app stack (
-  `docker-compose.yml`), only the web frontend's `8080/8443` and listening-virtual's device inbound ports TCP `6270`/UDP
+  `docker-compose.yml`), only the web frontend's `8080` and listening-virtual's device inbound ports TCP `6270`/UDP
   `6271` are mapped to the host; the gateway's `8000` isn't published, and external requests pass through the web
   frontend's nginx reverse proxy to `dc3-gateway:8000`. Only the dev stack (`docker-compose-dev.yml`) publishes the
   gateway's `8000` and the center ports to the host. In either stack, the remaining backend ports are reachable only
@@ -197,10 +198,10 @@ unchanged. See [Facade Modes](./facade-modes) for details.
   internally. You still have to bring up the db stack yourself first.
 - **Readiness paths carry a base path.** The centers use `webflux.base-path` (e.g. auth's `/auth`), so the probe paths
   carry that prefix; the gateway doesn't. Don't drop the prefix when writing monitoring or liveness scripts.
-- **Distributed mode uses the gRPC facade by default.** For centers like manager, `dc3.facade.mode` defaults to
-  `${DC3_FACADE_MODE:grpc}`, and `dc3/env/dev.env` also sets it to `grpc`; only the single monolith's base
-  `application.yml` declares `local`. This is a deployment-topology choice, not a protocol choice —
-  see [Facade Modes](./facade-modes) for details.
+- **Distributed mode uses the gRPC facade by default.** The facade switches are per target —
+  `dc3.facade.{auth,manager,data}.mode` (unset means `grpc`): each distributed center's `application.yml` declares
+  `grpc` per target (and `disabled` for itself); the single monolith sets all three to `local`. This is a
+  deployment-topology choice, not a protocol choice — see [Facade Modes](./facade-modes) for details.
 
 ## Further Reading
 

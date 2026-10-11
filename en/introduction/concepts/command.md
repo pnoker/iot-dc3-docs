@@ -67,6 +67,7 @@ Command definition `CommandBO` (belongs to a [Profile](./profile), table `dc3_co
 | `profileId`       | Long            | Owning [Profile](./profile)                                                                    |
 | `enableFlag`      | EnableFlagEnum  | Enabled / disabled state                                                                       |
 | `tenantId`        | Long            | Owning [Tenant](./tenant)                                                                      |
+| `signature` / `version` | String / Integer | Data signature and version (common audit fields)                                               |
 
 Command parameter `CommandParamBO` (declares a command's input/output parameters, belongs to a command definition):
 

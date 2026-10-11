@@ -63,15 +63,15 @@ import TenantAuthDiagram from '../../../.vitepress/theme/components/TenantAuthDi
 
 ## 隔离是怎么落实的
 
-租户隔离落在控制器层：取数后比对实体 `tenantId` 与调用方租户，跨租户访问被判为不存在或被剔除。
+租户隔离落在控制器层与仓储层：控制器取数后比对实体 `tenantId` 与调用方租户，跨租户访问被判为不存在或被剔除；仓储端口则强制携带显式租户作用域。
 
 <TenantAuthDiagram lang="zh" />
 
 - **控制器层（单条按 ID）**：查到实体后，`BaseController.requireTenant()` 比对实体的 `tenantId` 与调用方租户，不一致（或实体不存在）就抛
   `NotFoundException`，对外返回 **404**。
 - **控制器层（批量）**：`BaseController.filterTenant()` 只保留属于本租户的条目，直接剔除别家租户的记录。
-- **库级自动追加 `WHERE tenant_id = ?`**：当前未启用（`MybatisPlusConfig` 只注册了 `PaginationInnerInterceptor`
-  ），作为统一兜底仍在规划中。
+- **仓储层强制租户作用域**：数据访问走 R2DBC 仓储端口，调用必须携带显式 `TenantScope(tenantId)`（缺失或非法直接抛错
+  ）；没有"自动改写 SQL 追加租户条件"的隐式兜底，租户条件由仓储查询显式带上。
 
 ::: warning 跨租户访问返回 404，不是 403
 故意用"不存在"而非"无权限"——避免泄露"某个跨租户资源是否存在"。所以你查不到一台设备时，可能它真不存在，也可能它属于别的租户：对你而言两者无差别。批量查询走
@@ -92,14 +92,14 @@ import TenantAuthDiagram from '../../../.vitepress/theme/components/TenantAuthDi
 
 租户管理端点在鉴权中心，前缀 `/tenant`（经网关为 `/api/v3/auth/tenant`）。非管理员只能操作自己所属的租户：
 
-| 方法   | 路径                    | 说明                      |
-|------|-----------------------|-------------------------|
-| POST | `/tenant/add`         | 新增租户（仅 `default` 租户管理员） |
-| POST | `/tenant/delete`      | 删除租户                    |
-| POST | `/tenant/update`      | 修改租户                    |
-| GET  | `/tenant/get_by_id`   | 按 ID 查询                 |
-| GET  | `/tenant/get_by_code` | 按编码查询                   |
-| POST | `/tenant/list`        | 分页查询                    |
+| 方法     | 路径                    | 说明                      |
+|--------|-----------------------|-------------------------|
+| POST   | `/tenant/add`         | 新增租户（仅 `default` 租户管理员） |
+| DELETE | `/tenant/delete`      | 删除租户                    |
+| POST   | `/tenant/update`      | 修改租户                    |
+| GET    | `/tenant/get_by_id`   | 按 ID 查询                 |
+| GET    | `/tenant/get_by_code` | 按编码查询                   |
+| POST   | `/tenant/list`        | 分页查询                    |
 
 ## 延伸阅读
 

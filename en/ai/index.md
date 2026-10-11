@@ -11,11 +11,14 @@ import AiIndexDiagram from '../../.vitepress/theme/components/AiIndexDiagram.vue
 IoT DC3 plugs large language models into operations, so a model can do more than read data — it can act on devices. This
 section covers two ways an LLM drives those actions; the difference is who initiates and how it's constrained.
 
-- **Agentic Center** — a built-in, conversational AI operations assistant. Built on Spring AI with 10 `@Tool`s, it lets
-  the LLM query devices, read and write points, and run commands through Tool Calling. It speaks the OpenAI API, so you
+- **Agentic Center** — a built-in, conversational AI operations assistant. Built on Spring AI with 68 built-in tools
+  (61 programmatically registered reactive tools plus 7 `@Tool` methods), it lets
+  the LLM query devices, read and write points, and run commands through Tool Calling. It speaks the OpenAI API and
+  supports the Anthropic API natively, so you
   can point GPT, Claude, DeepSeek, Qwen, and friends at it. Good when you want a UI-driven, multi-turn assistant.
 - **MCP** — exposes platform tools safely to external AI agents. The gateway serves a JSON-RPC 2.0 MCP resource server
-  at `POST /mcp`; the tool catalog is aggregated from the four centers' OpenAPI (330+ tools) and gated by OAuth 2.1, a
+  at `POST /mcp`; the tool catalog is aggregated from the service registry and the four centers' build-time OpenAPI
+  snapshots (340+ tools) and gated by OAuth 2.1, a
   per-connection tool whitelist, and risk tiers. Good when you run your own agent and want the model to pick which tool
   to call.
 
@@ -47,7 +50,7 @@ permission point and the tenant boundary:
 
 ## Further reading
 
-- [Agentic Center](./agentic) — conversational AI operations, 10 built-in tools, session persistence, high-risk
+- [Agentic Center](./agentic) — conversational AI operations, 68 built-in tools, session persistence, high-risk
   confirmation
 - [AI Agent / MCP](./mcp) — OAuth 2.1 + MCP, exposing tools safely to external agents
 - [Why Spring AI](./spring-ai-deep-dive) — architecture rationale, tool-calling mechanics, and roadmap

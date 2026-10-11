@@ -19,7 +19,8 @@ title: 驱动能力矩阵
 ## 工业总线 / PLC
 
 这一类驱动作为主站（client）主动连设备，按[位号](../introduction/concepts/point)
-轮询读值、按[命令](../introduction/concepts/command)写值，不监听上报。`ethernet-ip` 目前是协议骨架，CIP 组帧尚未补全。
+轮询读值、按[命令](../introduction/concepts/command)写值，不监听上报。`ethernet-ip` 走 CIP Unconnected 报文按标签名读写（不含
+`ForwardOpen` 连接型 I/O）。
 
 | 驱动 (dc3.driver.code)                              | 类别       | 读 | 写 | 订阅/上报 | 实现状态 | 备注                               |
 |---------------------------------------------------|----------|---|---|-------|------|----------------------------------|
@@ -29,8 +30,8 @@ title: 驱动能力矩阵
 | [OPC DA](./opc-da) (`OpcDaDriver`)                | 工业总线/PLC | ✓ | ✓ | —     | 完整   | 经典 OPC 数据访问（DCOM）                |
 | [S7](./plcs7) (`PlcS7Driver`)                     | 工业总线/PLC | ✓ | ✓ | —     | 完整   | 西门子 PLC                          |
 | [MELSEC](./melsec) (`MelsecDriver`)               | 工业总线/PLC | ✓ | ✓ | —     | 完整   | 三菱 PLC（MC 协议）                    |
-| [FINS](./fins) (`FinsDriver`)                     | 工业总线/PLC | ✓ | ✓ | —     | 可用   | 欧姆龙 PLC，支持 16/32 位整数、浮点、字符串与 BCD |
-| [EtherNet/IP](./ethernet-ip) (`EthernetIpDriver`) | 工业总线/PLC | — | — | —     | 骨架   | 罗克韦尔 / CIP，组帧待补                  |
+| [FINS](./fins) (`FinsDriver`)                     | 工业总线/PLC | ✓ | ✓ | —     | 可用   | 欧姆龙 PLC，支持 16/32 位整数、浮点、字符串与 BCD；main 组帧缺陷见驱动页告警 |
+| [EtherNet/IP](./ethernet-ip) (`EthernetIpDriver`) | 工业总线/PLC | ✓ | ✓ | —     | 可用   | 罗克韦尔 / CIP，Unconnected 报文读写标签    |
 
 ## SCADA / 电力 / 计量
 
@@ -54,8 +55,8 @@ title: 驱动能力矩阵
 
 物联网与无线类。`mqtt` 走发布/订阅，值由订阅被动到达（无主动读），命令可下发；`lwm2m` 内嵌服务端、收设备注册与通知，读写已落地但
 Observe 订阅尚未实现；
-`coap`、`http`、`ble` 为请求-响应式主动读写（`coap` 的 Observe 未实现）；`can`、`zigbee` 当前为骨架实现，`zigbee`
-仅监听协调器网络状态、尚未监听节点入网与属性上报，`can` 底层走 can-utils。
+`coap`、`http`、`ble` 为请求-响应式主动读写（`coap` 的 Observe 未实现）；`zigbee` 经串口协调器读写 ZCL
+属性，仅监听协调器网络状态、尚未监听节点入网与属性上报；`can` 当前为骨架实现，底层走 can-utils。
 
 | 驱动 (dc3.driver.code)                | 类别     | 读 | 写 | 订阅/上报 | 实现状态 | 备注                             |
 |-------------------------------------|--------|---|---|-------|------|--------------------------------|
@@ -63,10 +64,10 @@ Observe 订阅尚未实现；
 | [CoAP](./coap) (`CoapDriver`)       | IoT/无线 | ✓ | ✓ | —     | 可用   | 受限设备 RESTful，Observe 未实现       |
 | [LwM2M](./lwm2m) (`Lwm2mDriver`)    | IoT/无线 | ✓ | ✓ | —     | 可用   | 内嵌服务端，读写已落地，Observe 订阅未实现      |
 | [HTTP](./http) (`HttpDriver`)       | IoT/无线 | ✓ | ✓ | —     | 完整   | 通用 HTTP 采集                     |
-| [BLE](./ble) (`BleDriver`)          | IoT/无线 | ✓ | ✓ | —     | 完整   | 低功耗蓝牙 GATT                     |
-| [Zigbee](./zigbee) (`ZigbeeDriver`) | IoT/无线 | ✓ | ✓ | —     | 骨架   | 骨架实现，订阅（入网/上报）未实现              |
+| [BLE](./ble) (`BleDriver`)          | IoT/无线 | ✓ | ✓ | —     | 可用   | 低功耗蓝牙 GATT，需主机蓝牙适配器与 TinyB     |
+| [Zigbee](./zigbee) (`ZigbeeDriver`) | IoT/无线 | ✓ | ✓ | —     | 可用   | 读写经串口协调器落地，订阅（入网/上报）未实现        |
 | [CAN](./can) (`CanDriver`)          | IoT/无线 | ✓ | — | —     | 骨架   | 控制器局域网，底层走 can-utils           |
-| [LoRaWAN](./lorawan) (`LorawanDriver`) | IoT/无线 | ✓ | ✓ | ✓     | 可用   | ChirpStack MQTT 上行接入，Cayenne LPP    |
+| [LoRaWAN](./lorawan) (`LorawanDriver`) | IoT/无线 | ✓ | ✓ | ✓     | 可用   | ChirpStack MQTT 上行接入，Cayenne LPP，下行发布 |
 | [Kafka](./kafka) (`KafkaDriver`)     | IoT/无线 | ✓ | ✓ | ✓     | 可用   | 流式数据源，消费 + 生产                    |
 
 ## 串口 / 通用网络
@@ -102,7 +103,7 @@ Observe 订阅尚未实现；
 
 ::: info 能力标记以代码为准
 表中「✓ / —」反映各驱动 `*DriverCustomServiceImpl` 当前的真实实现：「—」可能是协议方向本就不提供（如 `virtual` 的写、`mqtt`
-的主动读），也可能是骨架未补齐（如 `ethernet-ip`、`iec104`、`dlms`、`can`）。「实现状态」列是对成熟度的整体概括，局部的数据类型或子能力缺口以各驱动页的
+的主动读），也可能是骨架未补齐（如 `iec104`、`dlms`、`can`）。「实现状态」列是对成熟度的整体概括，局部的数据类型或子能力缺口以各驱动页的
 `::: warning` / `::: info` 标注为准。最终行为请以对应模块的 `read()` / `write()` / `initial()` 源码为准；驱动迭代后此表会同步更新。
 :::
 

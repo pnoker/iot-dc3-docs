@@ -4,7 +4,7 @@ title: 模块清单
 
 # 模块清单
 
-本页按仓库目录列出 IoT DC3 当前模块。每个模块链接指向 GitHub `release` 分支中的原始 `README.md` 或源码目录，便于进一步查看实现。
+本页按仓库目录列出 IoT DC3 当前模块。每个模块链接指向 GitHub `main` 分支中的原始 `README.md`，便于进一步查看实现。
 
 ::: tip 事实来源
 驱动数量和模块名称以仓库当前目录为准：`dc3-driver/` 下共有 36 个接入驱动模块。
@@ -14,17 +14,17 @@ title: 模块清单
 
 | 模块            | 说明                                | 文档                                                                             |
 |---------------|-----------------------------------|--------------------------------------------------------------------------------|
-| `dc3-gateway` | Spring Cloud Gateway，对外 HTTP 统一入口 | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-gateway/README.md) |
+| `dc3-gateway` | Spring Cloud Gateway，对外 HTTP 统一入口 | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-gateway/README.md) |
 
 ## 中心服务
 
 | 模块                   | 说明                                 | 文档                                                                                               |
 |----------------------|------------------------------------|--------------------------------------------------------------------------------------------------|
-| `dc3-center-auth`    | 认证中心，管理租户、用户、角色、资源和 Token          | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-auth/README.md)    |
-| `dc3-center-manager` | 管理中心，管理驱动、模板、设备、位号和元数据             | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-manager/README.md) |
-| `dc3-center-data`    | 数据中心，处理位号值、查询和命令分发                 | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-data/README.md)    |
-| `dc3-center-agentic` | Agentic Center，承载 AI 会话、模型提供方和工具调用 | [README](https://github.com/pnoker/iot-dc3/tree/release/dc3-center/dc3-center-agentic)           |
-| `dc3-center-single`  | 单进程聚合启动，适合本地调试                     | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-single/README.md)  |
+| `dc3-center-auth`    | 认证中心，管理租户、用户、角色、资源和 Token          | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-auth/README.md)    |
+| `dc3-center-manager` | 管理中心，管理驱动、模板、设备、位号和元数据             | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-manager/README.md) |
+| `dc3-center-data`    | 数据中心，处理位号值、查询和命令分发                 | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-data/README.md)    |
+| `dc3-center-agentic` | Agentic Center，承载 AI 会话、模型提供方和工具调用 | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-agentic/README.md) |
+| `dc3-center-single`  | 单进程聚合启动，适合本地调试                     | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-single/README.md)  |
 
 ## 协议驱动
 
@@ -73,38 +73,52 @@ title: 模块清单
 
 | 模块                | 用途                                | 文档                                                                                         |
 |-------------------|-----------------------------------|--------------------------------------------------------------------------------------------|
-| `dc3-api-auth`    | Auth Center gRPC / Protobuf 合约    | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-auth/README.md)    |
-| `dc3-api-manager` | Manager Center gRPC / Protobuf 合约 | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-manager/README.md) |
-| `dc3-api-data`    | Data Center gRPC / Protobuf 合约    | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-data/README.md)    |
-| `dc3-api-driver`  | Driver gRPC / Protobuf 合约         | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-driver/README.md)  |
+| `dc3-api-auth`    | Auth Center gRPC / Protobuf 合约    | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-auth/README.md)    |
+| `dc3-api-manager` | Manager Center gRPC / Protobuf 合约 | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-manager/README.md) |
+| `dc3-api-data`    | Data Center gRPC / Protobuf 合约    | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-data/README.md)    |
+| `dc3-api-driver`  | Driver gRPC / Protobuf 合约         | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-driver/README.md)  |
 
-## 消息与端到端（main 前瞻）
+## 消息与端到端
 
 | 分类 | 模块 | 用途 |
 |-----|------|-----|
-| 消息抽象 | `dc3-mq-core` / `dc3-mq-rabbitmq` / `dc3-mq-kafka` / `dc3-mq-mqtt` / `dc3-mq-pulsar` 等 | 可插拔消息中间件抽象（`DC3_MQ_TYPE` 选择实现；随 2026.5.x 之后的版本线发布，当前 release 线仍是 RabbitMQ 直连） |
+| 消息抽象 | `dc3-mq-core` / `dc3-mq-rabbitmq` / `dc3-mq-kafka` / `dc3-mq-mqtt` / `dc3-mq-pulsar` | 可插拔消息中间件抽象：broker 中立端口 + 每种 broker 一个适配器，`DC3_MQ_TYPE` 选择生效实现（默认 `rabbitmq`；2026.9 及之后的发布线内置） |
+| 消息契约 | `dc3-mq-tck` | broker 中立契约测试套件，通过即视为合规适配器 |
 | 测试 | `dc3-e2e` / `dc3-coverage` | 端到端测试与覆盖率聚合 |
+
+## 数据持久化
+
+| 分类   | 模块                                                                  | 用途                                                            |
+|------|---------------------------------------------------------------------|---------------------------------------------------------------|
+| 运行时 | `dc3-db-core` / `dc3-db-runtime`                                    | 分页 / 租户 / 操作契约；R2DBC 连接池、PostgreSQL 方言与 schema 指纹启动门禁 |
+| 域存储 | `dc3-db-auth` / `dc3-db-manager` / `dc3-db-data` / `dc3-db-agentic` | Auth / Manager / Data / Agentic 各域的 PostgreSQL R2DBC 存储       |
+| 测试   | `dc3-db-tck`                                                        | PostgreSQL Testcontainers 契约套件                                |
+
+运行时仅支持 PostgreSQL + R2DBC，JDBC / MyBatis 不是受支持的运行路径。
+
+## 时序存储
+
+| 模块            | 用途                                                                     |
+|---------------|------------------------------------------------------------------------|
+| `dc3-tsdb-core` | 存储中立响应式 `TsdbStore` 端口与能力集；位号历史由 Data Center 的原生 R2DBC 存储实现 |
 
 ## 公共组件
 
 | 分类    | 模块                                | 用途                                     |
 |-------|-----------------------------------|----------------------------------------|
 | 基础模型  | `dc3-common-model`                | BO / VO / DTO / Builder / Ext 等共享模型    |
-| 基础能力  | `dc3-common-public`               | `R<T>` 响应封装、`BaseService`、租户标记等公共能力    |
+| 基础能力  | `dc3-common-public`               | 公共注解与实体（租户标记、树实体）、HTTP 客户端、OAuth/HMAC 校验和常用工具 |
 | Web   | `dc3-common-web`                  | WebFlux、BaseController、OpenAPI、安全基础配置  |
 | 常量与异常 | `dc3-common-constant`             | 常量、枚举和值对象                              |
 | 常量与异常 | `dc3-common-exception`            | 异常体系                                   |
-| 数据访问  | `dc3-common-dal`                  | 共享 DAL 基础能力                            |
-| 数据访问  | `dc3-common-postgres`             | PostgreSQL / MyBatis-Plus 配置           |
-| 数据访问  | `dc3-common-sql`                  | SQL 工具                                 |
-| 数据访问  | `dc3-common-repository`           | 位号值存储抽象                                |
-| 通信    | `dc3-common-rabbitmq`             | RabbitMQ 配置和常量                         |
-| 通信    | `dc3-common-mqtt`                 | MQTT 客户端配置                             |
+| 数据访问  | `dc3-common-sql`                  | JDBC 数据库驱动公共基座（连接管理与查询执行）             |
+| 通信    | `dc3-common-mqtt`                 | MQTT 客户端配置（MQTT 驱动等使用）                |
 | 通信    | `dc3-common-facade-api`           | 跨服务 facade 接口                          |
 | 通信    | `dc3-common-facade-grpc`          | gRPC facade 实现                         |
 | 通信    | `dc3-common-facade-local-auth`    | Auth 本地 facade                         |
 | 通信    | `dc3-common-facade-local-manager` | Manager 本地 facade                      |
 | 通信    | `dc3-common-facade-local-data`    | Data 本地 facade                         |
+| 通信    | `dc3-common-facade-local`         | 聚合全部本地 facade 实现的依赖 POM（单进程应用使用）     |
 | 领域能力  | `dc3-common-auth`                 | 认证、授权、租户和 Token 领域能力                   |
 | 领域能力  | `dc3-common-manager`              | 驱动、模板、设备、位号和元数据领域能力                    |
 | 领域能力  | `dc3-common-data`                 | 位号值、命令和数据查询领域能力                        |
@@ -115,8 +129,15 @@ title: 模块清单
 | 平台支撑  | `dc3-common-thread`               | 线程池配置                                  |
 | 平台支撑  | `dc3-common-quartz`               | 调度基础设施                                 |
 | 平台支撑  | `dc3-common-api`                  | API 工具                                 |
-| 平台支撑  | `dc3-common-resource-registrar`   | 资源注册                                   |
+| 平台支撑  | `dc3-common-resource`             | 启动时发现 HTTP API 端点并注册为 Auth 授权资源       |
 | 测试    | `dc3-common-test`                 | Testcontainers、gRPC、RabbitMQ 和契约测试基础设施 |
+
+## CLI 与前端
+
+| 模块       | 用途                                   | 文档                                                              |
+|----------|--------------------------------------|-----------------------------------------------------------------|
+| `dc3-cli` | 独立 TypeScript 命令行工具（`npm install -g dc3-cli`），详见 [CLI 手册](../automation/cli) | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-cli/README.md) |
+| `dc3-web` | Vue 3 + TypeScript 管理控制台，仅经网关与后端通信，详见 [前端开发](../frontend/) | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-web/README.md) |
 
 ## 相关文档
 

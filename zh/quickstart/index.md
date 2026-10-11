@@ -23,7 +23,8 @@ JDK/构建工具，外加一个容器运行时。
 - **JDK 21** —— 平台强制 Java 21，低版本编译会直接失败。
 - **Maven 3.9+** —— 仓库内置 `.mvn/settings.xml` 与并行构建配置；多模块打包用它。
 - **pnpm** —— 前端 `dc3-web/` 与同级目录 `dc3-cli/` 都用 pnpm（不要用 npm/yarn）。仅做后端开发可跳过。
-- **Podman** —— 本仓库容器操作一律用 `podman`（`make` 默认 `podman compose`）。
+- **容器运行时** —— Docker 或 Podman 均可。Makefile 的 `COMPOSE` 自动探测：`docker compose` 可用则优先，其次
+  `podman compose`；也可以用 `COMPOSE='podman compose'` 显式指定。
 
 ## 在 JetBrains IDEA 中开发
 
@@ -67,8 +68,9 @@ JDK/构建工具，外加一个容器运行时。
 
 ## 命令行五步为什么是这个顺序
 
-本地起栈的最短闭环是五步，每一步都有明确产物，下一步依赖上一步的产物：先有基础设施（容器），才能加载指向它们的环境变量；先构建出
-jar，才能启动开发栈；服务起来后才谈得上跑测试。
+本地起栈的最短闭环是五步：起基础设施（容器）→ 加载指向它们的环境变量 → 构建 → 起开发栈 → 跑测试。注意两条路线的分工：`make
+up-dev` 起的是**全容器** dev 栈，镜像在容器内自行构建（builder 阶段内跑 Maven，不消费宿主机的 jar），首次起栈会完整构建一遍、耗时较长；
+第三步的宿主机 `make package` 服务于 IDEA 本地进程路线（半容器模式）与快速编译验证，与容器路线并列，**不是** `up-dev` 的前置。
 
 <QuickstartIndexDiagram lang="zh" />
 
@@ -95,8 +97,8 @@ make up-db-cn
 ）。验证：
 
 ```bash
-podman ps                          # 应看到 dc3-postgres、dc3-rabbitmq 在 running
-podman exec dc3-postgres psql -U dc3 -d dc3 -c '\dt dc3_auth.*'   # 能列出 auth 表即就绪
+make ps STACK=db                   # 应看到 dc3-postgres、dc3-rabbitmq 在 running
+docker exec dc3-postgres psql -U dc3 -d dc3 -c '\dt dc3_auth.*'   # 能列出 auth 表即就绪（Podman 用户把 docker 换成 podman）
 ```
 
 ::: tip 可选可观测栈
@@ -129,7 +131,8 @@ Java 进程。本地从源码跑，必须 `source dc3/env/dev.env.sh`；否则�
 make package                       # 等价于 mvn -s .mvn/settings.xml clean package
 ```
 
-仓库已配好并行构建、强制 JDK 21/Maven 3.9+、Spring Java Format 校验。构建产物是各服务模块的可执行 jar（如
+仓库已配好并行构建、强制 JDK 21/Maven 3.9+、Spotless + Checkstyle 格式与风格校验（本地可用 `make format-java`
+一键格式化）。构建产物是各服务模块的可执行 jar（如
 `dc3-gateway/target/dc3-gateway.jar`）。这一步只验证编译与打包，不依赖第一步的容器。
 
 ::: tip 快速编译检查
@@ -138,17 +141,31 @@ make package                       # 等价于 mvn -s .mvn/settings.xml clean pa
 
 ## 第四步：起开发栈
 
-构建出 jar 后，用 dev 栈把中心服务跑起来。`make up STACK=dev`（或简写 `make up-dev`）按依赖顺序启动
-Gateway、Auth、Manager、Data、Agentic 与驱动。
+用 dev 栈把中心服务跑起来。`make up STACK=dev`（或简写 `make up-dev`）按依赖顺序启动
+Gateway、Auth、Manager、Data、Agentic 与驱动。dev 栈的镜像在容器内构建（不依赖第三步在宿主机构建出的 jar），首次起栈较慢。
+
+::: warning 容器栈要"干净"的 shell：传 `RUNTIME_ENV_FILE=` 抑制本地进程默认值
+`dc3/env/dev.env` 里的 `localhost:35432` 等值是给**本地 Java 进程**用的（第二步），但 Makefile 会自动
+`include` 并 `export` 这个文件，再经 `docker compose` 的 `${VAR:-default}` 插值**灌进容器**——中心服务就会去连宿主机端口，
+报 `Connection refused: localhost/127.0.0.1:35432` 并崩溃重启，`make up-dev` 以 `dependency failed to start` 收场。
+起容器栈时显式抑制：
+
+```bash
+make up-dev RUNTIME_ENV_FILE=        # 空值即不 include dev.env，容器按 dc3-postgres:5432 等网内地址互连
+```
+
+反过来：第二步的 `source dc3/env/dev.env.sh` 只在"中心服务跑本地进程"（IDEA / 半容器模式）时才需要；纯容器路线可跳过第二步。
+两件事的原理与更多症状见[排障](../guide/troubleshooting)。
+:::
 
 ::: code-group
 
 ```bash [全球镜像源]
-make up-dev
+make up-dev RUNTIME_ENV_FILE=
 ```
 
 ```bash [中国大陆镜像源]
-make up-dev-cn
+make up-dev-cn RUNTIME_ENV_FILE=
 ```
 
 :::
@@ -160,7 +177,7 @@ make up-dev-cn
   上下文。它要在后端中心服务可达之后才能正确转发，所以排在依赖项之后。
 
 ::: details 完整启动顺序与端口
-分布式默认走 gRPC（`DC3_FACADE_MODE=grpc`，dev.env 已设）。各服务端口：
+分布式默认走 gRPC（facade 模式缺省即 `grpc`，见 [Facade 模式](../architecture/facade-modes)）。各服务端口：
 
 | 服务                              | HTTP | gRPC |
 |---------------------------------|------|------|
@@ -170,24 +187,27 @@ make up-dev-cn
 | 数据中心 / `dc3-center-data`        | 8500 | 9500 |
 | 智能中心 / `dc3-center-agentic`     | 8600 | —    |
 
-只有 Gateway（用户入口）与 listening-virtual 的 TCP 6270 / UDP 6271（设备入口）对宿主映射，其余后端端口都是内部端口。
+只有 Gateway（用户入口）与 listening-virtual 的 TCP 6270 / 6271（设备入口；6271 意图是 UDP 通道，但当前发布点未声明
+`/udp`，实际按 TCP 发布，见[部署模式与镜像源](../guide/usage)）对宿主映射，其余后端端口都是内部端口。
 :::
 
 验证：栈起来后，对网关跑一次登录黄金路径。登录分两步——先取盐，再连同盐提交明文密码换 12 小时有效的 access token（盐不参与密码哈希，校验在服务端完成）：
 
 ```bash
-# 1) 取盐（公开端点，建议 5 分钟内使用）
+# 1) 取盐（公开端点，5 分钟内有效）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3"}'      # 返回字符串 salt（示例值）
+  -d '{"tenant":"default","name":"dc3"}'      # 2026.9 线返回裸盐；2026.10+ 线返回 {"salt":"a1b2c3d4e5"}
 
-# 2) 用 salt 哈希密码后换 token（公开端点，access token 12 小时有效）
+# 2) 连同盐提交明文密码换 token（公开端点，access token 12 小时有效）
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"<上一步的 salt>","password":"<明文密码>"}'
+# 2026.10 镜像线返回 {"token":"eyJhbGciOiJIUzI1NiJ9..."}；默认 2026.9 镜像线返回 text/plain 裸 token（同时写入 httpOnly Cookie）
 ```
 
-拿到 token 后，受保护端点都通过网关访问，并带上三个鉴权头 `X-Auth-Tenant`、`X-Auth-Login`、`X-Auth-Token`。完整的"建驱动 →
+拿到 token 后，受保护端点都通过网关访问，并带上三个鉴权头：`X-Auth-Tenant`（租户名）、`X-Auth-Login`（用户名）、`X-Auth-Token`
+（JSON 信封 `{"salt":"...","token":"..."}`，携带取盐那一步的 salt；裸 token 会被网关拒绝）。完整的"建驱动 →
 建模板 → 建设备 → 读写位号"闭环见 [第一个设备：端到端](./first-device)。
 
 ## 第五步：跑测试
@@ -203,8 +223,8 @@ make test                          # 单元测试套件
 
 - **没 `source dev.env.sh` 就起服务**——最常见。本地 Java 进程拿不到 `localhost:35432` / `35672`，会去连容器内 DNS
   名而连不上。每开一个新 shell 都要重新 `source`（变量只在当前 shell 生效）。
-- **podman 没起**——`make up-db` 报连不上容器运行时，先确认 `podman` 守护进程/machine 已启动（macOS 上需
-  `podman machine start`），再用 `podman ps` 确认。
+- **容器运行时没起**——`make up-db` 报连不上容器运行时，先确认 Docker daemon 或 Podman machine 已启动（macOS 上 Podman 需
+  `podman machine start`），再用 `make ps STACK=db` 确认。
 - **端口被占**——`35432` / `35672` / `8000` 等被其它进程占用时启动失败。释放占用进程，或在根 `.env` 中覆盖 Compose
   发布端口（仅影响容器侧），本地进程端口用服务级环境变量覆盖。
 - **首次起库很慢或表不全**——PostgreSQL 只在空卷首启时跑 initdb。若中途中断导致表不全，需重置卷重来：`make reset STACK=db`（需

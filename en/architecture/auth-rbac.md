@@ -42,8 +42,8 @@ only come from the secret shared between the gateway and the backend.
 
 ## Login and token issuance
 
-Login is a two-step handshake: fetch a one-time salt, then hash the password with that salt to trade for a token. The
-salt stops a plaintext password or a fixed hash from being replayed over the wire.
+Login is a two-step handshake: fetch a one-time salt, then submit the plaintext password together with the salt to
+trade for a token (verification happens server-side). The salt handshake keeps every login riding a fresh nonce.
 
 <AuthFlowDiagram lang="en" />
 
@@ -52,9 +52,10 @@ Both endpoints are public and need no authentication:
 - `POST /api/v3/auth/token/salt`: send `tenant` and `name`. It first confirms the tenant exists, then returns a random
   salt (a UUID); the response text suggests **use within 5 minutes** (the server does not store the salt or enforce the
   timeout — "5 minutes" is only a client-side hint).
-- `POST /api/v3/auth/token/generate`: send `tenant`, `name`, `salt`, and the **plaintext `password`** (the salt is NOT
-  mixed into the password — it is concatenated with the server-side key to sign the token). On success it returns an
-  access token, **valid for 12 hours** (`TOKEN_CACHE_TIMEOUT = 12` hours).
+- `POST /api/v3/auth/token/generate`: send `tenant`, `name`, `salt`, and the **plaintext `password`** (verification
+  happens server-side; the salt is NOT mixed into the password and takes no part in token signing either — it only
+  rides along inside the `X-Auth-Token` envelope). On success it returns an
+  access token, **valid for 12 hours**.
 
 `generateToken` runs its checks in a fixed order. Any failure returns the same "no available authentication" error, so
 the caller can't tell which step failed:
@@ -71,8 +72,9 @@ the caller can't tell which step failed:
 6. **Password expiry / forced change**: when `password_expire_time` has passed or `require_password_change=1`, it
    throws "password change required" instead of issuing a token.
 
-Only when all checks pass does it sign a JWT with `KeyUtil.generateToken(principalId, salt, tenantId)`. The token binds
-to **principal_id + tenant_id**, not to the username. On logout, `(tenantCode:principalId)` goes onto a Caffeine
+Only when all checks pass does it sign a JWT with `KeyUtil.generateToken(principalId, tenantId)`. The token binds
+to **principal_id + tenant_id**, not to the username; the signing key derives solely from `DC3_SECURITY_KEY` (the salt
+plays no part). On logout, `(loginName:tenantCode)` goes onto a Caffeine
 denylist, so later requests carrying an old token are rejected — even with a valid signature — because the token was
 issued before the logout point.
 
@@ -83,7 +85,7 @@ curl -s -X POST http://localhost:8000/api/v3/auth/token/salt \
   -d '{"tenant":"default","name":"dc3"}'
 # Example response (use within 5 minutes): "a1b2c3d4-...-e5f6"
 
-# 2) Hash password with salt, then exchange for token
+# 2) Submit the plaintext password together with the salt for a token (verification is server-side)
 curl -s -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"a1b2c3d4-...-e5f6","password":"<plaintext password>"}'
@@ -201,8 +203,8 @@ the other way around.
 
 RBAC decides "can you perform this kind of operation." Tenant isolation decides "can you touch this piece of data." The
 two are orthogonal and both required — having `device:get` doesn't mean you can fetch another tenant's device. Isolation
-lands at the controller layer (the database query layer does no automatic tenant pruning today; `MybatisPlusConfig`
-registers only the pagination plugin):
+lands at the controller layer (the R2DBC data-access layer does no automatic tenant pruning today, and there is no
+database-layer tenant interceptor):
 
 **Controller layer `BaseController.requireTenant()`**: after looking up an entity by ID, it compares the entity's
 `tenantId` against the caller's. On a mismatch (or if the entity doesn't exist) it throws `NotFoundException` and
@@ -211,8 +213,9 @@ can't tell whether the resource is there. Batch queries go through `filterTenant
 belong to the current tenant.
 
 ::: warning There is no database-layer tenant safety net
-Don't assume the SQL layer will fill in a missing tenant condition — the current implementation has **no** MyBatis-Plus
-tenant-line interceptor; isolation relies entirely on the controller layer's `requireTenant` / `filterTenant`. When you
+Don't assume the SQL layer will fill in a missing tenant condition — the current implementation has **no**
+database-layer tenant interceptor (R2DBC has no MyBatis-Plus-style plugin layer); isolation relies entirely on the
+controller layer's `requireTenant` / `filterTenant`. When you
 add a single or batch query, you must call these methods yourself to enforce the tenant scope, otherwise the query is
 not pruned by tenant.
 :::
@@ -240,7 +243,7 @@ The hard constraints scattered through the page, gathered in one place for a pre
 | Item                         | Value / behavior                                                            | Source                           |
 |------------------------------|-----------------------------------------------------------------------------|----------------------------------|
 | Salt validity                | Use within 5 minutes client-side (server does not enforce)                  | `POST /api/v3/auth/token/salt`   |
-| Token validity               | 12 hours                                                                    | `TOKEN_CACHE_TIMEOUT=12` hours   |
+| Token validity               | 12 hours                                                                    | `TokenTtl` (12 hours)           |
 | JWT binding                  | `principal_id` + `tenant_id`                                                | `generateToken`                  |
 | HMAC secret                  | `AUTH_HMAC_SECRET` / `dc3.auth.hmac.secret`, default `io.github.pnoker.dc3` | `HmacAuthConfig`                 |
 | HMAC production check        | empty or equal to default under `pre`/`pro` fails startup                   | `HmacAuthConfig`                 |

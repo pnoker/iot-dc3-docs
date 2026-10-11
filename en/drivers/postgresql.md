@@ -46,7 +46,7 @@ across the three layers, see [Attributes & Config](../introduction/concepts/attr
 
 When onboarding a PostgreSQL database, fill in these [attributes](../introduction/concepts/attribute-config) on
 the [Device](../introduction/concepts/device). They decide which database to connect to, which account to use, and the
-connection timeout:
+query timeout:
 
 | Attribute     | code           | Type   | Default     | Remark                                                                            |
 |---------------|----------------|--------|-------------|-----------------------------------------------------------------------------------|
@@ -55,7 +55,7 @@ connection timeout:
 | Database      | `database`     | STRING | (empty)     | Database name to connect to                                                       |
 | Username      | `username`     | STRING | `root`      | Connection account                                                                |
 | Password      | `password`     | STRING | (empty)     | Account password                                                                  |
-| Query Timeout | `queryTimeout` | INT    | `30`        | Connection-acquire timeout (seconds); used as the Hikari pool `connectionTimeout` |
+| Query Timeout | `queryTimeout` | INT    | `30`        | SQL query timeout in seconds, applied to each read/write statement                 |
 
 The driver builds the JDBC URL from `host`, `port`, and `database` (in the form `jdbc:postgresql://host:port/database`).
 Device validation (`validate()`) checks that all five of `host`, `port`, `database`, `username`, `password` are
@@ -101,7 +101,7 @@ separate "execute a SQL string per command" path. To write values, put the SQL i
 - **Custom interval**: the driver also has a custom schedule, default cron `0/5 * * * * ?` (every 5 seconds); the JDBC
   database driver's `schedule()` is an empty implementation, so this schedule currently does nothing.
 - **Health/online**: device health check defaults to cron `0/15 * * * * ?` with a lease timeout of `45 seconds`. The
-  health check borrows a connection from the pool and uses `conn.isValid(5)` to decide reachability—if it can't connect,
+  health check borrows a connection from the pool and uses `conn.isValid(2)` to decide reachability—if it can't connect,
   the device goes offline. See [Device](../introduction/concepts/device) for the online-state mechanism.
 
 ## Troubleshooting
@@ -110,7 +110,7 @@ When a database-bridge onboarding fails, the cause is rarely the protocol itself
 SQL shape, or the upstream database's state. Ordered by frequency:
 
 ::: warning Device stays offline / pool won't come up
-The health check decides with `conn.isValid(5)`. If a device is always offline, first confirm `host`/`port` is
+The health check decides with `conn.isValid(2)`. If a device is always offline, first confirm `host`/`port` is
 reachable (don't use `localhost` from inside a container to reach the host), `database` name case is correct, and the
 `username`/`password` account can log into that database. PostgreSQL is also gated by `pg_hba.conf`—if the source IP or
 auth method isn't allowed it rejects the connection outright; that error is on the database side, so open it up there.
@@ -139,8 +139,9 @@ does not exist". Fill them in with the real case, and double-quote identifiers i
 :::
 
 ::: tip Query timeout / slow SQL
-`queryTimeout` (default 30 seconds) is used as the Hikari pool `connectionTimeout`—the upper bound on waiting to acquire
-a connection. For large tables or slow SQL, optimize the SQL, add indexes, and narrow the `WHERE` rather than simply
+`queryTimeout` (default 30 seconds) is set on every read/write statement (`PreparedStatement.setQueryTimeout`)—the
+execution cap for a single SQL statement; the Hikari pool's `connectionTimeout` is a fixed `4000` milliseconds and is
+unrelated to it. For large tables or slow SQL, optimize the SQL, add indexes, and narrow the `WHERE` rather than simply
 raising the timeout—a slow query holds a pool connection (only 5 exist) and drags down polling of the whole batch.
 :::
 

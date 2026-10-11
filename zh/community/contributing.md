@@ -74,9 +74,9 @@ EnvFile 插件读）或 `dc3/env/dev.env.sh`（`source` 进 shell）。四个文
 
 一次贡献从一个聚焦的分支开始，到一个聚焦的 PR 结束。把无关的重构、格式整理和行为改动分开，评审才跑得快。
 
-- 除非维护者另有要求，从最新的 `main` 切出功能/修复分支。
+- 除非维护者另有要求，从最新的 `main` 切出功能/修复分支（生产修复用 `hotfix/<scope>`，同样回 `main`）。
 - 分支名带语义，如 `feature/<name>/<topic>` 或 `fix/<name>/<topic>`。
-- PR 提交到 `develop` 分支。
+- PR 一律提交到 `main` 分支：仓库采用 trunk-based 工作流，`main` 是唯一的集成与生产主干；legacy 的 `develop` 与 `release` 分支已归档，不要向它们提 PR。
 - 保持 PR 聚焦：不要把重构、格式整理和行为改动混进一个 PR，除非它们是同一个修复必需的。
 - 在 PR 描述里引用相关 Issue。
 
@@ -93,7 +93,7 @@ EnvFile 插件读）或 `dc3/env/dev.env.sh`（`source` 进 shell）。四个文
 - 非根级的微小改动尽量带 scope。
 - 不要用 `update`、`fix`、`misc`、`wip`、`.` 这类弱 subject——它们会让发布说明无法读。
 
-仓库内置 `.husky/commit-msg` 钩子（type 白名单、可选 scope、10–100 字符的小写祈使句英文描述），不合规的提交在本地就会被拒绝；merge、revert 与 fixup 直接放行。
+仓库内置 `.husky/commit-msg` 钩子（type 白名单、可选 scope、10–100 字符的小写祈使句英文描述），不合规的提交在本地就会被拒绝；merge、revert 与 fixup/squash 直接放行。
 
 真实示例：
 
@@ -156,10 +156,10 @@ PR 描述里明确标注。
 make changelog
 ```
 
-默认它读取 `pom.xml` 里的当前版本，对比 `HEAD` 与最近可达的 `dc3.release.*` tag，更新 `dc3/doc/CHANGE.md`。需要时可覆盖范围或版本：
+默认它读取 `pom.xml` 里的当前版本，对比 `HEAD` 与最近可达的 `v*`（semver）tag，更新 `dc3/doc/CHANGE.md`。需要时可覆盖范围或版本：
 
 ```bash
-make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.9.22
+make changelog FROM=v2026.9.22 TO=HEAD VERSION=2026.10.9
 ```
 
 ::: info 变更日志专用提交

@@ -33,20 +33,21 @@ page just inlines it for display. **Don't hand-edit entries here** — the next 
 
 ::: code-group
 
-```bash [Default (last release tag → HEAD)]
-# Run inside the iot-dc3/ directory
+```bash [Default (last v* tag → HEAD)]
+# Run inside the iot-dc3/ directory, on the main branch
 make changelog
 ```
 
 ```bash [Specify range and version number]
 # FROM/TO accept any git ref (tag, branch, commit); VERSION is written into the group heading
-make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.5.17
+make changelog FROM=v2026.9.22 TO=HEAD VERSION=2026.10.9
 ```
 
 :::
 
-With no arguments, the generator finds the most recent `dc3.release.*` tag as the start point, uses `HEAD` as the end
-point, and reads the version number from `dc3.version` in `pom.xml`. It writes the result back to `dc3/doc/CHANGE.md`,
+With no arguments, the generator finds the most recent tag matching `v*` (the default `TAG_PATTERN` in `changelog.py`)
+as the start point, uses `HEAD` as the end point, and reads the version number from the `dc3.version` property in
+`pom.xml` (falling back to the root `<version>`). It writes the result back to `dc3/doc/CHANGE.md`,
 which this page's include directive then inlines.
 
 ::: info Commit it separately when you change it
@@ -96,29 +97,33 @@ Other Changes without a category. For the full convention, see the [Contributing
 
 ## Version number and tag rules
 
-Version numbers in the list correspond to git tags created by `make tag` (`dc3/bin/tag.sh`), in the format
-`dc3.<type>.<YYYYMMDD>.<NN>`:
+Version numbers in the list correspond to git tags created by `make tag` (`dc3/bin/tag.sh`). The tag name is `v` plus
+the root `pom.xml` version, e.g. `v2026.9.22` or `v2026.10.9` (the version must be `YYYY.M.P` shaped). Five checks gate
+the run; any failure aborts it:
 
-- `<type>` comes from the current branch. The `develop` branch produces `develop` tags; `release` / `main` produce
-  `release` tags. Other branches can't create tags.
-- `<YYYYMMDD>` is the current date.
-- `<NN>` is a zero-padded two-digit sequence number counting how many tags of that type already exist for the day,
-  starting at `00`. So the first release tag of a given day is `dc3.release.20260622.00`, the second is
-  `dc3.release.20260622.01` (example values).
+- tagging is only allowed on the `main` branch;
+- the working tree must be clean (no uncommitted changes);
+- local `main` must exactly match `origin/main` (the script fetches first);
+- the root `pom.xml` version must be `YYYY.M.P` shaped;
+- the tag must not already exist locally or on the remote.
 
 ```bash
-# In the iot-dc3/ directory, on the release branch
+# In the iot-dc3/ directory, on the main branch
 make tag
-# → produces a tag like dc3.release.20260622.00 and pushes it to origin
+# → creates an annotated tag like v2026.10.9 and pushes it to origin;
+#   the Docker Images workflow then verifies, builds, and publishes the images
+#   and creates the GitHub Release
+# Preview without tagging:
+bash dc3/bin/tag.sh --dry-run
 ```
 
-By default, `make changelog` scans from the previous `dc3.release.*` tag up to `HEAD`. The normal release flow is: run
-`make tag` to cut a new tag, then run `make changelog` to generate the changes for that segment, then commit the updated
-`CHANGE.md`.
+The normal release flow: bump the root `pom.xml` version and commit it, run `make changelog` to generate that segment
+and commit the updated `CHANGE.md`, then run `make tag` on a clean, up-to-date `main` to cut the tag matching the pom
+version.
 
 ::: warning The tag is pushed to the remote
-`make tag` ends by running `git push origin --tags`. That's an outbound operation, so confirm you're on the right branch
-and that the day's sequence number is correct before running it.
+`make tag` ends by running `git push origin <tag>`. That's an outbound operation, and once pushed the tag triggers the
+image publishing pipeline (the Docker Images workflow). Confirm the version number before running it.
 :::
 
 ## Complete Changelog

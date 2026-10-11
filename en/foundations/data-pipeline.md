@@ -136,11 +136,11 @@ listener container factory**: `concurrentConsumers=2`, `maxConcurrentConsumers=8
 default. When you need it, add `containerFactory` to the `@RabbitListener` explicitly.
 :::
 
-**Batched persistence: one of two paths by inbound rate.** The data center doesn't blindly write row by row. It splits
-by inbound rate — below `POINT_BATCH_SPEED` (default `100`) it persists immediately; above the threshold it hands off to
-a Quartz scheduled batch job, with `POINT_BATCH_INTERVAL` (default `5`, in **seconds**) participating in the rate
-calculation. This is exactly the engineering trade-off of "batch the writes to amortize I/O, write immediately at low
-volume for real-time."
+**Batched persistence: fill the batch or hit the timeout, whichever comes first.** The data center doesn't blindly
+write row by row. The message listener pulls in batches — once a batch fills up (`POINT_BATCH_SIZE`, default `500`
+messages) or the wait window expires (`POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`, default `100` ms), whichever comes first
+triggers one reactive write pass for the whole batch. This is exactly the engineering trade-off of "batch the writes to
+amortize I/O, stay real-time at low volume when batches stay small."
 
 **Time-series storage: the TimescaleDB hypertable `dc3_point_value`.** Point values land in the TimescaleDB **hypertable
 ** `dc3_point_value` (in the `dc3_history` schema). It puts the partitioning idea into practice — two-dimensional

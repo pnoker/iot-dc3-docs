@@ -32,7 +32,7 @@ facade, and domain objects are layered as DO/BO/VO.
 There's no free naming space here. For every CRUD-shaped method, HTTP path, gRPC RPC, and frontend API function, **the
 verb must reflect the cardinality of the returned result** — `get` for a single record, `list` for a collection. This
 applies across Service interfaces, ServiceImpl, Controller, Local/gRPC Facade, the gRPC server, and the RPC names in
-`.proto`, and it's enforced the same way in both the frontend and backend repos. The payoff: from a method name or a
+`.proto`, and it's enforced the same way in the backend and the `dc3-web/` frontend. The payoff: from a method name or a
 path alone, you know whether it returns one record or a batch — no need to read the implementation.
 
 | Action        | Java method    | HTTP path   | gRPC RPC  | Frontend function |
@@ -43,33 +43,35 @@ path alone, you know whether it returns one record or a batch — no need to rea
 | Update        | `update(BO)`   | `/update`   | n/a       | `updateXxx(...)`  |
 | Delete        | `delete(Long)` | `/delete`   | n/a       | `deleteXxx(...)`  |
 
-The five base methods `add`/`delete`/`update`/`getById`/`list(Q)` come from `BaseService<B, Q>`. Sub-interfaces only add
-`getByXxx`/`listByXxx` when they need to query by some dimension, and the verb still has to match the cardinality.
+The five base actions `add`/`delete`/`update`/`getById`/`list(Q)` appear as a set on each domain's Service interface
+(e.g. `ReactiveDeviceService`). Sub-interfaces only add `getByXxx`/`listByXxx` when they need to query by some
+dimension, and the verb still has to match the cardinality.
 `DeviceController` is a ready-made template — its endpoints are exactly `/add`, `/delete`, `/update`, `/get_by_id` (
 single record), `/list_by_ids`, `/list_by_profile_id`, `/list` (collection), with verbs strictly aligned to cardinality.
 
-::: warning Do not misuse these three reserved verbs
+::: warning Do not misuse the reserved verbs
 
-- `select*` is only for raw MyBatis Mapper calls inside `*ManagerImpl`, and **never appears** on
-  Service/Controller/Facade.
-- `remove*` is only for the Manager methods inherited from MyBatis-Plus (`removeById`, `remove(wrapper)`); business
-  deletion always uses `delete*`.
+- There is no `select*` family in the codebase at all — raw persistence in the `dc3-db-*` storage layer (`R2dbc*Store`)
+  also uses the `get`/`list`/`insert`/`update`/`delete` verbs (on DO); never invent `select*` method names on
+  Service/Controller/Facade either.
+- Business deletion always uses `delete*`; there is no `remove*` family.
 - `find*`, `query*`, and `fetch*` are not used as primary CRUD verbs.
   :::
 
-## Layered calls: Controller(VO) → Service(BO) → Manager(DO) / Facade (cross-service)
+## Layered calls: Controller(VO) → Service(BO) → Store(DO) / Facade (cross-service)
 
 An incoming request passes through three layers, and each layer knows one data representation. The Controller receives
-and returns **VO** (the API shape). The Service interface extends `BaseService<B, Q>` and **works only on BO types** —
-business semantics, using domain enums like `EnableFlagEnum`. The Manager/Mapper operates on **DO** — the database
-shape, with flags as `Byte`. MapStruct's `*Builder` classes handle conversion between the three representations, and a
-DO flag never leaks into a business or response model.
+and returns **VO** (the API shape). The Service interface (e.g. `ReactiveDeviceService`) **works only on BO types** —
+business semantics, using domain enums like `EnableFlagEnum`. The storage layer (the `R2dbc*Store` classes in
+`dc3-db-*`) operates on **DO** — the database shape, with flags as `Byte`. MapStruct's `*Builder` classes handle
+conversion between the three representations, and a DO flag never leaks into a business or response model.
 
 There's a hard boundary here: **when business code needs data from another service, it doesn't touch transport details
 directly — it goes through a facade interface.** Controller and Service classes don't bind to any gRPC or REST detail.
 They only call the contract interfaces in `dc3-common-facade-api`, and the deployment topology decides whether the
 implementation behind them is gRPC (`dc3-common-facade-grpc`) or in-process (`dc3-common-facade-local-*`). Distributed
-deployments default to `grpc` (`DC3_FACADE_MODE=grpc`).
+deployments default to `grpc` (`dc3.facade.{auth,manager,data}.mode` defaults to `grpc` when unset — see
+[Facade modes](../architecture/facade-modes)).
 
 <DevIndexDiagram lang="en" />
 
@@ -88,7 +90,7 @@ by driverId" API to device management:
 
 ```text [layer placement]
 1. VO/BO/DO     add fields in dc3-common-model or the corresponding module (if needed), keep MapStruct *Builder in sync
-2. Manager      call the Mapper via select* in *ManagerImpl (select* allowed only here)
+2. Store        persist through the R2dbc*Store in dc3-db-* (get/list/insert/update/delete on DO)
 3. Service      add getCountByDriverId(...) to the Service interface, implement it in ServiceImpl, touch BO only
 4. cross-service?  if you need data from another center, go through the *Facade interface, never connect to gRPC directly
 5. Controller   GET /get_count_by_driver_id — use the get verb to query a single value
@@ -141,8 +143,9 @@ docs(env): explain JetBrains IDEA environment variables
   commit).
 - The release-notes commit is fixed as `docs(release): update generated changelog`, and `CHANGE.md` is committed
   separately.
-- Before committing, check your commit message against the format and examples above; non-conforming formats are
-  rejected by CI before merge.
+- Before committing, check your commit message against the format and examples above; the format is enforced by the
+  local `.husky/commit-msg` hook (type whitelist, lowercase imperative English of 10–100 chars; merges, reverts, and
+  fixups pass through) — CI does not check commit messages, so don't rely on it as a safety net.
   :::
 
 
@@ -178,10 +181,10 @@ Suggested debug ports: Gateway 5005, Auth 5006, Manager 5007, Data 5008, Agentic
 | Change auth / tenant / RBAC | `dc3-center/dc3-center-auth` |
 | Change point-value storage / command dispatch | `dc3-center/dc3-center-data` |
 | Change AI conversations / tool calls | `dc3-center/dc3-center-agentic` |
-| Change gateway routes / filters | `dc3-gateway` |
+| Change gateway routes / filters | `dc3-common/dc3-common-gateway` (routes live in `src/main/resources/application-gateway.yml`; the `Authentic` filter and friends live in this module too) — `dc3-gateway` only holds environment config such as ports and profiles |
 | Add a protocol driver | `dc3-driver/`, copy from `dc3-driver-virtual` |
 | Change gRPC protos | `dc3-api/`, rerun `mvn compile` afterwards |
-| Change the web UI | `dc3-web/` (a separate pnpm project) |
+| Change the web UI | `dc3-web/` (a standalone pnpm subproject inside the repo) |
 
 ## Further reading
 

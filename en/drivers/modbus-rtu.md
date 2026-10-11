@@ -75,8 +75,9 @@ int. Get the Point type wrong and a float reads back as a meaningless large numb
 
 ### Command attributes (`command-attribute`)
 
-Writable Points also need four attributes on the write command. `valueTemplate` is the value template, rendered with
-command params before the write is issued:
+These attributes are declared when the driver registers, but the **current write path (`write()`) does not consume
+them** — same as Modbus TCP, `write()` reads the point attributes (`point-attribute`): slave ID / function code /
+offset all come from the point's configuration. The table below is a declaration record only:
 
 | Attribute      | code            | Type   | Default    | Description                                                                                          |
 |----------------|-----------------|--------|------------|------------------------------------------------------------------------------------------------------|

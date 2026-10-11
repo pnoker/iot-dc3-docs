@@ -34,13 +34,13 @@ EtherNet/IP 与 Modbus 这类协议最大的不同在**寻址模型**：
 
 <EthernetIpDiagram lang="zh" />
 
-CIP 不依赖物理地址，因此位号上配的是 `tagName` 而非偏移量；驱动按位号配置的 `tagType` 把 PLC
-返回的字节解码成具体数值后，统一为 [位号值](../introduction/concepts/point-value) 上送平台。
+CIP 不依赖物理地址，因此位号上配的是 `tagName` 而非偏移量；驱动按 CIP 应答里的类型码把 PLC
+返回的标签值解码成具体数值后，统一为 [位号值](../introduction/concepts/point-value) 上送平台。
 
 ## 属性配置
 
 EtherNet/IP 的接入参数分两层：**驱动属性（driver-attribute）** 描述"连哪台 PLC、用什么端口和超时"
-，填在 [设备](../introduction/concepts/device) 上；**位号属性（point-attribute）** 描述"读哪个标签、按什么类型解码"
+，填在 [设备](../introduction/concepts/device) 上；**位号属性（point-attribute）** 描述"读哪个标签、写值按什么类型编码"
 ，填在每个 [位号](../introduction/concepts/point) 上。可写位号再加一项**命令属性（command-attribute）**。这些属性的默认值都来自驱动的
 `application.yml`，三层来历见 [属性与配置](../introduction/concepts/attribute-config)。
 
@@ -56,30 +56,31 @@ EtherNet/IP 的接入参数分两层：**驱动属性（driver-attribute）** �
 | Slot    | `slot`    | INT    | `0`         | PLC 背板槽位号，定位机架中的 CPU 模块      |
 | Timeout | `timeout` | INT    | `5000`      | 请求超时（毫秒），设到套接字 `SoTimeout`   |
 
-::: info `slot` 当前仅参与校验，未参与组帧
-`validate()` 会把 `slot` 列为必填项校验，但当前连接与读写代码尚未把 `slot` 编入 CIP 路由路径（`ForwardOpen` 的连接路径仍是占位）。单
-CPU、CPU 在 0 号槽的场景不受影响；多槽机架的精确寻址需待协议组帧补全。
+::: info `slot` 会编入 CIP 连接路径
+`validate()` 把 `host` / `port` / `slot` 列为必填项；组帧时 `buildConnectionPath()` 先写背板端口段（`0x01` + `slot`），再写 ANSI
+扩展符号段携带标签名，请求因此路由到机架中该槽位的 CPU。多槽机架请把 `slot` 填成控制器实际所在槽位（单 CPU、0 号槽保持默认即可）。
 :::
 
 ### 位号属性（`point-attribute`）
 
-每个采集位号都要指明读哪个标签、以及该标签在 PLC 里是什么数据类型——驱动不会向 PLC 探测类型，完全按你填的 `tagType` 解码字节。
+每个采集位号都要指明读哪个标签、以及**写值时**按什么类型编码——读方向则以 CIP 应答自带的类型码为准（见下方提示）。
 
 | 属性            | code           | 类型     | 默认值    | 说明                                                          |
 |---------------|----------------|--------|--------|-------------------------------------------------------------|
 | Tag Name      | `tagName`      | STRING | （空）    | CIP 标签名，如 `Motor_Speed`，必须与 PLC 工程逐字一致                      |
-| Tag Type      | `tagType`      | STRING | `DINT` | 标签数据类型：`BOOL` / `SINT` / `INT` / `DINT` / `REAL` / `STRING` |
+| Tag Type      | `tagType`      | STRING | `DINT` | 写值编码类型：`BOOL` / `SINT` / `INT` / `DINT` / `REAL`（读不看此项；`STRING` 读可解码、写被拒） |
 | Element Count | `elementCount` | INT    | `1`    | 读取的元素个数（数组标签用）                                              |
 
-::: tip `tagType` 决定字节怎么解码
-驱动按 `tagType` 把 PLC 返回的原始字节（小端序）解析成对应类型：`BOOL` 1 字节、`SINT` 1 字节、`INT` 2 字节整数、`DINT` 4 字节整数、
-`REAL` 4 字节浮点、`STRING` 取 ASCII 文本。`tagType` 要与 PLC
-里该标签的实际类型一致，否则解析出无意义的值。位号自身的数据类型（[Point](../introduction/concepts/point) 的
-`pointTypeFlag`）应与之匹配。
+::: tip 读按应答类型码解码，写按 `tagType` 编码
+**读**：`parseTagValue()` 不看配置的 `tagType`，而是按 Read Tag 应答里的 CIP 类型码解码（`BOOL`/`SINT`/`INT`/`DINT`/`REAL`
+均按小端序，`STRING` 取 ASCII 文本），未知类型码回退为十六进制原文。**写**：`encodeTagValue()` / `mapTypeCode()` 按你填的
+`tagType` 编码，支持 `BOOL` / `SINT` / `INT` / `DINT` / `REAL`；`STRING` 写不支持（需结构化类型，直接抛
+`...cannot be written atomically`）。写值时 `tagType` 必须与 PLC 里该标签的实际类型一致，否则 PLC 会误解字节；位号自身的数据类型（
+[Point](../introduction/concepts/point) 的 `pointTypeFlag`）应与之对应。
 :::
 
 ::: warning `elementCount` 当前未被消费
-`buildReadTagRequest()` 把读请求里的元素个数硬编码为 `1`，配置的 `elementCount` 暂不生效。数组标签的整段读取需待实现补全；当前只能按单元素读取。
+`read()` 调 `buildMrReadTagRequest()` 时把元素个数硬编码传 `1`，配置的 `elementCount` 暂不生效。数组标签的整段读取需待实现补全；当前只能按单元素读取。
 :::
 
 ### 命令属性（`command-attribute`）
@@ -96,7 +97,8 @@ CPU、CPU 在 0 号槽的场景不受影响；多槽机架的精确寻址需待�
 
 ### 采集与健康
 
-- **采集周期**：默认 cron `0/30 * * * * ?`（每 30 秒读一轮）。
+- **采集周期**：`application.yml` 基线 read cron `0/30 * * * * ?`（每 30 秒读一轮）；默认激活的 `dev` profile 在
+  `application-dev.yml` 把 read cron 覆盖为 `0/5 * * * * ?`（每 5 秒），故开箱即用的实际采集间隔是 5 秒。
 - **自定义调度**：`schedule.custom` 在 yml 中启用（cron `0/5 * * * * ?`），但当前 `schedule()` 方法体为空，不执行任何自定义逻辑。
 - **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`
   ——在线状态机制见 [设备](../introduction/concepts/device)。
@@ -117,9 +119,10 @@ CIP 按名字寻址，`tagName` 必须与 PLC 程序里的变量名**逐字一�
 工程核对标签拼写与作用域（控制器级标签 vs 程序级标签）。
 :::
 
-::: warning tagType 与 PLC 真实类型不符，读到乱值
-驱动完全按你填的 `tagType` 解码字节、不向 PLC 探测真实类型。把一个 `REAL`（浮点）标签配成 `DINT`，会把浮点的 4
-字节当整数解析，得到一个无意义的大数。接入前在 PLC 工程里逐个确认标签的实际类型，并让位号的 `pointTypeFlag` 与之匹配。
+::: warning 写值的 tagType 与 PLC 真实类型不符，写入会错位
+写方向按你填的 `tagType` 编码字节，不向 PLC 探测真实类型：把一个 `REAL`（浮点）标签配成 `DINT` 写入，会按 4
+字节整数编码，PLC 按浮点解释就得到乱值。读方向不受影响——读按 CIP 应答自带的类型码解码。接入前在 PLC 工程里逐个确认标签的实际类型，并让位号的
+`pointTypeFlag` 与之对应。
 :::
 
 ::: warning 超时偏短导致间歇性读失败
@@ -135,40 +138,40 @@ CIP 按名字寻址，`tagName` 必须与 PLC 程序里的变量名**逐字一�
 :::
 
 ::: info 多槽机架定位不到 CPU
-当前 `slot` 未编入 CIP 路由路径。若 PLC 在非 0 号槽、或机架含多个 CPU，精确寻址需待协议组帧补全；在此之前建议用单 CPU、CPU 置于
-0 号槽的场景做接入验证。
+`slot` 已编入 CIP 连接路径（背板端口段 `0x01` + `slot`），请求会路由到该槽位的 CPU。若仍定位不到，核对 `slot` 是否为控制器实际所在槽位、机架背板配置是否与工程一致。
 :::
 
 ## 在 IoT DC3 中如何落地
 
 - **dc3.driver.code**：`EthernetIpDriver`（稳定路由标识，注册与消息路由都以它为准，不要随意改）。驱动名 `EtherNet/IP Driver`
   ，类型 `DRIVER_CLIENT`（驱动主动连 PLC）。
-- **读能力**：`read()` 已接通"取标签名 → 组 Read Tag 请求 → 解码字节"的主干流程。
-- **写能力**：`write()` 已接通"取标签名/类型 → 编码值 → 组 Write Tag 请求"的主干流程。
+- **读能力**：✓ 已实现。`read()` 先 `RegisterSession`（封装命令 `0x00F0`）注册 CIP 会话，再经 `sendRRData`（`0x005F`）发
+  Read Tag（`0x4C`）非连接报文取标签值。
+- **写能力**：✓ 已实现。`write()` 经同一非连接通道发 Write Tag（`0x4D`），按位号 `tagType` 编码值。
 - **订阅/上报**：不支持。EtherNet/IP 显式报文是请求-应答模型，本驱动按采集周期主动轮询，不监听设备主动上报。
 
-与 [驱动能力矩阵](./matrix) 对齐：EtherNet/IP 在矩阵中读/写/订阅均标记为 `—`，备注"罗克韦尔 / CIP，骨架待补"。
+与 [驱动能力矩阵](./matrix) 对齐：EtherNet/IP 在矩阵中标记为读 ✓ / 写 ✓ / 订阅 `—`，状态"可用"。
 
-::: warning 当前为骨架实现（Work in progress）
-本驱动是协议骨架。读写的上层流程（按 `tagName` 取数、按 `tagType` 编解码、套接字连接与失效重建）已就位，但 **CIP 协议组帧尚未补全
-**：
+::: info 实现边界（Unconnected 报文，无连接型 I/O）
+`EthernetIpDriverCustomServiceImpl` 的 CIP 组帧是完整实现（24 字节封装头、`RegisterSession`、`sendRRData` 非连接报文、Read
+Tag `0x4C` / Write Tag `0x4D` 均已落地），但有以下边界：
 
-- 会话建立 `RegisterSession`、连接打开 `ForwardOpen` 仍是 `TODO` 占位；
-- `buildEncapsulationHeader()` 只写了一个 24 字节长度头，并非完整的 EtherNet/IP 封装帧；
-- `health()` 仅检查套接字状态，非真实协议探测；
-- `elementCount`、`sendCommand` 两个属性当前未被消费。
+- 只走 **Unconnected 报文**：`ForwardOpen` 连接型 I/O 明确不在本版范围（标签读写用非连接报文已覆盖）；
+- `STRING` 标签写被拒（需结构化类型支持），`STRING` 读可按应答类型码解码；
+- `elementCount`、`sendCommand` 两个属性当前未被消费（见上文告警）；
+- `health()` 仅检查套接字状态，非真实协议探测。
 
-请将它作为接入起点模板，而非生产可用驱动。最终行为以 `EthernetIpDriverCustomServiceImpl` 的 `read()` / `write()` /
-`initial()` 源码为准。
+最终行为以 `EthernetIpDriverCustomServiceImpl` 的 `read()` / `write()` / `initial()` 源码为准。
 :::
 
-把一台 Allen-Bradley PLC 接进来的最小路径（用于验证流程，非生产采集）：
+把一台 Allen-Bradley PLC 接进来的最小路径：
 
 1. 选 `EtherNet/IP Driver` 创建 [设备](../introduction/concepts/device)，driver 属性填 `host=192.168.1.20`、`port=44818`、
    `slot=0`、`timeout=5000`。
 2. 给设备绑定的 [模板](../introduction/concepts/profile) 加一个转速 [位号](../introduction/concepts/point)（
    `pointTypeFlag=INT`、`READ_ONLY`），point 属性填 `tagName=Motor_Speed`、`tagType=DINT`、`elementCount=1`。
-3. 启动驱动观察连接与采集日志；CIP 组帧补全后，30 秒内即可在 [位号值](../introduction/concepts/point-value) 看到采集值。
+3. 启动驱动观察连接与采集日志，30 秒内即可在 [位号值](../introduction/concepts/point-value) 看到采集值（默认 `dev` profile 实际每
+   5 秒一轮）。
 
 完整的接入操作流程见 [设备接入](../operation/device-onboarding)。
 

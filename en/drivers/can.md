@@ -60,8 +60,9 @@ bus's physical and frame characteristics and must match the device.
 
 ### Point attributes (`point-attribute`)
 
-Fill these on each [Point](../introduction/concepts/point) to be read. The first five decide "which frame to match,
-which bytes of the payload, and how to parse them by format and byte order"; the last two, `requestCanId`/`requestData`,
+Fill these on each [Point](../introduction/concepts/point) to be read. The first five decide "which frame to match and
+which bytes of the payload to take"; `dataOffset`/`dataLength` are already applied to slicing, while the parsing by
+`dataFormat`/`byteOrder` is not wired up yet (see the warning below). The last two, `requestCanId`/`requestData`,
 are an optional "request-then-respond" mechanism — leave them empty for purely passive listening.
 
 | Attribute      | code           | Type   | Default  | Description                                      |
@@ -81,10 +82,11 @@ Many CAN devices only answer with data after receiving a "request" frame. In the
 for frames the bus broadcasts periodically.
 :::
 
-::: warning dataOffset / dataLength / byteOrder are not yet used in parsing
-Per the source, `read()` actually uses only `interfaceName`, `canId`, `requestCanId`, and `requestData`, returning the
-payload field of the frame captured by `candump` as-is. `dataOffset`, `dataLength`, `dataFormat`, and `byteOrder` are
-not yet applied on the read path to slice/convert bytes (a skeleton TODO). The config keys are in place; behavior is
+::: warning dataFormat / byteOrder are not yet used in parsing (dataOffset / dataLength already slice)
+Per the source, after `read()` captures the frame via `interfaceName`, `canId`, and `requestCanId`/`requestData`, it
+slices `dataOffset` / `dataLength` bytes out of the payload and returns them as a contiguous hex string; but
+`dataFormat` and `byteOrder` are not yet applied on the read path to convert/sort bytes (a skeleton TODO) — whether you
+fill `INT`/`UINT` or `HEX`, you always get the hex literal of that slice. The config keys are in place; behavior is
 subject to the eventual implementation.
 :::
 
@@ -100,7 +102,7 @@ Per the source, `write()` reads `canId` and `data` only from the **point attribu
 only through `DriverCommand.execute(commandConfig, …)` — which the CAN driver does not override (it uses the default
 empty implementation). So the write path never reads `command-attribute`. As a result `data` is always the empty
 default, `frameData` is always empty, the `${value}` template is never rendered, and `cansend` emits an empty payload (
-of the form `cansend can0 <canId>#`). Like `dataOffset`/`dataLength`, this is a skeleton TODO; dispatched write values
+of the form `cansend can0 <canId>#`). Like `dataFormat`/`byteOrder`, this is a skeleton TODO; dispatched write values
 do not actually land in the frame payload today.
 :::
 
@@ -160,8 +162,9 @@ Onboard a node on `can0` that periodically broadcasts temperature with CAN ID `1
 
 - **`dc3.driver.code`**: `CanDriver` (driver name `CAN Bus Driver`, type `DRIVER_CLIENT`, actively sends/receives frames
   on the bus). This is a stable routing identifier and must not be changed casually.
-- **Read**: ✓ supported. `read()` captures a single frame matching `canId` via `candump` and returns its payload field,
-  optionally sending a request frame first via `cansend`.
+- **Read**: ✓ supported. `read()` captures a single frame matching `canId` via `candump`, slices the payload by
+  `dataOffset`/`dataLength` (returned as a contiguous hex string), optionally sending a request frame first via
+  `cansend`.
 - **Write**: stub / partial. `write()` already shells out to `cansend` to put a frame on the bus, but the `data`
   frame-data template is not wired up today (`data` is read from `pointConfig` yet declared only under
   `command-attribute`, and `execute()` is not implemented), so `${value}` is never rendered and the frame currently
@@ -170,20 +173,23 @@ Onboard a node on `can0` that periodically broadcasts temperature with CAN ID `1
   push wired into DC3. The above matches the CAN row (✓ read / — write / — subscribe) in
   the [driver capability matrix](./matrix).
 
-::: warning Implementation status: skeleton (WIP), backed by can-utils
+::: warning Implementation status: skeleton (read works, write not wired), backed by can-utils
 This driver is a starting template. `read()`/`write()` use `ProcessBuilder` to shell out to the Linux `can-utils`
 tools (`candump`/`cansend`), and `health()` checks the interface via `ip link show` — these call paths actually execute
-on a Linux host with can-utils and a real SocketCAN interface, rather than throwing "not implemented." But the source
-itself marks it a WIP skeleton, with parts still not wired up:
+on a Linux host with can-utils and a real SocketCAN interface, rather than throwing "not implemented." But parts are
+still not wired up:
 
-- **Read path**: the `dataOffset`/`dataLength`/`dataFormat`/`byteOrder` point attributes are not yet applied to byte
-  slicing and type conversion; `read()` returns the captured payload field as-is.
+- **Read path**: `dataOffset`/`dataLength` are already applied to byte slicing (returned as a contiguous hex string);
+  `dataFormat`/`byteOrder` are not yet applied to type conversion or byte order — the value is always the hex literal
+  of the slice.
 - **Write path**: the `data` frame-data template rendering is not actually wired up — `data` is read from `pointConfig`
   but declared only under `command-attribute`, and `execute()` is not implemented, so `${value}` is never rendered and
-  the frame currently emitted has an empty payload. Like `dataOffset`, this is a skeleton TODO; **do not treat write as
+  the frame currently emitted has an empty payload. Like `dataFormat`, this is a skeleton TODO; **do not treat write as
   able to deliver values yet.**
-- A `TODO` plans to replace the per-call `ProcessBuilder` approach with native SocketCAN JNI to cut latency. Byte
-  parsing, write-template rendering, and native I/O integration must be completed before production use.
+- A native SocketCAN JNI bridge was evaluated but **deliberately not adopted**: the per-call process startup cost is
+  acceptable for this driver's low-frequency industrial sampling profile, and dragging JNI cross-compilation into the
+  build is not worth it (per the class Javadoc). Byte-order/format parsing and write-template wiring must still be
+  completed before production use.
   :::
 
 ## Further reading

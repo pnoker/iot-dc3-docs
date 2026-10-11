@@ -51,13 +51,14 @@ The mapping between host ports and internal ports is the core of this diagram:
 |---------------|----------------------------|---------------------------------------|
 | PostgreSQL    | `localhost:35432`          | `dc3-postgres:5432`                   |
 | RabbitMQ AMQP | `localhost:35672`          | `dc3-rabbitmq:5672`                   |
-| EMQX MQTT     | `localhost:31883`          | `dc3-emqx:1883` (conventional value)  |
+| EMQX MQTT     | `localhost:31883`          | `dc3-emqx:1883` (EMQX's default internal port) |
 
 ## How to Use
 
 ### Bring the Stack Up with Compose
 
-Create a local `.env` from the template, then bring it up with `make` (backed by `podman compose`):
+Create a local `.env` from the template, then bring it up with `make` (the Makefile's `COMPOSE` auto-detects and prefers
+`docker compose`; you can also force `COMPOSE='podman compose'` explicitly):
 
 ::: code-group
 
@@ -68,7 +69,8 @@ make up-db && make up-optional && make up-dev
 
 ```bash [podman compose]
 cp .env.example .env
-podman compose -f dc3/docker-compose-dev.yml config --quiet
+podman compose -f dc3/docker-compose-dev.yml up -d   # bring up the dev stack
+podman compose -f dc3/docker-compose-dev.yml config --quiet   # validate only, don't start
 ```
 
 :::
@@ -108,9 +110,11 @@ at the end of the page; here we list only the variables you'll really change or 
 ### Security Keys (Runtime)
 
 Two secrets are the platform's root of identity. Their defaults exist only for first-run convenience and must never go
-to production.
+to production. Note that `.env.example` **intentionally does not set** these two keys: local source runs get dev-specific
+values from `dc3/env/dev.env`; the `dev`/`single` compose files carry dev fallback defaults (the "Default" column below);
+the `app`/`scale`/`swarm` stacks require them to be set explicitly in the root `.env` and refuse to start otherwise.
 
-| Variable           | Default                                  | Purpose                                                                          |
+| Variable           | Default (dev-stack fallback)             | Purpose                                                                          |
 |--------------------|------------------------------------------|----------------------------------------------------------------------------------|
 | `DC3_SECURITY_KEY` | `dc3.security.key.2026.io.github.pnoker` | Signing key the auth center uses to generate and verify login tokens             |
 | `AUTH_HMAC_SECRET` | `io.github.pnoker.dc3`                   | HMAC-SHA256 key the gateway uses to sign `X-Auth-Principal` for backend services |
@@ -152,6 +156,20 @@ AMQP host port `35672`, internal `5672`. With TLS on, the internal port switches
 | `DC3_RABBITMQ_PORT`            | `35672`     | Compose only | AMQP published port                              |
 | `DC3_RABBITMQ_MANAGEMENT_PORT` | `15672`     | Compose only | Management UI published port                     |
 
+### Message Broker Selection (Runtime)
+
+The message carrier for the internal async plane (point values, commands) is selected by `DC3_MQ_TYPE`, defaulting to
+`rabbitmq`. The connection variables are only read when the matching carrier is selected; the defaults below point at
+service names inside the Compose network — for local source runs see `dc3/env/dev.env` (e.g. Kafka uses `localhost:9092`).
+
+| Variable                 | Default                  | Purpose                                                         |
+|--------------------------|--------------------------|-----------------------------------------------------------------|
+| `DC3_MQ_TYPE`            | `rabbitmq`               | Async-plane carrier: `rabbitmq` / `kafka` / `pulsar` / `mqtt`   |
+| `DC3_MQ_KAFKA_BOOTSTRAP` | `kafka:9092`             | Kafka bootstrap address (read when `DC3_MQ_TYPE=kafka`)         |
+| `DC3_MQ_PULSAR_URL`      | `pulsar://pulsar:6650`   | Pulsar service URL (read when `DC3_MQ_TYPE=pulsar`)             |
+| `DC3_MQ_MQTT_HOST`       | `dc3-rabbitmq`           | MQTT carrier host (read when `DC3_MQ_TYPE=mqtt`)                |
+| `DC3_MQ_MQTT_PORT`       | `1883`                   | MQTT carrier port (read when `DC3_MQ_TYPE=mqtt`)                |
+
 ### EMQX / MQTT (Runtime)
 
 MQTT broker host port `31883`. EMQX also publishes several other ports (WebSocket, Dashboard) — see the collapsed long
@@ -160,7 +178,7 @@ table for the full list.
 | Variable                  | Default     | Scope        | Purpose                                                 |
 |---------------------------|-------------|--------------|---------------------------------------------------------|
 | `MQTT_BROKER_HOST`        | `localhost` | Runtime      | broker host                                             |
-| `MQTT_BROKER_PORT`        | `31883`     | Runtime      | broker port (published by EMQX; internal around `1883`) |
+| `MQTT_BROKER_PORT`        | `31883`     | Runtime      | broker port (published by EMQX; internal is `1883`) |
 | `MQTT_USERNAME`           | `dc3`       | Runtime      | Username                                                |
 | `MQTT_PASSWORD`           | `dc3dc3dc3` | Runtime      | Password                                                |
 | `DC3_EMQX_MQTT_PORT`      | `31883`     | Compose only | MQTT published port                                     |
@@ -168,8 +186,9 @@ table for the full list.
 
 ### gRPC / facade (Runtime)
 
-Center services talk to each other through facades. Distributed deployments default to `DC3_FACADE_MODE=grpc`, and local
-processes point `CENTER_*_HOST` at `localhost`.
+Center services talk to each other through facades. The facade implementation for each target center is selected
+per-target via `dc3.facade.{auth,manager,data}.mode` (default `grpc` when unset; `local` is the in-process call — see
+[Facade modes](../architecture/facade-modes)), and local processes point `CENTER_*_HOST` at `localhost`.
 
 | Variable                      | Default     | Scope   | Purpose                                                     |
 |-------------------------------|-------------|---------|-------------------------------------------------------------|
@@ -177,8 +196,16 @@ processes point `CENTER_*_HOST` at `localhost`.
 | `CENTER_MANAGER_HOST`         | `localhost` | Runtime | Manager center host                                         |
 | `CENTER_DATA_HOST`            | `localhost` | Runtime | Data center host                                            |
 | `CENTER_AGENTIC_HOST`         | `localhost` | Runtime | Agentic center host                                         |
-| `DC3_FACADE_MODE`             | `grpc`      | Runtime | facade protocol mode                                        |
+| `DC3_FACADE_AUTH_MODE`        | `grpc`      | Runtime | Auth center facade mode (`grpc`/`local`/`disabled`)        |
+| `DC3_FACADE_MANAGER_MODE`     | `grpc`      | Runtime | Manager center facade mode                                 |
+| `DC3_FACADE_DATA_MODE`        | `grpc`      | Runtime | Data center facade mode                                    |
 | `DC3_FACADE_GRPC_DEADLINE_MS` | `3000`      | Runtime | Per-request gRPC deadline; `0` disables the client deadline |
+
+::: warning `DC3_FACADE_MODE` is a dead leftover
+The `DC3_FACADE_MODE` entry in `.env.example` is **read by no code** (the real config keys are the per-target
+`dc3.facade.{auth,manager,data}.mode`, whose env forms are the three rows above); it is a historical leftover —
+changing it has no effect.
+:::
 
 ### Gateway and Service Ports (Compose only)
 
@@ -197,19 +224,36 @@ locally and need to avoid port collisions.
 | `DC3_MANAGER_GRPC_PORT`          | `9400`  | Compose only | Manager center gRPC                       |
 | `DC3_DATA_GRPC_PORT`             | `9500`  | Compose only | Data center gRPC                          |
 | `DC3_LISTENING_VIRTUAL_TCP_PORT` | `6270`  | Compose only | Listening Virtual driver TCP publish      |
-| `DC3_LISTENING_VIRTUAL_UDP_PORT` | `6271`  | Compose only | Listening Virtual driver UDP publish      |
+| `DC3_LISTENING_VIRTUAL_UDP_PORT` | `6271`  | Compose only | Listening Virtual driver UDP publish (currently published as TCP) |
+| `DC3_SINGLE_PORT`                | `8100`  | Compose only | Single-center mode HTTP published port    |
+| `DC3_SINGLE_GRPC_PORT`           | `9100`  | Compose only | Single-center mode gRPC published port    |
+| `DC3_WEB_HTTP_PORT`              | `8080`  | Compose only | Web console HTTP published port           |
+| `DC3_WEB_HTTPS_PORT`             | `8443`  | Compose only | Web console HTTPS published port          |
 | `SERVER_PORT`                    | (unset) | Per-process  | Single-service HTTP port override         |
 | `GRPC_SERVER_PORT`               | (unset) | Per-process  | Single-center gRPC port override          |
 
 ::: warning `DC3_LISTENING_VIRTUAL_*_PORT` are host-published ports
 `DC3_LISTENING_VIRTUAL_TCP_PORT` and `DC3_LISTENING_VIRTUAL_UDP_PORT` are the ports Compose publishes to the host. The
-process's internal ports use `TCP_PORT` and `UDP_PORT` (Per-process). Don't confuse the two.
+process's internal ports use `TCP_PORT` and `UDP_PORT` (Per-process). Don't confuse the two. Also note that 6271 is
+intended as the UDP channel, but no published port currently declares `/udp`, so it is actually published as TCP.
 :::
+
+### Web Console and Gateway OAuth (Compose only)
+
+The web console (`dc3-web`) proxies API requests to the gateway through nginx; the gateway's API routes default to the
+internal auth headers, but can be switched to OAuth RS256 ticket mode.
+
+| Variable                        | Default                                             | Purpose                                                     |
+|---------------------------------|-----------------------------------------------------|-------------------------------------------------------------|
+| `APP_API_HOST`                  | `dc3-gateway`                                       | Gateway host the console reverse-proxies to (nginx upstream) |
+| `APP_API_PORT`                  | `8000`                                              | Gateway port the console reverse-proxies to                 |
+| `DC3_GATEWAY_OAUTH_ENABLED`     | `false`                                             | Whether gateway API routes use OAuth RS256 ticket mode      |
+| `DC3_GATEWAY_OAUTH_JWKS_URL`    | `http://dc3-center-auth:8300/auth/oauth2/jwks`      | OAuth JWKS URL (points at the auth center)                  |
 
 ### Agentic / AI (Runtime)
 
 The `AGENTIC_FALLBACK_OPENAI_*` group only kicks in as a fallback when `dc3_model_provider` has no usable provider
-configured. Conversation memory is off by default on the `.env.example` injection path (the in-code default is on; see the note below).
+configured. Conversation memory is on by default (`.env.example` and the in-code fallback agree).
 
 | Variable                              | Default                        | Purpose                                                                         |
 |---------------------------------------|--------------------------------|---------------------------------------------------------------------------------|
@@ -219,7 +263,7 @@ configured. Conversation memory is off by default on the `.env.example` injectio
 | `AGENTIC_FALLBACK_OPENAI_TEMPERATURE` | `0.7`                          | Sampling temperature (0.0–2.0)                                                  |
 | `AGENTIC_FALLBACK_OPENAI_MAX_TOKENS`  | `2048`                         | Maximum output tokens                                                           |
 | `AGENTIC_MEMORY_SCHEMA_INIT`          | `never`                        | Spring AI JDBC memory table init mode (`always`/`never`/`create_if_not_exists`) |
-| `AGENTIC_MEMORY_ENABLED`              | `false`                        | Whether persistent conversation memory is on                                    |
+| `AGENTIC_MEMORY_ENABLED`              | `true`                         | Whether persistent conversation memory is on                                    |
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         | Whether tool calling is on                                                      |
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           | Maximum messages retained per conversation window                               |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` | Attachment storage path                                                         |
@@ -236,25 +280,35 @@ Sensitive values like `AGENTIC_FALLBACK_OPENAI_API_KEY` must never be written in
 Configure production providers in the `dc3_model_provider` table; the fallback is just a safety net.
 :::
 
-::: info Defaults in the table come from `.env.example` and differ from the in-code fallback defaults
-The values above for `AGENTIC_MEMORY_ENABLED` (`false`) and `AGENTIC_ATTACHMENT_STORAGE_PATH` (
-`dc3/data/agentic/attachments`) come from `.env.example`. On the `cp .env.example .env` + `source` path, these values
-are explicitly injected. But the in-code fallback defaults in `application-agentic.yml` differ: when the environment
-variables are unset, memory defaults to enabled and the attachment path is `dc3/data/upload/agentic/attachment`. When
-you're not on the `.env.example` path, the code takes precedence.
+::: info `AGENTIC_ATTACHMENT_STORAGE_PATH` differs between `.env.example` and the in-code fallback
+The value above for `AGENTIC_ATTACHMENT_STORAGE_PATH` (`dc3/data/agentic/attachments`) comes from `.env.example`; on the
+`cp .env.example .env` + `source` path it is explicitly injected. But the in-code fallback default in
+`application-agentic.yml` is `dc3/data/upload/agentic/attachment`. When you're not on the `.env.example` path, the code
+takes precedence. All other rows (including `AGENTIC_MEMORY_ENABLED=true`) agree between the two.
 :::
 
-### Batch Processing (Runtime)
+### Batch Processing and Consumption (Runtime)
 
-MQTT and point values each have a "count threshold + interval" pair. A Quartz schedule flushes the accumulated buffer
-all at once every `interval` seconds, where `speed = count / interval`.
+MQTT reporting and point-value persistence each have a group of batching parameters. Point values flush on a dual
+"count + receive-timeout" threshold — whichever of `POINT_BATCH_SIZE` records or `POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`
+milliseconds comes first; concurrent consumption and retries are governed by `POINT_CONCURRENT_CONSUMERS` and friends.
 
-| Variable               | Default | Purpose                                   |
-|------------------------|---------|-------------------------------------------|
-| `MQTT_BATCH_SPEED`     | `100`   | MQTT batch size threshold (records/batch) |
-| `MQTT_BATCH_INTERVAL`  | `5`     | MQTT batch interval (seconds)             |
-| `POINT_BATCH_SPEED`    | `100`   | Point value batch size threshold          |
-| `POINT_BATCH_INTERVAL` | `5`     | Point value batch interval (seconds)      |
+| Variable                               | Default  | Purpose                                            |
+|----------------------------------------|----------|----------------------------------------------------|
+| `MQTT_BATCH_SPEED`                     | `100`    | MQTT batch size threshold (records/batch)          |
+| `MQTT_BATCH_INTERVAL`                  | `5`      | MQTT batch interval (seconds)                      |
+| `POINT_BATCH_SIZE`                     | `500`    | Point value batch size threshold (records/batch)   |
+| `POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`   | `100`    | Point value receive timeout (ms; first-to-trigger) |
+| `POINT_CONCURRENT_CONSUMERS`           | `4`      | Initial concurrent consumers for point values      |
+| `POINT_MAX_CONCURRENT_CONSUMERS`       | `16`     | Maximum concurrent consumers for point values      |
+| `POINT_PREFETCH_COUNT`                 | `1000`   | Prefetch count per consumer                        |
+| `POINT_RETRY_MAX_RETRIES`              | `3`      | Maximum consumption retries                        |
+| `POINT_RETRY_INITIAL_INTERVAL_MILLIS`  | `1000`   | Initial retry interval (ms)                        |
+| `POINT_RETRY_MULTIPLIER`               | `2`      | Retry interval multiplier                          |
+| `POINT_RETRY_MAX_INTERVAL_MILLIS`      | `10000`  | Maximum retry interval (ms)                        |
+
+On the MQTT side it remains a "count threshold + interval" pair: a timer flushes the accumulated buffer every
+`MQTT_BATCH_INTERVAL` seconds.
 
 ### Image Sources (Compose only)
 
@@ -266,6 +320,8 @@ Compose interpolation reads `DC3_IMAGE_REGISTRY` — each governs its own segmen
 | `REGISTRY`           | `auto`      | Makefile image-source selector (accepts only `auto`/`global`/`cn`; other values error out) |
 | `DC3_IMAGE_REGISTRY` | `pnoker`    | Image namespace                                                                            |
 | `DC3_IMAGE_TAG`      | `2026.9`    | Image tag for all services and dependencies                                                |
+| `DC3_BASE_TAG`       | `2026.10`   | dc3-docker base image line the dependency images build from (independent of `DC3_IMAGE_TAG`) |
+| `DC3_VERSION`        | `latest`    | Web console image version (dc3-web publishes only `latest` and full releases)              |
 | `DC3_BIND_HOST`      | `127.0.0.1` | Published-port bind address (`0.0.0.0` for external access)                                |
 
 ### Observability (Compose only / Runtime)
@@ -273,14 +329,17 @@ Compose interpolation reads `DC3_IMAGE_REGISTRY` — each governs its own segmen
 The optional stack (EMQX, ELK, Prometheus, Grafana) comes up via `make up-optional`. Its ports and JVM parameters are
 below.
 
-| Variable             | Default                 | Scope        | Purpose                          |
-|----------------------|-------------------------|--------------|----------------------------------|
-| `GF_SERVER_ROOT_URL` | `http://localhost:3000` | Runtime      | Grafana external root URL        |
-| `DC3_GRAFANA_PORT`   | `3000`                  | Compose only | Grafana published port           |
-| `DC3_KIBANA_PORT`    | `5601`                  | Compose only | Kibana published port            |
-| `DC3_ES_JAVA_OPTS`   | `-Xms512m -Xmx512m`     | Runtime      | Elasticsearch JVM heap           |
-| `DC3_LS_JAVA_OPTS`   | `-Xms256m -Xmx256m`     | Runtime      | Logstash JVM heap                |
-| `APM_AGENT_ENABLE`   | `false`                 | Runtime      | Whether the Java APM agent is on |
+| Variable                 | Default                 | Scope        | Purpose                          |
+|--------------------------|-------------------------|--------------|----------------------------------|
+| `GF_SERVER_ROOT_URL`     | `http://localhost:3000` | Runtime      | Grafana external root URL        |
+| `DC3_GRAFANA_PORT`       | `3000`                  | Compose only | Grafana published port           |
+| `DC3_KIBANA_PORT`        | `5601`                  | Compose only | Kibana published port            |
+| `DC3_ES_JAVA_OPTS`       | `-Xms512m -Xmx512m`     | Runtime      | Elasticsearch JVM heap           |
+| `DC3_LS_JAVA_OPTS`       | `-Xms256m -Xmx256m`     | Runtime      | Logstash JVM heap                |
+| `APM_AGENT_ENABLE`       | `false`                 | Runtime      | Whether the Java APM agent is on |
+| `DC3_JAEGER_UI_PORT`     | `16686`                 | Compose only | Jaeger UI published port         |
+| `DC3_JAEGER_OTLP_GRPC_PORT` | `4317`               | Compose only | Jaeger OTLP gRPC published port  |
+| `DC3_JAEGER_OTLP_HTTP_PORT` | `4318`               | Compose only | Jaeger OTLP HTTP published port  |
 
 ::: details Full Variable Reference (collapsed)
 
@@ -322,6 +381,16 @@ below.
 | `DC3_RABBITMQ_TLS_PORT`                    | `35671`      | Compose only |
 | `DC3_RABBITMQ_MANAGEMENT_PORT`             | `15672`      | Compose only |
 
+#### Message Broker Selection
+
+| Variable                 | Default                  | Scope        |
+|--------------------------|--------------------------|--------------|
+| `DC3_MQ_TYPE`            | `rabbitmq`               | Runtime      |
+| `DC3_MQ_KAFKA_BOOTSTRAP` | `kafka:9092`             | Runtime      |
+| `DC3_MQ_PULSAR_URL`      | `pulsar://pulsar:6650`   | Runtime      |
+| `DC3_MQ_MQTT_HOST`       | `dc3-rabbitmq`           | Runtime      |
+| `DC3_MQ_MQTT_PORT`       | `1883`                   | Runtime      |
+
 #### EMQX / MQTT
 
 | Variable                  | Default     | Scope        |
@@ -346,7 +415,9 @@ below.
 | `CENTER_MANAGER_HOST`         | `localhost` | Runtime      |
 | `CENTER_DATA_HOST`            | `localhost` | Runtime      |
 | `CENTER_AGENTIC_HOST`         | `localhost` | Runtime      |
-| `DC3_FACADE_MODE`             | `grpc`      | Runtime      |
+| `DC3_FACADE_AUTH_MODE`        | `grpc`      | Runtime      |
+| `DC3_FACADE_MANAGER_MODE`     | `grpc`      | Runtime      |
+| `DC3_FACADE_DATA_MODE`        | `grpc`      | Runtime      |
 | `DC3_FACADE_GRPC_DEADLINE_MS` | `3000`      | Runtime      |
 | `DC3_AUTH_GRPC_PORT`          | `9300`      | Compose only |
 | `DC3_MANAGER_GRPC_PORT`       | `9400`      | Compose only |
@@ -365,6 +436,10 @@ below.
 | `GRPC_SERVER_PORT`               | (unset) | Per-process  |
 | `DC3_LISTENING_VIRTUAL_TCP_PORT` | `6270`  | Compose only |
 | `DC3_LISTENING_VIRTUAL_UDP_PORT` | `6271`  | Compose only |
+| `DC3_SINGLE_PORT`                | `8100`  | Compose only |
+| `DC3_SINGLE_GRPC_PORT`           | `9100`  | Compose only |
+| `DC3_WEB_HTTP_PORT`              | `8080`  | Compose only |
+| `DC3_WEB_HTTPS_PORT`             | `8443`  | Compose only |
 | `TCP_PORT`                       | (unset) | Per-process  |
 | `UDP_PORT`                       | (unset) | Per-process  |
 | `GATEWAY_ROUTE_AUTH_TOKEN_URI`   | (unset) | Per-process  |
@@ -372,6 +447,15 @@ below.
 | `GATEWAY_ROUTE_MANAGER_URI`      | (unset) | Per-process  |
 | `GATEWAY_ROUTE_DATA_URI`         | (unset) | Per-process  |
 | `GATEWAY_ROUTE_AGENTIC_URI`      | (unset) | Per-process  |
+
+#### Web Console and Gateway OAuth
+
+| Variable                        | Default                                             | Scope        |
+|---------------------------------|-----------------------------------------------------|--------------|
+| `APP_API_HOST`                  | `dc3-gateway`                                       | Compose only |
+| `APP_API_PORT`                  | `8000`                                              | Compose only |
+| `DC3_GATEWAY_OAUTH_ENABLED`     | `false`                                             | Compose only |
+| `DC3_GATEWAY_OAUTH_JWKS_URL`    | `http://dc3-center-auth:8300/auth/oauth2/jwks`      | Compose only |
 
 #### Agentic / AI (Runtime)
 
@@ -383,30 +467,45 @@ below.
 | `AGENTIC_FALLBACK_OPENAI_TEMPERATURE` | `0.7`                          |
 | `AGENTIC_FALLBACK_OPENAI_MAX_TOKENS`  | `2048`                         |
 | `AGENTIC_MEMORY_SCHEMA_INIT`          | `never`                        |
-| `AGENTIC_MEMORY_ENABLED`              | `false`                        |
+| `AGENTIC_MEMORY_ENABLED`              | `true`                         |
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           |
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` |
 
-#### Batch Processing / Images / Observability
+#### Batch Processing / Driver Lease / Images / Observability
 
-| Variable               | Default                 | Scope        |
-|------------------------|-------------------------|--------------|
-| `POINT_BATCH_SPEED`    | `100`                   | Runtime      |
-| `POINT_BATCH_INTERVAL` | `5`                     | Runtime      |
-| `REGISTRY`             | `auto`                  | Compose only |
-| `DC3_IMAGE_REGISTRY`   | `pnoker`                | Compose only |
-| `DC3_IMAGE_TAG`        | `2026.9`                | Compose only |
-| `DC3_LOG_MAX_SIZE`     | `10M`                   | Compose only |
-| `DC3_LOG_MAX_FILE`     | `20`                    | Compose only |
-| `DC3_BIND_HOST`        | `127.0.0.1`             | Compose only |
-| `GF_SERVER_ROOT_URL`   | `http://localhost:3000` | Runtime      |
-| `DC3_GRAFANA_PORT`     | `3000`                  | Compose only |
-| `DC3_KIBANA_PORT`      | `5601`                  | Compose only |
-| `DC3_ES_JAVA_OPTS`     | `-Xms512m -Xmx512m`     | Runtime      |
-| `DC3_LS_JAVA_OPTS`     | `-Xms256m -Xmx256m`     | Runtime      |
-| `APM_AGENT_ENABLE`     | `false`                 | Runtime      |
-| `NODE_ENV`             | `dev`                   | Runtime      |
+| Variable                               | Default                 | Scope        |
+|----------------------------------------|-------------------------|--------------|
+| `POINT_BATCH_SIZE`                     | `500`                   | Runtime      |
+| `POINT_BATCH_RECEIVE_TIMEOUT_MILLIS`   | `100`                   | Runtime      |
+| `POINT_CONCURRENT_CONSUMERS`           | `4`                     | Runtime      |
+| `POINT_MAX_CONCURRENT_CONSUMERS`       | `16`                    | Runtime      |
+| `POINT_PREFETCH_COUNT`                 | `1000`                  | Runtime      |
+| `POINT_RETRY_MAX_RETRIES`              | `3`                     | Runtime      |
+| `POINT_RETRY_INITIAL_INTERVAL_MILLIS`  | `1000`                  | Runtime      |
+| `POINT_RETRY_MULTIPLIER`               | `2`                     | Runtime      |
+| `POINT_RETRY_MAX_INTERVAL_MILLIS`      | `10000`                 | Runtime      |
+| `DC3_DRIVER_LEASE_SECONDS`             | `30`                    | Runtime      |
+| `DC3_DRIVER_LEASE_RENEW_CRON`          | `0/10 * * * * ?`        | Runtime      |
+| `DC3_DRIVER_LEASE_QUEUE_EXPIRES_MILLIS` | `300000`               | Runtime      |
+| `REGISTRY`                             | `auto`                  | Compose only |
+| `DC3_IMAGE_REGISTRY`                   | `pnoker`                | Compose only |
+| `DC3_IMAGE_TAG`                        | `2026.9`                | Compose only |
+| `DC3_BASE_TAG`                         | `2026.10`               | Compose only |
+| `DC3_VERSION`                          | `latest`                | Compose only |
+| `DC3_LOG_MAX_SIZE`                     | `10M`                   | Compose only |
+| `DC3_LOG_MAX_FILE`                     | `20`                    | Compose only |
+| `DC3_BIND_HOST`                        | `127.0.0.1`             | Compose only |
+| `GF_SERVER_ROOT_URL`                   | `http://localhost:3000` | Runtime      |
+| `DC3_GRAFANA_PORT`                     | `3000`                  | Compose only |
+| `DC3_KIBANA_PORT`                      | `5601`                  | Compose only |
+| `DC3_ES_JAVA_OPTS`                     | `-Xms512m -Xmx512m`     | Runtime      |
+| `DC3_LS_JAVA_OPTS`                     | `-Xms256m -Xmx256m`     | Runtime      |
+| `APM_AGENT_ENABLE`                     | `false`                 | Runtime      |
+| `DC3_JAEGER_UI_PORT`                   | `16686`                 | Compose only |
+| `DC3_JAEGER_OTLP_GRPC_PORT`            | `4317`                  | Compose only |
+| `DC3_JAEGER_OTLP_HTTP_PORT`            | `4318`                  | Compose only |
+| `NODE_ENV`                             | `dev`                   | Runtime      |
 
 :::
 

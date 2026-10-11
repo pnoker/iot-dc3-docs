@@ -9,7 +9,7 @@ import ApiDocSequenceDiagram from '../../.vitepress/theme/components/ApiDocSeque
 
 # API Documentation
 
-IoT DC3's REST API docs are generated from code annotations, then aggregated by the gateway into a single Swagger UI. By
+IoT DC3's REST API docs are generated from code annotations, and each center service exposes its own online docs. By
 the end of this page you'll be able to open each center's online docs in development, walk through the login flow with
 the default credentials (fetch salt → fetch token → call with auth headers), read the CRUD path conventions, and see how
 the `x-dc3-ai` risk metadata on each endpoint feeds into AI/MCP tools.
@@ -18,7 +18,7 @@ the `x-dc3-ai` risk metadata on each endpoint feeds into AI/MCP tools.
 > see [First Device](../quickstart/first-device). For the tenants and permissions behind those auth headers,
 > see [Auth · Tenant · RBAC](../architecture/auth-rbac).
 
-## Where the docs come from: annotation-generated, gateway-aggregated
+## Where the docs come from: annotation-generated, per-center
 
 There are no hand-written API spec files. Every endpoint's title, parameters, and request/response models come from
 `springdoc-openapi` annotations on the Controllers (`@Tag`, `@Operation`, `@Parameter`, `@Schema`). Each center service
@@ -26,16 +26,17 @@ emits its own OpenAPI JSON at runtime on the WebFlux stack.
 
 Four business centers expose their own docs — Auth Center (`dc3-center-auth`), Manager Center (`dc3-center-manager`),
 Data Center (`dc3-center-data`), and Agentic Center (`dc3-center-agentic`). The Gateway (`dc3-gateway`) has no business
-Controllers of its own; through `springdoc.swagger-ui.urls` it pulls all four documents into one Swagger UI with a
-service dropdown, so only a single entry point faces outward.
+Controllers of its own. Its configuration still declares a service dropdown pointing at `/v3/api-docs/{svc}` via
+`springdoc.swagger-ui.urls`, but the gateway aggregation routes behind it have been removed, so that entry point is
+currently unusable (see the warning below).
 
 <ApiDocFlowDiagram lang="en" />
 
 Grouping works in two layers. `dc3-common-web`'s `SpringDocConfig` supplies the global metadata — title, version,
 contact, license, security schemes. Each business module then declares a `GroupedOpenApi` Bean under its already-scanned
 package, so only that module's Controllers are scanned. Each center service prepends its `spring.webflux.base-path` (
-e.g. `/auth`, `/manager`) to the doc path, giving paths like `/auth/v3/api-docs`. The gateway's aggregation path
-`/v3/api-docs/{svc}` flattens that away, so every service is reachable the same way.
+e.g. `/auth`, `/manager`) to the doc path, giving paths like `/auth/v3/api-docs`. You must include that base-path and
+hit each center directly — the gateway no longer provides an aggregation path that flattens it away.
 
 ::: info dc3-center-single mode
 `dc3-center-single` packs multiple business modules into one process, so its Swagger UI shows several groups at once.
@@ -44,17 +45,24 @@ That's expected, not duplicated configuration.
 
 ## Access entry points
 
-In development, prefer the gateway aggregation entry point. When you're debugging a single center, you can also hit its
-base-path docs directly.
+In development, hit each center's Swagger UI directly (remember the base-path prefix). Exporting or debugging the
+contract likewise goes through each center's `/{svc}/v3/api-docs`.
 
-| Target                              | URL                                             |
-|-------------------------------------|-------------------------------------------------|
-| Gateway aggregated UI (recommended) | `http://<gateway>:8000/swagger-ui.html`         |
-| Auth Center direct                  | `http://<auth>:8300/auth/swagger-ui.html`       |
-| Manager Center direct               | `http://<manager>:8400/manager/swagger-ui.html` |
-| Data Center direct                  | `http://<data>:8500/data/swagger-ui.html`       |
-| Agentic Center direct               | `http://<agentic>:8600/agentic/swagger-ui.html` |
-| Single-center OpenAPI JSON          | `http://<center>:<port>/<svc>/v3/api-docs`      |
+| Target                            | URL                                             |
+|-----------------------------------|-------------------------------------------------|
+| Auth Center direct (preferred)    | `http://<auth>:8300/auth/swagger-ui.html`       |
+| Manager Center direct (preferred) | `http://<manager>:8400/manager/swagger-ui.html` |
+| Data Center direct (preferred)    | `http://<data>:8500/data/swagger-ui.html`       |
+| Agentic Center direct (preferred) | `http://<agentic>:8600/agentic/swagger-ui.html` |
+| Single-center OpenAPI JSON        | `http://<center>:<port>/<svc>/v3/api-docs`      |
+
+::: warning The gateway aggregation entry point is currently unusable
+`dc3-gateway`'s `application.yml` still configures an aggregated Swagger UI pointing at `/v3/api-docs/{svc}`
+(`http://<gateway>:8000/swagger-ui.html`), but the corresponding aggregation proxy routes were removed from
+`dc3-common/dc3-common-gateway`'s `application-gateway.yml` (the surviving routes are the OAuth and `/api/v3/**` business
+routes). Every entry in that UI's service dropdown fails with "Failed to load API definition". Until the aggregation
+routes are restored, always connect to each center directly.
+:::
 
 ## Login and authentication: fetch salt → fetch token → send X-Auth-* headers
 
@@ -64,9 +72,10 @@ business API behind the gateway requires three auth headers: `X-Auth-Tenant`, `X
 Login is a two-step handshake. First, request a random salt from the server using the username and tenant (use within 5
 minutes as a guideline; the server does not enforce the timeout). Then submit the **plaintext password** together with
 that
-salt to exchange for a token (valid 12 hours). The salt does not participate in the password hash — it is concatenated
-with
-the server-side `DC3_SECURITY_KEY` to derive the JWT's HMAC-SHA256 signing key. The password itself is submitted in
+salt to exchange for a token (valid 12 hours). The salt participates in neither the password hash nor the JWT signature
+— the token's HMAC-SHA256 signing key is derived solely from the server-side `DC3_SECURITY_KEY` (environment variable,
+falling back to the `dc3.security.key` system property); the salt is just a one-time random string the handshake
+requires you to echo back. The password itself is submitted in
 plaintext
 (relies on HTTPS for transport protection) and verified by the backend `PasswordUtil.verify` using Argon2id (falling
 back to
@@ -84,13 +93,13 @@ data):
 curl -X POST http://localhost:8000/api/v3/auth/token/salt \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3"}'
-# → R<String>: data is the salt (e.g. "f3a9c1..."), use within 5 minutes
+# → 2026.10 image line (and main) returns JSON object {"salt":"f3a9c1..."} (no R envelope); 2026.9 and earlier image lines return a bare text/plain salt. Use within 5 minutes
 
 # 2. Submit the plaintext password together with the salt (HTTPS protects transport) to exchange for a token
 curl -X POST http://localhost:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
   -d '{"tenant":"default","name":"dc3","salt":"f3a9c1...","password":"<plaintext password>"}'
-# → R<String>: data is the access token (e.g. "eyJ..."), valid 12 hours
+# → 2026.10 image line (and main) returns JSON object {"token":"eyJ..."} (no R envelope); 2026.9 and earlier image lines return a bare text/plain token. Both set an httpOnly cookie; valid 12 hours
 
 # 3. Call a business API with the auth headers
 curl -X POST http://localhost:8000/api/v3/manager/device/list \
@@ -98,7 +107,7 @@ curl -X POST http://localhost:8000/api/v3/manager/device/list \
   -H 'X-Auth-Login: dc3' \
   -H 'X-Auth-Token: {"salt":"f3a9c1...","token":"eyJ..."}' \
   -H 'Content-Type: application/json' \
-  -d '{"current":1,"size":10}'
+  -d '{"offset":0,"limit":10}'
 ```
 
 ```bash [dc3 CLI]
@@ -139,16 +148,23 @@ record or many, and whether it reads or writes.
 | Delete        | `delete(Long)` | `/delete`   | n/a       | `deleteXxx(...)`  |
 
 ::: tip Reserved verb semantics
-`select*` is only for native MyBatis Mapper calls inside `*ManagerImpl`. `remove*` is only for Manager methods inherited
-from MyBatis-Plus. Business deletion always uses `delete*`. `find*`/`query*`/`fetch*` aren't used as primary CRUD verbs.
+There is no `select*` family in the codebase at all — raw persistence in the `dc3-db-*` storage layer (`R2dbc*Store`)
+also uses the `get`/`list`/`insert`/`update`/`delete` verbs, and `select*` never appears on Service/Controller/Facade
+either. Business deletion always uses `delete*`. `find*`/`query*`/`fetch*` aren't used as primary
+CRUD verbs.
 :::
 
 Here's a real example from Manager Center — the "add device" step of the golden path. The endpoint is
 `POST /api/v3/manager/device/add`, the request body is `DeviceVO` with key fields `deviceName`, `driverId`, `profileId`,
-`enableFlag`, and on success it returns `SuccessCode.ADD` ("Added successfully"). Note that `add` doesn't return the new
-entity ID — if you need it afterward, query it back through `device/list` by name. The endpoint requires the
-`device:add` permission. All APIs return a uniform `R<T>` envelope with four fields: `ok`, `code`, `message`, and
-`data`.
+and `enableFlag` (the string `"ENABLE"`); on success it returns `201 Created` with the created `DeviceVO` (including its
+id). The matching delete endpoint `DELETE /api/v3/manager/device/delete` takes both `id` and an optimistic-lock
+`version` query parameter. The endpoint requires the `device:add` permission
+(`@PreAuthorize("@perm.can('device', 'add')")`). APIs return business objects or page objects directly — there is no
+uniform envelope. Pagination endpoints (like `device/list`) take **flat** `offset`/`limit` fields in the request body
+(zero-based offset, defaults `offset=0` and `limit=50`, max 200) and respond with an `OffsetPage`
+(`items`/`offset`/`limit`/`total`/`hasNext`). Note that a nested `page` object is silently ignored — the global
+`fail-on-unknown-properties=false` doesn't error, but pagination falls back to the defaults. Errors use RFC 9457 problem
+details (`application/problem+json`).
 
 ## x-dc3-ai: risk annotations for AI/MCP tools
 
@@ -192,17 +208,16 @@ filtering, and confirmation mechanism, see [AI Agent / MCP Integration](../ai/mc
 
 ## Exporting OpenAPI JSON
 
-When you need an offline contract snapshot, or input for a client code generator, export each center's OpenAPI JSON from
-a running dev/test stack with one command:
+When you need an offline contract snapshot, or input for a client code generator, export each center's OpenAPI JSON
+from a running dev/test stack. Note that `make openapi` (`dc3/bin/export_openapi.sh`) fetches through the gateway
+aggregation path `/v3/api-docs/{svc}` by default — those routes are gone, so all four services return 404. Until the
+aggregation routes are restored, export directly from each center:
 
 ```bash
-make openapi
-```
-
-Override the export entry point and output directory with variables:
-
-```bash
-make openapi OPENAPI_BASE=http://localhost:8000 OPENAPI_OUT=build/openapi
+curl -s http://localhost:8300/auth/v3/api-docs    -o openapi-auth.json
+curl -s http://localhost:8400/manager/v3/api-docs -o openapi-manager.json
+curl -s http://localhost:8500/data/v3/api-docs    -o openapi-data.json
+curl -s http://localhost:8600/agentic/v3/api-docs -o openapi-agentic.json
 ```
 
 ## Documentation requirements when adding an API
@@ -215,9 +230,11 @@ When you add a backend API, documentation isn't an afterthought — the annotati
 3. Add `@Parameter` for path, query, and request-body parameters.
 4. Add `@Schema(description = ...)` to request/response DTO fields, with `example` and `requiredMode = REQUIRED` where
    needed.
-5. For endpoints callable by AI/MCP, add the `x-dc3-ai` extension reflecting the real risk.
-6. When adding a new business module, add the `GroupedOpenApi` Bean, the gateway aggregation config, and the Swagger UI
-   group.
+5. For endpoints callable by AI/MCP, add the `x-dc3-ai` extension reflecting the real risk. Once done, run
+   `make validate-annotations` locally to check annotation completeness (the five AnnotationGateTests —
+   Controller/Manager/Data/Agentic/Auth — the same gate cases CI runs in its unit-test job).
+6. When adding a new business module, add its `GroupedOpenApi` Bean (the group is exposed under the center's own
+   base-path; no gateway-side configuration is needed).
 
 ::: warning Annotation text must always be in English
 The `summary`/`description` in annotations is user-visible code text and, per engineering rules, must be written in

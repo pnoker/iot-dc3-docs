@@ -36,6 +36,7 @@ Profile；但一个设备**只能归属一个** Profile（多对多绑定已在�
 | `deviceExt`  | DeviceExt      | JSON 扩展，存放协议无关的自定义配置              |
 | `enableFlag` | EnableFlagEnum | 启停标记，见下                           |
 | `tenantId`   | Long           | 归属[租户](./tenant)，多租户隔离            |
+| `signature` / `version` | String / Integer | 数据签名与版本（通用审计字段）              |
 
 继承自 `BaseBO` 的通用字段：`id`、`remark`（描述）、`creatorId`/`creatorName`、`operatorId`/`operatorName`、`createTime`/
 `operateTime`。

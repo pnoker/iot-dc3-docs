@@ -30,20 +30,21 @@ import ChangelogDiagram from '../../.vitepress/theme/components/ChangelogDiagram
 
 ::: code-group
 
-```bash [默认（上一个发布 tag → HEAD）]
-# 在 iot-dc3/ 目录下执行
+```bash [默认（上一个 v* tag → HEAD）]
+# 在 iot-dc3/ 目录下的 main 分支执行
 make changelog
 ```
 
 ```bash [指定范围与版本号]
 # FROM/TO 接受任意 git ref（tag、分支、commit）；VERSION 写入分组标题
-make changelog FROM=dc3.release.20251005.00 TO=HEAD VERSION=2026.5.17
+make changelog FROM=v2026.9.22 TO=HEAD VERSION=2026.10.9
 ```
 
 :::
 
-不传参数时，生成器会自动找到上一个匹配 `dc3.release.*` 的 tag 作为起点、`HEAD` 作为终点，并从 `pom.xml` 的 `dc3.version`
-读取版本号。生成结果会覆盖写回 `dc3/doc/CHANGE.md`，再由本页的 include 指令内联展示。
+不传参数时，生成器会自动找到上一个匹配 `v*` 的 tag（`changelog.py` 的默认 `TAG_PATTERN`）作为起点、`HEAD` 作为终点，并从
+`pom.xml` 的 `dc3.version` 属性（缺失时回退根 `<version>`）读取版本号。生成结果会覆盖写回
+`dc3/doc/CHANGE.md`，再由本页的 include 指令内联展示。
 
 ::: info 改了它要单独提交
 变更日志是从历史生成的产物。当 `CHANGE.md` 本身被重新生成需要提交时，使用约定的提交信息
@@ -90,24 +91,30 @@ Highlights 最快。
 
 ## 版本号与 tag 规则
 
-清单里的版本号对应 git tag，由 `make tag`（`dc3/bin/tag.sh`）生成，格式是 `dc3.<type>.<YYYYMMDD>.<NN>`：
+清单里的版本号对应 git tag，由 `make tag`（`dc3/bin/tag.sh`）生成。tag 名就是 `v` 加根 `pom.xml` 的版本号，形如
+`v2026.9.22`、`v2026.10.9`（版本号须为 `YYYY.M.P` 形态）。打 tag 前有五道校验，任何一道不过即拒绝执行：
 
-- `<type>` 由当前分支推断——`develop` 分支打 `develop` tag，`release` / `main` 分支打 `release` tag；其它分支不允许打 tag。
-- `<YYYYMMDD>` 是当天日期。
-- `<NN>` 是当天该类型已有 tag 数量的两位补零序号，从 `00` 起。所以同一天第一个发布 tag 是 `dc3.release.20260622.00`，第二个是
-  `dc3.release.20260622.01`（示例值）。
+- 只允许在 `main` 分支上打 tag；
+- 工作区必须干净（无未提交改动）；
+- 本地 `main` 必须与 `origin/main` 完全一致（脚本会先 `git fetch`）；
+- 根 `pom.xml` 版本必须是 `YYYY.M.P` 形态；
+- 目标 tag 在本地与远端都不存在。
 
 ```bash
-# 在 iot-dc3/ 目录下，release 分支上
+# 在 iot-dc3/ 目录下的 main 分支上
 make tag
-# → 生成形如 dc3.release.20260622.00 的 tag 并 push 到 origin
+# → 创建形如 v2026.10.9 的 annotated tag 并 push 到 origin；
+#   随后 Docker Images 工作流校验、构建并发布镜像，并创建 GitHub Release
+# 预览效果（不实际打 tag）：
+bash dc3/bin/tag.sh --dry-run
 ```
 
-`make changelog` 默认就是以上一个 `dc3.release.*` tag 为起点扫描到 `HEAD`，所以正常发布流程是：先 `make tag` 打出新 tag，再
-`make changelog` 生成这一段的变更，提交回 `CHANGE.md`。
+正常发布流程是：先把根 `pom.xml` 版本号提到新版本并提交，`make changelog` 生成这一段的变更并随 `CHANGE.md` 提交，再在干净、与远端一致的
+`main` 上 `make tag` 打出与 pom 版本一致的 tag。
 
 ::: warning tag 会推送到远端
-`make tag` 末尾会执行 `git push origin --tags`——这是对外操作，确认在正确分支、当天序号无误后再执行。
+`make tag` 末尾会执行 `git push origin <tag>`——这是对外操作，且 tag 一旦推送就会触发镜像发布流水线（Docker Images
+工作流）。确认版本号无误后再执行。
 :::
 
 ## 完整变更清单

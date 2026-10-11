@@ -70,7 +70,7 @@ KnxDriverCustomServiceImpl 按设备缓存 KNXNetworkLink + ProcessCommunicator�
 驱动按[设备](../introduction/concepts/device)（即每个 `remoteHost`）各建一条 KNXnet/IP 隧道链路。多数 KNX IP 网关的并发隧道数很有限——接口类设备常只有 1 条——多台设备指向同一网关时，超出容量的那条建连会失败。多设备共用网关前，先确认它的隧道容量。
 :::
 
-- **读写抛 `Failed to open KNX link`**：隧道建立失败。原因多半是 `remoteHost` / `remotePort`（默认 `3671`）不可达、UDP `3671` 被防火墙拦截（KNXnet/IP 隧道走 UDP），或网关隧道数已满；另外 `remoteHost` 留空时驱动会回退连接 `192.168.0.100`。看报错里带的 `host:port` 先确认实际目标与网络连通，再查网关侧隧道占用。
+- **读写抛 `Failed to open KNX link`**：隧道建立失败。原因多半是 `remoteHost` / `remotePort`（默认 `3671`）不可达、UDP `3671` 被防火墙拦截（KNXnet/IP 隧道走 UDP），或网关隧道数已满；`remoteHost` 留空时建连直接报 `Required attribute 'remoteHost' is missing`（见下条），不会发起任何连接。看报错里带的 `host:port` 先确认实际目标与网络连通，再查网关侧隧道占用。
 - **报 `Invalid KNX group address`**：`groupAddress` 不是合法组地址。按三段式 `主/中/子`（如 `1/2/3`）填写；前后空格驱动会自动去掉，但段数与分隔符必须对。
 - **报 `Required attribute 'xxx' is missing`**：缺必填项——设备上没填 `remoteHost`，位号上没填 `groupAddress`，或写 UINT 位号时没填 `dpt`。对照上文属性表补齐。
 - **UINT 读/写抛异常**：`dpt` 缺失或不是合法数据点类型。读走 `readUnsigned(组地址, dpt)`，写走同一寻址；**写路径上 `dpt` 是必填**，取不到直接失败。按 `主.子` 格式填，如百分比 `5.001`。

@@ -22,7 +22,7 @@ implementation status inside IoT DC3.
 
 OPC DA (OPC Data Access) is the classic industrial data-access specification on the Windows platform. Born in the PC
 era, it applies Microsoft's COM/DCOM component technology to the industrial floor: SCADA systems, HMI/configuration
-software, and PLC gateways mostly embed an OPC DA Server that exposes the points of underlying PLCs and instruments as "
+software, and PLC gateways mostly embed an OPC DA Server that exposes the data of underlying PLCs and instruments as "
 items". Upper systems read and write through a uniform OPC DA client without caring about each PLC's proprietary
 protocol. Common versions are OPC DA 2.0 / 3.0.
 
@@ -135,11 +135,9 @@ through them in order:
 ::: warning Implementation status: code is complete, but running depends on Windows / DCOM infrastructure
 `read()` / `write()` in `OpcDaDriverCustomServiceImpl` are **fully implemented** on top of the bundled OpenSCADA OPC DA
 client library (J-Interop): connections are established via `Server.connect()` and cached per device, reads call
-`item.read()` and convert by COM variant type, and writes build a `JIVariant` and call `item.write()`. A stale "
-work-in-progress skeleton / see TODO markers" warning lingers in the class javadoc, but there are no TODO markers left
-in the method bodies and it no longer matches the implementation — trust the method bodies. The real barrier is not the
-code but the requirement of a DCOM-configured Windows OPC DA Server to actually run end to end; without that environment
-it cannot be verified.
+`item.read()` and convert by COM variant type, and writes build a `JIVariant` and call `item.write()`. The real
+barrier is not the code but the requirement of a DCOM-configured Windows OPC DA Server to actually run end to end;
+without that environment it cannot be verified.
 :::
 
 ::: tip Minimal onboarding example

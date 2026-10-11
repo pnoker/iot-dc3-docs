@@ -63,7 +63,7 @@ variables. Key items:
 | Username / password | `MQTT_USERNAME` / `MQTT_PASSWORD`                     | `dc3` / empty (the docker-compose stack injects `dc3dc3dc3`) | Auth credentials (auth types: `NONE` / `USERNAME` / `CLIENT_ID` / `X509`); the password falls back to empty in app config and is injected by the deployment |
 | Keep-alive          | no env binding (`dc3.driver.mqtt.keep-alive`)         | `15` (s)                                                     | Client heartbeat interval, hard-coded default                                                                                                               |
 | Completion timeout  | no env binding (`dc3.driver.mqtt.completion-timeout`) | `3000` (ms)                                                  | Wait timeout for a publish operation, hard-coded default                                                                                                    |
-| Batch thresholds    | `MQTT_BATCH_SPEED` / `MQTT_BATCH_INTERVAL`            | `100` / `5`                                                  | Ingest batching: flush at 100 messages or 5 s, whichever comes first                                                                                        |
+| Batch thresholds    | `MQTT_BATCH_SPEED` / `MQTT_BATCH_INTERVAL`            | `100` / `5`                                                  | Ingest batching: below 100 msg/s each message is processed immediately; at or above the threshold messages enter a batch queue flushed every 5 s            |
 
 ::: info The broker defaults to the RabbitMQ MQTT plugin
 The default MQTT broker is the **RabbitMQ MQTT plugin** (`dc3-rabbitmq`), addressed via `MQTT_BROKER_HOST` /
@@ -127,8 +127,9 @@ traces a reported value from device to platform—both device and driver only ta
 
 For a payload to become a [PointValue](../introduction/concepts/point-value), it must resolve a `deviceId` and a
 `pointId` (otherwise that message is skipped); a parse failure only logs a warn and does not affect other messages.
-Batch messages go through `receiveValues()` and are sent together, flushed once a batch threshold (`MQTT_BATCH_SPEED` /
-`MQTT_BATCH_INTERVAL`) is hit.
+Inbound messages are routed by **rate**: while the receive rate stays below `MQTT_BATCH_SPEED` (default 100 msg/s) each
+message is processed immediately with no batching; once the rate reaches the threshold, messages enter a batch queue
+that a scheduled job flushes as one batch through `receiveValues()` every `MQTT_BATCH_INTERVAL` (default 5 s).
 
 ## Troubleshooting
 
@@ -170,7 +171,9 @@ here (`schedule.read.enable=false`).
 Per the `MqttDriverCustomServiceImpl` and `MqttReceiveServiceImpl` source: **data reception** (parse to point value and
 forward, event report with topic matching), **write commands** (`write()` / `execute()` publishing the payload, QoS
 fallback, template rendering), and the **`health()` check** (listening to `MqttSubscribedEvent` /
-`MqttConnectionFailedEvent` to reflect the broker connection state in real time) are implemented; `read()` returns
+`MqttConnectionFailedEvent` to reflect the broker connection state in real time; a publish-only deployment without
+`receive-topics` has no connection events to listen to and degrades to online with a diagnostic note) are implemented;
+`read()` returns
 `null` by pub/sub semantics (data arrives passively via subscription—not a defect). The only reference stub left is
 `initial()`, an empty initialization template.
 :::

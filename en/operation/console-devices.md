@@ -35,7 +35,7 @@ Searches hit the manager center's device pagination endpoint (`POST /device/list
 3. Complete the connection configuration per the driver's attribute definitions (e.g. Modbus host/port): where attributes come from is covered in [Attributes & Config](../introduction/concepts/attribute-config);
 4. Save. The new device's enable state follows the form; keep it disabled until a real device is attached.
 
-Creation maps to `POST /device/add` (no ID returned — look it up by name; see the API table in the [Device concept](../introduction/concepts/device)).
+Creation maps to `POST /device/add` (returns the new entity with its id — see the API table in the [Device concept](../introduction/concepts/device)).
 
 ## Bulk import
 
@@ -51,13 +51,15 @@ Actions live on the device card:
 
 ## Device detail
 
-Click a card to open **device detail**, with three tabs:
+Click a card to open **device detail**, with five tabs:
 
 | Tab | Content |
 |-----|---------|
-| Device info | Name, driver, profile (name and code), enable status and other base fields |
+| Dashboard | The device's live status and key metrics at a glance — the first screen when checking "how is this device doing" |
 | Related points | The device's points with status; jump to point configuration from here |
 | Related commands | The device's bound (custom) commands |
+| Related events | Entry to the events the device reports (external events defined by `dc3_event`) |
+| Device data | Entry for querying this device's point values (latest/history), matching the point-data capability |
 
 The detail page is the first stop when a device "isn't collecting": a driver-name load error shows inline (usually the driver is offline or was deleted).
 
@@ -66,7 +68,7 @@ The detail page is the first stop when a device "isn't collecting": a driver-nam
 | UI action | API (via gateway) | Semantics |
 |-----------|-------------------|-----------|
 | Search/filter | `POST …/device/list` | Paginated query, tenant-isolated |
-| Add | `POST …/device/add` | Creates the device, no ID returned |
+| Add | `POST …/device/add` | Creates the device, returns the new entity (with id) |
 | Edit | `POST …/device/update` | Change name/profile/config |
 | Enable/disable | `POST …/device/update` (enableFlag) | Toggle enable state |
 | Delete | `POST …/device/delete` | Remove the device |

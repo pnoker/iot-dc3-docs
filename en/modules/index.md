@@ -4,8 +4,8 @@ title: Module Inventory
 
 # Module Inventory
 
-The IoT DC3 modules, grouped by repository directory. Each module links to its `README.md` or source directory on the
-`release` branch on GitHub.
+The IoT DC3 modules, grouped by repository directory. Each module links to its original `README.md` on the `main`
+branch on GitHub.
 
 ::: tip Source of Truth
 Driver counts and module names match the current repository layout: 36 connectivity driver modules live under
@@ -16,17 +16,17 @@ Driver counts and module names match the current repository layout: 36 connectiv
 
 | Module        | Description                                  | Documentation                                                                  |
 |---------------|----------------------------------------------|--------------------------------------------------------------------------------|
-| `dc3-gateway` | Spring Cloud Gateway — the single HTTP entry | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-gateway/README.md) |
+| `dc3-gateway` | Spring Cloud Gateway — the single HTTP entry | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-gateway/README.md) |
 
 ## Center Services
 
 | Module               | Description                                                        | Documentation                                                                                    |
 |----------------------|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| `dc3-center-auth`    | Auth Center — tenants, users, roles, resources, and tokens         | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-auth/README.md)    |
-| `dc3-center-manager` | Manager Center — drivers, profiles, devices, points, and metadata  | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-manager/README.md) |
-| `dc3-center-data`    | Data Center — point values, queries, and command dispatch          | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-data/README.md)    |
-| `dc3-center-agentic` | Agentic Center — AI conversations, model providers, and tool calls | [README](https://github.com/pnoker/iot-dc3/tree/release/dc3-center/dc3-center-agentic)           |
-| `dc3-center-single`  | Single-process aggregated startup — handy for local debugging      | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-center/dc3-center-single/README.md)  |
+| `dc3-center-auth`    | Auth Center — tenants, users, roles, resources, and tokens         | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-auth/README.md)    |
+| `dc3-center-manager` | Manager Center — drivers, profiles, devices, points, and metadata  | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-manager/README.md) |
+| `dc3-center-data`    | Data Center — point values, queries, and command dispatch          | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-data/README.md)    |
+| `dc3-center-agentic` | Agentic Center — AI conversations, model providers, and tool calls | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-agentic/README.md) |
+| `dc3-center-single`  | Single-process aggregated startup — handy for local debugging      | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-center/dc3-center-single/README.md)  |
 
 ## Protocol Drivers
 
@@ -75,38 +75,52 @@ To write your own driver, see [Driver Authoring](../development/driver-authoring
 
 | Module            | Purpose                                 | Documentation                                                                              |
 |-------------------|-----------------------------------------|--------------------------------------------------------------------------------------------|
-| `dc3-api-auth`    | Auth Center gRPC / Protobuf contract    | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-auth/README.md)    |
-| `dc3-api-manager` | Manager Center gRPC / Protobuf contract | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-manager/README.md) |
-| `dc3-api-data`    | Data Center gRPC / Protobuf contract    | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-data/README.md)    |
-| `dc3-api-driver`  | Driver gRPC / Protobuf contract         | [README](https://github.com/pnoker/iot-dc3/blob/release/dc3-api/dc3-api-driver/README.md)  |
+| `dc3-api-auth`    | Auth Center gRPC / Protobuf contract    | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-auth/README.md)    |
+| `dc3-api-manager` | Manager Center gRPC / Protobuf contract | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-manager/README.md) |
+| `dc3-api-data`    | Data Center gRPC / Protobuf contract    | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-data/README.md)    |
+| `dc3-api-driver`  | Driver gRPC / Protobuf contract         | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-api/dc3-api-driver/README.md)  |
 
-## Messaging and E2E (main-preview)
+## Messaging and E2E
 
 | Category | Module | Purpose |
 |----------|--------|---------|
-| Messaging | `dc3-mq-core` / `dc3-mq-rabbitmq` / `dc3-mq-kafka` / `dc3-mq-mqtt` / `dc3-mq-pulsar` etc. | Pluggable message-middleware abstraction (selected via `DC3_MQ_TYPE`; ships with the post-2026.5.x line — the current release line still wires RabbitMQ directly) |
+| Messaging | `dc3-mq-core` / `dc3-mq-rabbitmq` / `dc3-mq-kafka` / `dc3-mq-mqtt` / `dc3-mq-pulsar` | Pluggable message-middleware abstraction — a broker-neutral port plus one adapter per broker; the active implementation is selected via `DC3_MQ_TYPE` (default `rabbitmq`; part of the release line since 2026.9) |
+| Messaging TCK | `dc3-mq-tck` | Broker-neutral contract suite — an adapter that passes it is compliant |
 | Testing | `dc3-e2e` / `dc3-coverage` | End-to-end tests and coverage aggregation |
+
+## Relational Persistence
+
+| Category       | Module                                                             | Purpose                                                                                          |
+|----------------|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| Runtime        | `dc3-db-core` / `dc3-db-runtime`                                   | Paging / tenant / operation contracts; the R2DBC pool, PostgreSQL dialect, and schema-fingerprint startup gate |
+| Domain stores  | `dc3-db-auth` / `dc3-db-manager` / `dc3-db-data` / `dc3-db-agentic` | PostgreSQL R2DBC stores for the Auth / Manager / Data / Agentic domains                            |
+| Testing        | `dc3-db-tck`                                                       | PostgreSQL Testcontainers contract suite                                                          |
+
+The runtime is PostgreSQL + R2DBC only — JDBC / MyBatis are not supported runtime paths.
+
+## Time-series Storage
+
+| Module          | Purpose                                                                                                                  |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------|
+| `dc3-tsdb-core` | Store-neutral reactive `TsdbStore` port and capability set — point history is implemented by the Data Center's native R2DBC store |
 
 ## Common Components
 
 | Category               | Module                            | Purpose                                                                          |
 |------------------------|-----------------------------------|----------------------------------------------------------------------------------|
 | Base models            | `dc3-common-model`                | Shared models — BO / VO / DTO / Builder / Ext                                    |
-| Base capabilities      | `dc3-common-public`               | Shared capabilities — the `R<T>` response wrapper, `BaseService`, tenant markers |
+| Base capabilities      | `dc3-common-public`               | Shared annotations and entities (tenant markers, tree entities), HTTP client, OAuth/HMAC verification, common utilities |
 | Web                    | `dc3-common-web`                  | WebFlux, BaseController, OpenAPI, security baseline                              |
 | Constants & exceptions | `dc3-common-constant`             | Constants, enums, value objects                                                  |
 | Constants & exceptions | `dc3-common-exception`            | Exception hierarchy                                                              |
-| Data access            | `dc3-common-dal`                  | Shared DAL foundation                                                            |
-| Data access            | `dc3-common-postgres`             | PostgreSQL / MyBatis-Plus configuration                                          |
-| Data access            | `dc3-common-sql`                  | SQL utilities                                                                    |
-| Data access            | `dc3-common-repository`           | Point value storage abstraction                                                  |
-| Communication          | `dc3-common-rabbitmq`             | RabbitMQ configuration and constants                                             |
-| Communication          | `dc3-common-mqtt`                 | MQTT client configuration                                                        |
+| Data access            | `dc3-common-sql`                  | Shared base for the JDBC database drivers (connection management and query execution) |
+| Communication          | `dc3-common-mqtt`                 | MQTT client configuration (used by the MQTT driver and other MQTT consumers)     |
 | Communication          | `dc3-common-facade-api`           | Cross-service facade interfaces                                                  |
 | Communication          | `dc3-common-facade-grpc`          | gRPC facade implementation                                                       |
 | Communication          | `dc3-common-facade-local-auth`    | Auth local facade                                                                |
 | Communication          | `dc3-common-facade-local-manager` | Manager local facade                                                             |
 | Communication          | `dc3-common-facade-local-data`    | Data local facade                                                                |
+| Communication          | `dc3-common-facade-local`         | Dependency-only POM aggregating all local facades (for single-process apps)      |
 | Domain capabilities    | `dc3-common-auth`                 | Authentication, authorization, tenant, and token domain capabilities             |
 | Domain capabilities    | `dc3-common-manager`              | Driver, profile, device, point, and metadata domain capabilities                 |
 | Domain capabilities    | `dc3-common-data`                 | Point value, command, and data query domain capabilities                         |
@@ -117,8 +131,15 @@ To write your own driver, see [Driver Authoring](../development/driver-authoring
 | Platform support       | `dc3-common-thread`               | Thread pool configuration                                                        |
 | Platform support       | `dc3-common-quartz`               | Scheduling infrastructure                                                        |
 | Platform support       | `dc3-common-api`                  | API utilities                                                                    |
-| Platform support       | `dc3-common-resource-registrar`   | Resource registration                                                            |
+| Platform support       | `dc3-common-resource`             | Discovers HTTP API endpoints at startup and registers them as Auth authorization resources |
 | Testing                | `dc3-common-test`                 | Testcontainers, gRPC, RabbitMQ, and contract test infrastructure                 |
+
+## CLI and Web Frontend
+
+| Module    | Purpose                                                                                          | Documentation                                                       |
+|-----------|--------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| `dc3-cli` | Standalone TypeScript CLI (`npm install -g dc3-cli`) — see the [CLI manual](../automation/cli)    | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-cli/README.md) |
+| `dc3-web` | Vue 3 + TypeScript management console — talks to the backend only through the gateway; see [Frontend](../frontend/) | [README](https://github.com/pnoker/iot-dc3/blob/main/dc3-web/README.md) |
 
 ## Related Documentation
 

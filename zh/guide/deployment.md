@@ -24,11 +24,15 @@ title: 生产部署指南
 要 GitOps / 可重复安装 / 频繁调参再上形态五。
 完整命令与排错细节见主仓库的 [`dc3/doc/DEPLOYMENT.md`](https://github.com/pnoker/iot-dc3/blob/main/dc3/doc/DEPLOYMENT.md)。
 
+::: info 版本适用范围
+五种形态的文件都在主仓库 main 分支上。形态一（单机 Compose）在任何镜像线上可用；形态二至五（scale / swarm / k8s / helm）的编排文件于 2026-08-18 进入仓库——v2026.8.19 之前的检出（含停更的 release 线）没有这些文件。另注意 Docker Hub 从无 2026.8 镜像线，v2026.8.19 检出的默认 tag 还是不存在的 `2026.6`：开箱可用的镜像线自 `2026.9` 起。
+:::
+
 ### 镜像可得性（先知道这个再选形态）
 
 发布 CI 只把 **应用镜像**（web、网关、四个中心及 `dc3-center-single`、驱动）推到 Docker Hub `pnoker/*` 与阿里云
 `registry.cn-beijing.aliyuncs.com/dc3/*`。**依赖镜像** `dc3-postgres` 与 `dc3-rabbitmq` 由 `docker-compose-db.yml`
-本地构建，**不发布**——swarm / k8s / helm 形态需要先构建并推送到你自己的仓库。`push-images.sh` 要求本地能完整构建
+本地构建，当前发布 CI 不再发布它们（Docker Hub 上仅留存 `2026.5` 线及更早的历史 tag）——swarm / k8s / helm 形态需要先构建并推送到你自己的仓库。`push-images.sh` 要求本地能完整构建
 全部镜像（JDK/Maven 环境、充足磁盘），并具备向目标仓库推送的凭证：
 
 ```bash
@@ -91,7 +95,7 @@ kubectl apply -k dc3/deploy/k8s
 kubectl -n dc3 get pods -w
 ```
 
-> 注意：主仓库当前 git 跟踪着一份弱默认值的 `secret.env`——`cp` 覆盖本地文件即可，改完的真实值不要提交回去。
+> 注意：git 只跟踪模板 `secret.env.example`，`secret.env` 本身已被主仓库 `.gitignore` 排除——`cp` 出副本后填入强随机值即可，真实值不会被误提交。
 
 ## 形态五：Helm
 
@@ -146,8 +150,9 @@ CI 的 `PROFILE=pro` 只是构建参数（Maven `-P pro`）；**运行时 Spring
 4. **高可用**：PostgreSQL 主备或托管实例 + RabbitMQ 集群；swarm/k8s 多节点时有状态卷放共享存储。
 5. **可观测**：叠加 [可观测性](./observability)（Prometheus + Grafana + ELK），对就绪/存活探针告警。
 6. **网络**：出口收敛（中心只需访问 LLM 端点）、后端端口不映射宿主；k8s 开启 Pod Security Admission `baseline`（manifests 未内置，需自行 `kubectl label ns dc3 pod-security.kubernetes.io/enforce=baseline`）。
-7. **API 面**：Swagger/OpenAPI 只在 `pro` profile 下关闭（构建参数不决定运行行为，见上方 warning），上线前确认
-   `NODE_ENV=pro` 已生效、且无调试端点可达。
+7. **API 面**：Swagger/OpenAPI 的防护在 `pre` 与 `pro` 两个 profile 下同样生效——api-docs 开着而未配置内部签名
+   （`dc3.docs.internal-signature-enabled` + 内部 HMAC 密钥）时服务直接拒绝启动（构建参数不决定运行行为，见上方
+   warning）。上线前确认 `NODE_ENV` 已设为 `pre`/`pro`、且无调试端点可达。
 
 ## 常见问题
 

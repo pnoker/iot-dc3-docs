@@ -23,20 +23,21 @@ pnpm preview      # 预览构建产物
 ├── public/          # 静态资源（图片、CNAME、versions.json 等）
 ├── zh/              # 中文文档
 ├── en/              # English docs
-├── dc3/doc/         # CHANGE.md / USAGE.md 快照（见下）
+├── dc3/doc/         # CHANGE.md / USAGE.md / DEPLOYMENT.md 快照（见下）
 └── index.md         # 语言入口（按浏览器语言重定向到 /zh/ 或 /en/）
 ```
 
 ## 与上游 iot-dc3 的关系
 
-本仓库**完全独立**，构建时不依赖主仓库。两份内容以快照形式存在于 `dc3/doc/`：
+本仓库**完全独立**，构建时不依赖主仓库。三份内容以快照形式存在于 `dc3/doc/`：
 
 | 文件 | 上游来源 | 说明 |
 | --- | --- | --- |
 | `dc3/doc/CHANGE.md` | iot-dc3 的 `make changelog` 生成 | 每次发版更新，需手动同步 |
 | `dc3/doc/USAGE.md` | iot-dc3 手动维护 | make 快捷命令与镜像坐标 |
+| `dc3/doc/DEPLOYMENT.md` | iot-dc3 手动维护 | 生产部署文档 |
 
-iot-dc3 发版后，手动刷新这两份快照：
+iot-dc3 发版后，手动刷新这三份快照：
 
 ```bash
 ./scripts/sync-external.sh

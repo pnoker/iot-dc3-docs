@@ -170,12 +170,13 @@ auth/tenancy and LLM/tool-calling capabilities. Point values ultimately land in 
 become queryable — the concrete form of the cloud-side "data service."
 
 **Facade mode = the edge/cloud division switch.** Calls between center services are written against the contract
-interfaces in `dc3-common-facade-api`; at runtime `DC3_FACADE_MODE` picks the implementation: [
+interfaces in `dc3-common-facade-api`; at runtime `dc3.facade.{auth,manager,data}.mode` picks the implementation
+per target: [
 `grpc` (the distributed default)](../architecture/facade-modes) makes each center its own process collaborating across
 processes — fitting a "centers centralized in the cloud, drivers scattered at the edge" topology; `local` (single
 process) collapses all centers into one process on one machine, fitting local and small single-host setups. In other
 words, "how edge and cloud divide the work, distributed or not" is collapsed in DC3 into one deployment flag, not two
-codebases — the same business logic switches between the two shapes by changing `DC3_FACADE_MODE`.
+codebases — the same business logic switches between the two shapes by changing `dc3.facade.*.mode`.
 
 ::: tip Mapping this chapter's concepts onto DC3
 
@@ -184,7 +185,7 @@ codebases — the same business logic switches between the two shapes by changin
 - Cloud-side "device metadata management" → Manager Center `dc3-center-manager`
 - Cloud-side "connection/state management" (online-offline, lease expiry) → Data Center `dc3-center-data`
 - Cloud-side "data service" → Data Center `dc3-center-data` + TimescaleDB
-- Edge/cloud division deployment switch → Facade mode `DC3_FACADE_MODE`
+- Edge/cloud division deployment switch → Facade mode `dc3.facade.{auth,manager,data}.mode`
   :::
 
 ::: info On the boundary of "edge autonomy"

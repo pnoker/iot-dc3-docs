@@ -2,13 +2,13 @@
 title: 常见问题
 ---
 
-# 常见问题（Q&A）
+# 常见问题
 
 ## 许可证与授权
 
 ### IoT DC3 使用什么开源协议？
 
-IoT DC3 基于 [AGPL-3.0](https://github.com/pnoker/iot-dc3/blob/release/LICENSE-AGPL.txt) 协议发布。
+IoT DC3 基于 [AGPL-3.0](https://github.com/pnoker/iot-dc3/blob/main/LICENSE-AGPL.txt) 协议发布。
 
 AGPL-3.0 的核心要求：如果你修改了平台代码并**通过网络提供服务**（包括
 SaaS、内部系统），你必须将修改后的完整源代码开源。如果只是内部使用、未分发、未通过网络提供服务，则无需开源。
@@ -80,6 +80,7 @@ SaaS、内部系统），你必须将修改后的完整源代码开源。如果�
 - **IoT/无线**：MQTT、CoAP、LwM2M、HTTP、BLE、Zigbee、CAN、LoRaWAN、Kafka
 - **串口/通用网络**：Serial、TCP/UDP
 - **数据库**：MySQL、PostgreSQL、Oracle、SQL Server、Redis
+- **模拟/虚拟**：Virtual、Listening Virtual（开发调试与协议联调用）
 
 选择建议：先确定现场设备支持的协议，再看驱动能力矩阵（[驱动能力矩阵](../drivers/matrix)）确认所需读写/订阅能力是否满足。
 
@@ -122,9 +123,9 @@ PostgreSQL 数据备份：
 # 全量备份
 podman exec dc3-postgres pg_dumpall -U dc3 > backup.sql
 
-# 仅备份平台数据（不含 TimescaleDB 时序数据）
+# 仅备份平台数据（不含 TimescaleDB 时序数据，即排除 dc3_history）
 podman exec dc3-postgres pg_dump -U dc3 \
-  --schema=dc3_auth --schema=dc3_manager --schema=dc3_data > backup_platform.sql
+  --schema=dc3_auth --schema=dc3_manager --schema=dc3_data --schema=dc3_agentic > backup_platform.sql
 ```
 
 生产环境建议配置 pgBackRest 或 pg_dump 定时任务 + 异地存储。

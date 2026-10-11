@@ -44,23 +44,24 @@ Temperature Measurement `1026`, Relative Humidity `1029`), and each cluster hold
 
 Onboarding a Zigbee device involves two layers: **driver attributes (`driver-attribute`)** configure the coordinator
 side — one coordinator serves the whole Zigbee network; **point attributes (`point-attribute`)** locate each collected
-point to one specific ZCL attribute in the network. The fields in both tables come from the driver's `application.yml` (
-`dc3.driver.driver-attribute` / `point-attribute`); the defaults are the `default-value` entries in that yml.
+point to one specific ZCL attribute in the network. The fields in both tables come from the driver's
+`application.yml` (`dc3.driver.driver-attribute` / `point-attribute`); the defaults are the `default-value` entries
+in that yml.
 
 ### Driver attributes (device-level `driver-attribute`)
 
 These attributes are filled on the [Device](../introduction/concepts/device) and describe how the coordinator dongle on
-this host connects and which Zigbee network it joins. `serialPort` and `baudRate` define the serial connection,
-`dongleType` selects the coordinator adapter, and `panId` and `channel` decide which network and channel to join (`0`
-means auto).
+this host connects and which Zigbee network it joins. `serialPort` and `baudRate` define the serial connection and
+`dongleType` selects the coordinator adapter; `panId` and `channel` are reserved attributes (the current build does not
+read them when forming the network — the coordinator's own stored parameters apply; semantically `0` means auto).
 
-| Attribute   | code         | Type   | Default        | Description                                        |
-|-------------|--------------|--------|----------------|----------------------------------------------------|
-| Serial Port | `serialPort` | STRING | `/dev/ttyUSB0` | Zigbee coordinator serial port                     |
-| Baud Rate   | `baudRate`   | INT    | `115200`       | Serial port baud rate                              |
-| Dongle Type | `dongleType` | STRING | `TELEGESIS`    | Coordinator dongle type (TELEGESIS, EMBER, CONBEE) |
-| PAN ID      | `panId`      | INT    | `0`            | PAN ID (0=auto)                                    |
-| Channel     | `channel`    | INT    | `0`            | Channel (0=auto, 11-26)                            |
+| Attribute   | code         | Type   | Default        | Description                                                          |
+|-------------|--------------|--------|----------------|----------------------------------------------------------------------|
+| Serial Port | `serialPort` | STRING | `/dev/ttyUSB0` | Zigbee coordinator serial port                                       |
+| Baud Rate   | `baudRate`   | INT    | `115200`       | Serial port baud rate                                                |
+| Dongle Type | `dongleType` | STRING | `TELEGESIS`    | Coordinator dongle type (only TELEGESIS in this build; EMBER/CONBEE reserved) |
+| PAN ID      | `panId`      | INT    | `0`            | PAN ID (0=auto; not read by the current build)                       |
+| Channel     | `channel`    | INT    | `0`            | Channel (0=auto, 11-26; not read by the current build)               |
 
 ### Point attributes (`point-attribute`)
 
@@ -77,8 +78,13 @@ locate one ZCL attribute in the Zigbee network. `nodeIeeeAddress` picks the node
 
 ### Write command attributes (`command-attribute`)
 
-Writable points fill the same four-level addressing on the write command, but pointing at the target attribute to write.
-The fields share the names and meanings of the point attributes; they just feed the `write` path.
+`application.yml` declares four-level addressing fields with the same names as the point attributes under
+`command-attribute`, but they are currently **placeholder declarations**: `write()` only receives `pointConfig` (point
+attributes) in its signature — never command attributes — and this driver does not override `execute()`, so the write
+path does not read them. Reading and writing share the same `nodeIeeeAddress` / `endpointId` / `clusterId` /
+`attributeId` on the **point attributes**; the write target is exactly the ZCL attribute the point addresses. The
+table below reproduces the yml declarations verbatim (the Description column is the yml remark wording — "for writing"
+states the design intent only and has no effect today):
 
 | Attribute         | code              | Type   | Default | Description              |
 |-------------------|-------------------|--------|---------|--------------------------|
@@ -110,8 +116,8 @@ correctly."
 The default serial port is `/dev/ttyUSB0` at baud rate `115200`. First confirm the dongle is plugged in, the host can
 see the serial device (e.g. `ls /dev/ttyUSB*`), and the port is not held by another process. For containerized
 deployments, pass the host serial device through into the container (e.g. `--device=/dev/ttyUSB0`); otherwise the driver
-will never connect to the coordinator after startup. **Note**: in the current implementation the serial port and baud
-rate are hardcoded — see the implementation status below.
+will never connect to the coordinator after startup. If any of `serialPort` / `baudRate` / `dongleType` is missing, the
+first network start fails outright with `Driver Zigbee attribute 'xxx' is required to start the network`.
 :::
 
 ::: warning Node reports "node not found"
@@ -124,13 +130,13 @@ coordinator's Zigbee network (permit-join) before it can be addressed.
 ::: warning Endpoint / cluster / attribute not found
 An "endpoint/cluster/attribute not found" error means one level of the three-level addressing is wrong. The endpoint of
 a multi-function device is not necessarily `1`; the cluster ID must match the actual physical quantity (Temperature
-Measurement `1026`, Relative Humidity `1029`); the attribute ID must match the specific attribute under that cluster (
-Measured Value is often `0`). Use the coordinator tooling to inspect which endpoints and clusters the target node
+Measurement `1026`, Relative Humidity `1029`); the attribute ID must match the specific attribute under that cluster
+(Measured Value is often `0`). Use the coordinator tooling to inspect which endpoints and clusters the target node
 exposes, then fill the point attributes accordingly.
 
-The read path takes the **most recent cached value** of that ZCL attribute (`attribute.getLastValue()`). If the node has
-never reported the attribute, or attribute binding/reporting is not configured, you may read `0` (the default
-placeholder).
+The read path issues a **synchronous ZCL read** for that attribute (`attribute.readValue`, with a timeout): if the node
+is unreachable or does not answer, the read comes back empty and the driver returns the `0` placeholder instead of
+raising an error.
 :::
 
 ::: warning Data type mismatch
@@ -141,11 +147,11 @@ meaningless values. Verify the ZCL attribute's data type before configuring the 
 
 ::: warning Driver / device shows offline
 The driver-level health check depends on whether `networkManager` is initialized: the driver is offline while the
-coordinator is not connected. Device-level online state uses the lease mechanism described
-in [Device](../introduction/concepts/device) (health check cron `0/15 * * * * ?`, lease timeout `45 seconds`). Note that
-in the current implementation the device-level health check returns online whenever the device record is valid (no
-reachability check by IEEE address), so it cannot be used to tell whether an individual node is actually reachable — see
-the implementation status below.
+coordinator is not connected (or before the first network start has been triggered). Device-level online state uses the
+lease mechanism described in [Device](../introduction/concepts/device) (health check cron `0/15 * * * * ?`, lease
+timeout `45 seconds`). The device-level check resolves an IEEE address from the device's points and looks the node up in
+the coordinator's network: a node absent from the network (or a device whose points carry no valid address, or a network
+not yet established) is reported offline.
 :::
 
 ## How it lands in IoT DC3
@@ -155,34 +161,27 @@ the implementation status below.
 - **Collection cycle**: default cron `0/30 * * * * ?`, reading ZCL attributes every 30 seconds.
 - **Health / online**: the device health check defaults to cron `0/15 * * * * ?` with a `45-second` lease timeout;
   see [Device](../introduction/concepts/device) for the online-state mechanism.
-- **Read / write capability**: the read path takes the most recent cached value of the ZCL attribute on the coordinator
-  side (`attribute.getLastValue()`) rather than synchronously polling the device over the air on every read; this
-  differs from request-response drivers such as `ble` and `coap`.
-- **Subscribe capability (not implemented yet)**: `initial()` currently **only registers a coordinator network-state
-  listener** (`addNetworkStateListener`, which merely logs network UP/DOWN), and **does not listen for node joining (
-  node-join/announce) or ZCL attribute reports**, nor does it configure attribute binding/reporting. The cached value
-  the read path returns therefore depends on the node reporting on its own or on reporting being configured by external
-  tooling — the driver itself does not capture join or report events, so the "subscribe" column for Zigbee in
-  the [driver capability matrix](./matrix) is marked as not implemented.
+- **Read / write capability**: the read path issues a **synchronous ZCL read** for the attribute
+  (`attribute.readValue`, with a timeout; an empty answer yields the `0` placeholder), and the write path genuinely
+  writes the value to the ZCL attribute (`attribute.writeValue`) and validates the ZCL write acknowledgement
+  (`CommandResult`) — a rejection or timeout raises an error, so a successful write command means the acknowledgement
+  check passed.
+- **Subscribe capability (not implemented yet)**: the driver **only registers a coordinator network-state listener**
+  (`addNetworkStateListener` in `ensureNetwork()` at first network start, which merely logs network UP/DOWN), and
+  **does not listen for node joining
+  (node-join/announce) or ZCL attribute reports**, nor does it configure attribute binding/reporting. Node joins and
+  attribute reports therefore never become point values — the "subscribe" column for Zigbee in
+  the [driver capability matrix](./matrix) is marked as not implemented accordingly.
 
-::: warning Work in progress (skeleton)
-This driver is currently a **skeleton** — protocol-level I/O is not yet fully implemented. Treat it as an onboarding
-template, not a production-ready driver. There are several `TODO` markers in the method bodies; the key limitations are:
+::: warning Local limitations: dongle support, reserved attributes, and subscription
+The core read/write path is ready (implementation status: usable), but mind these boundaries:
 
-- **Serial port and baud rate are hardcoded**: `initial()` hardcodes `/dev/ttyUSB0` and `115200` and **does not read**
-  the `serialPort` / `baudRate` driver attributes. If the coordinator is not on `/dev/ttyUSB0`, you must first wire up
-  the configuration-reading logic, otherwise the attributes have no effect.
-- **Only the Telegesis adapter is bundled**: the code only imports and uses `ZigBeeDongleTelegesis`, so a `dongleType`
-  of `EMBER` / `CONBEE` will not switch the adapter yet.
-- **Device-level health check always online**: `health(driverConfig, device)` returns online whenever the device record
-  is valid (it only returns offline when the device or its id is null) and does not actually verify node reachability by
-  IEEE address.
-  :::
-
-::: warning The write command does not actually dispatch yet
-The write path (`writeAttribute`) validates that the node / endpoint / cluster / attribute exist, but only logs a line —
-it **does not actually write the value to the ZCL attribute**. Until the write capability is completed, a point with a
-write command will appear to succeed while the device state stays unchanged — do not rely on it for real control.
+- **Only the Telegesis coordinator is bundled in this build**: the code ships only the `ZigBeeDongleTelegesis` adapter;
+  a `dongleType` of `EMBER` / `CONBEE` fails network start outright with `Driver Zigbee dongle type 'xxx' has no
+  adapter in this build`.
+- **`panId` / `channel` are not read yet**: these driver attributes do not take part in network formation — the
+  coordinator's own stored network parameters apply (see the attribute table).
+- **Subscribe is not implemented**: no node-join or ZCL attribute report listening; see "Subscribe capability" above.
 :::
 
 ## Further reading

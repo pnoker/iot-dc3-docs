@@ -25,7 +25,7 @@ title: 术语表
 | 管理中心 | Manager Center · `dc3-center-manager` | 元数据管理（驱动 / 模板 / 设备 / 位号）。详见 [服务清单](../architecture/services)                   | 中心服务  |
 | 数据中心 | Data Center · `dc3-center-data`       | 位号值落库与命令分发。详见 [数据平面](../architecture/data-plane)                               | 中心服务  |
 | 智能中心 | Agentic Center · `dc3-center-agentic` | LLM 对话与工具调用。详见 [服务清单](../architecture/services)                                | 中心服务  |
-| 指令   | Command                               | 点位级的读写动作走位号读写链路；"自定义指令"是设备级动作，走 `dc3.e.command` 交换机。详见 [指令](./concepts/command)                  | 元数据   |
+| 指令   | Command                               | 位号级的读写动作走位号读写链路；"自定义指令"是设备级动作，走 `dc3.e.command` 交换机。详见 [指令](./concepts/command)                  | 元数据   |
 | 事件   | Event                                 | 设备或系统上报的一次性事实，可触发告警。详见 [事件](./concepts/event)                                  | 元数据   |
 | 物模型  | Thing Model                           | 模板承载的设备能力描述（位号 / 指令 / 事件三件套），对标 IoT 行业"物模型"。见 [模板](./concepts/profile)                 | 元数据   |
 | 主体   | Principal                             | 租户内可被授权的实体（用户、服务账号等）。见 [租户](./concepts/tenant)                                | 横切    |
@@ -68,7 +68,7 @@ title: 术语表
 
 | 名称 · 标识                | 类型           | 说明                                                               | 所属  |
 |------------------------|--------------|------------------------------------------------------------------|-----|
-| `dc3.driver.code`      | 驱动路由标识       | 驱动的稳定路由标识，用于消息总线寻址；为稳定标识不可随意改                                    | 驱动  |
+| `dc3.driver.code`      | 驱动业务编码       | 驱动在租户内的稳定业务编码（`(tenant_id, driver_code)` 唯一），用于注册身份与识别，稳定标识不可随意改；消息总线寻址用的是驱动服务名 `dc3.driver.service`（`{租户}/{应用名}`），与它无关 | 驱动  |
 | `dc3.e.value`          | RabbitMQ 交换机 | 位号值上报走的交换机，驱动把采集封装为 `PointValue` 发往此处                            | 数据流 |
 | `dc3.e.command`                  | AMQP      | 设备级自定义指令的发布/回执（数据中心）                                            | 指令  |
 | `dc3.e.point_command`  | RabbitMQ 交换机 | 读写命令下发走的交换机，数据中心据此把命令路由到对应驱动                                     | 命令流 |

@@ -135,14 +135,15 @@ public record PointCommandDTO(
 
 ## 命令的 RabbitMQ 拓扑
 
-命令链路用两组交换机/队列：一组把命令从数据中心送到对应驱动，一组把回执从驱动送回数据中心。命令队列按驱动 `serviceName`
-分队，带 30 秒 TTL 与死信交换机；结果队列带 60 秒 TTL。
+命令链路用两组交换机/队列：一组把命令从数据中心送到对应驱动，一组把回执从驱动送回数据中心。命令队列按驱动实例分队（队列名后缀取
+`dc3.driver.client`，路由键按 `服务名.节点` 定向），带 30 秒 TTL、死信交换机与租约联动的队列过期；结果队列带 60 秒 TTL。
 
 <CommandFlowDiagram lang="zh" />
 
-命令队列 `dc3.q.point_command.{serviceName}` 是 durable、`ttl(30000)`，死信指向 `dc3.e.point_command_dead`
-——两条路径会进死信：一是命令在驱动侧 30 秒内没被消费（TTL 到期），二是基本校验失败时驱动直接 `reject`（不重投）把消息打入
-DLX；两者都不在原队列无限滞留。回执走 `dc3.e.point_command_result`（topic），结果队列 `dc3.q.point_command_result` 为
+命令队列 `dc3.q.point_command.<client>`（绑定路由键 `dc3.r.point_command.<服务名>.<节点>`）是 durable、`ttl(30000)`，死信指向
+`dc3.e.point_command_dead`
+——两条路径会进死信：一是命令在驱动侧 30 秒内没被消费（TTL 到期），二是基本校验失败时驱动直接拒绝（不重投）把消息打入
+DLX；两者都不在原队列无限滞留，驱动离线后其队列也会按 `x-expires`（默认 5 分钟）自动删除。回执走 `dc3.e.point_command_result`（topic），结果队列 `dc3.q.point_command_result` 为
 `ttl(60000)`，由数据中心的 `PointCommandResultReceiver` 消费：按 `commandId` 查到历史记录，写入终态 `status`、
 `responseValue`、`errorCode` / `errorMessage` 与 `finishTime`。
 
@@ -158,7 +159,7 @@ DLX；两者都不在原队列无限滞留。回执走 `dc3.e.point_command_resu
 curl -X POST http://localhost:8000/api/v3/data/point_command/write \
   -H "X-Auth-Tenant: <tenant>" \
   -H "X-Auth-Login: <login>" \
-  -H "X-Auth-Token: <token>" \
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}' \
   -H "Content-Type: application/json" \
   -d '{"deviceId": 1024, "pointId": 2048, "value": "25.5"}'
 # → {"code":"...","data":"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d", ...}
@@ -169,7 +170,7 @@ curl -X POST http://localhost:8000/api/v3/data/point_command/write \
 curl "http://localhost:8000/api/v3/data/point_command_history/get_by_command_id?commandId=9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d" \
   -H "X-Auth-Tenant: <tenant>" \
   -H "X-Auth-Login: <login>" \
-  -H "X-Auth-Token: <token>"
+  -H 'X-Auth-Token: {"salt":"<salt>","token":"<token>"}'
 ```
 
 :::

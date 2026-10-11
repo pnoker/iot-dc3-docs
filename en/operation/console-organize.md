@@ -10,7 +10,7 @@ Once devices multiply you need to organize them by business meaning: groups give
 
 ## Group management
 
-**Settings → Group Management** maintains `dc3_group`: groups are created per **entity type** (driver / profile / point / device etc., `entity_type_flag`) and support **parent nesting** (`parent_group_id`, 0 = top level) — e.g. a device tree like "Plant 1 → Line A → Filling section".
+**Settings → Metadata → Groups** maintains `dc3_group`: groups are created per **entity type** (driver / profile / point / device etc., `entity_type_flag`) and support **parent nesting** (`parent_group_id`, 0 = top level) — e.g. a device tree like "Plant 1 → Line A → Filling section".
 
 - Group names are **unique** within tenant + entity type + parent (enforced by a unique index);
 - The detail tab shows the group's info and members (bindings stored in `dc3_group_bind`);
@@ -18,14 +18,14 @@ Once devices multiply you need to organize them by business meaning: groups give
 
 ## Label management
 
-**Settings → Label Management** maintains `dc3_label`: the **cross-cutting** counterpart to groups — name + **color** (default `#F4F4F5`) + entity type; one device can carry many labels (`dc3_label_bind`).
+**Settings → Metadata → Labels** maintains `dc3_label`: the **cross-cutting** counterpart to groups — name + **color** (default `#F4F4F5`) + entity type; one device can carry many labels (`dc3_label_bind`).
 
 - A group is "one tree" (each entity sits in one place); a label is many-to-many (many labels per entity, many entities per label);
 - Typical use: dimensions like `critical`, `pending-maintenance`, `high-energy` that cut across groups — colored tags make them obvious in list views.
 
 ## Service accounts
 
-**Accounts & Identity → Service Accounts** (`ServiceAccountController`): identity principals for **programs** — scripts, cron jobs, the CLI, external agents shouldn't share a human's account.
+**Settings → Accounts & Identity → Service Accounts** (`ServiceAccountController`): identity principals for **programs** — scripts, cron jobs, the CLI, external agents shouldn't share a human's account.
 
 - Create the account, assign roles (RBAC works the same as for users); the credential policy is stored in `credentialPolicyExt`;
 - Difference from users: no interactive login session; credentials rotate per policy; audit entries record the service-account identity;
@@ -33,7 +33,7 @@ Once devices multiply you need to organize them by business meaning: groups give
 
 ## Identity audit
 
-**Accounts & Identity → Identity Audit** (`IdentityAuditLog`): the full ledger of identity-related operations — who created/changed/deleted users, roles, bindings, and service accounts, when; login and password-change events land here too.
+**Settings → Audit → Identity Audit** (same group as MCP Audit; `IdentityAuditLog`): the full ledger of identity-related operations — who created/changed/deleted users, roles, bindings, and service accounts, when; login and password-change events land here too.
 
 - Questions like "when was this permission granted" and "why is this account locked" are answered by tracing here;
 - Audit records are tenant-isolated, same semantics as business data.
@@ -45,7 +45,7 @@ Once devices multiply you need to organize them by business meaning: groups give
 | Group CRUD | manager center `…/group/*`, `…/group_bind/*` | Two interfaces: groups and memberships |
 | Label CRUD | manager center `…/label/*`, `…/label_bind/*` | Same shape |
 | Service account mgmt | auth center `…/service_account/*` | Includes credential policy |
-| Audit query | auth center `…/audit_log/*` (identity domain) | Filter by time/principal |
+| Audit query | auth center `POST …/identity_audit/list` | Filter by principal/action/resource type/outcome; cursor paging |
 
 ## Further reading
 

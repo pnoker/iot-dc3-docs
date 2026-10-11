@@ -75,11 +75,18 @@ tolerated.
 
 ## Reporting
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through either of these channels:
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through any of these channels:
 
-1. **Email a maintainer** — write to [pnokers@icloud.com](mailto:pnokers@icloud.com) with `Code of Conduct` in the
+1. **Open an issue / contact a maintainer** — open an issue
+   on [GitHub Issues](https://github.com/pnoker/iot-dc3/issues) or contact one or more project maintainers directly,
+   matching how the repository-root `CODE_OF_CONDUCT.md` says to report.
+2. **Email a maintainer** — write to [pnokers@icloud.com](mailto:pnokers@icloud.com) with `Code of Conduct` in the
    subject line for prompt triage.
-2. **Direct message** — contact the maintainer (@pnoker) through GitHub or Gitee private messages.
+3. **Direct message** — contact the maintainer (@pnoker) through GitHub or Gitee private messages.
+
+For reports that involve privacy or sensitive matters, prefer the private channels (email / direct message) and avoid
+disclosing personal details in a public issue — that is a stricter recommendation on this site than the repository's
+original text.
 
 All reports will be reviewed and investigated **promptly and fairly**. The outcome will be shared with the reporter
 (if the reporter provided contact information); privacy-sensitive details will not be disclosed publicly.

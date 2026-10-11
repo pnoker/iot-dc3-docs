@@ -2,13 +2,13 @@
 title: FAQ
 ---
 
-# FAQ (Q&A)
+# FAQ
 
 ## Licensing
 
 ### What open-source license does IoT DC3 use?
 
-IoT DC3 is released under the [AGPL-3.0](https://github.com/pnoker/iot-dc3/blob/release/LICENSE-AGPL.txt) license.
+IoT DC3 is released under the [AGPL-3.0](https://github.com/pnoker/iot-dc3/blob/main/LICENSE-AGPL.txt) license.
 
 The core requirement of AGPL-3.0: if you modify the platform code and **provide it as a network service** (including
 SaaS or internal systems), you must open-source the complete modified source code. Internal use without redistribution
@@ -78,13 +78,14 @@ JSONB, arrays, and range types are used in several places as well.
 
 ### What device protocols are supported? How do I choose?
 
-The platform includes **28 built-in driver modules**, covering:
+The platform includes **36 built-in driver modules**, covering:
 
 - **Industrial Bus / PLC**: Modbus TCP/RTU, OPC UA/DA, S7 (Siemens), MELSEC, FINS (Omron), EtherNet/IP
 - **SCADA / Power / Metering**: BACnet/IP, KNX, IEC 104, DNP3, IEC 61850, DLMS, DL/T645, M-Bus, SL651, SNMP
 - **IoT / Wireless**: MQTT, CoAP, LwM2M, HTTP, BLE, Zigbee, CAN, LoRaWAN, Kafka
 - **Serial / General Network**: Serial, TCP/UDP
 - **Database**: MySQL, PostgreSQL, Oracle, SQL Server, Redis
+- **Simulation / Virtual**: Virtual, Listening Virtual (for development, debugging, and protocol testing)
 
 Selection tip: first identify the protocols your field devices support, then check
 the [Driver Capability Matrix](../drivers/matrix) to confirm the required read / write / subscribe capabilities are met.
@@ -130,9 +131,9 @@ PostgreSQL data backup:
 # Full backup
 podman exec dc3-postgres pg_dumpall -U dc3 > backup.sql
 
-# Platform data only (exclude TimescaleDB time-series data)
+# Platform data only (exclude TimescaleDB time-series data, i.e. the dc3_history schema)
 podman exec dc3-postgres pg_dump -U dc3 \
-  --schema=dc3_auth --schema=dc3_manager --schema=dc3_data > backup_platform.sql
+  --schema=dc3_auth --schema=dc3_manager --schema=dc3_data --schema=dc3_agentic > backup_platform.sql
 ```
 
 For production, configure pgBackRest or scheduled pg_dump tasks with offsite storage.

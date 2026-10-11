@@ -62,6 +62,7 @@ import ProfileLifecycleDiagram from '../../../.vitepress/theme/components/Profil
 | `profileShareFlag` | ProfileShareTypeEnum | 共享范围，见下                                |
 | `profileTypeFlag`  | ProfileTypeEnum      | 创建来源，见下                                |
 | `version`          | Integer              | 模型版本，可查询、由人工设置                         |
+| `signature`        | String               | 数据签名（通用审计字段，与[驱动](./driver)等业务对象一致）     |
 | `profileExt`       | ProfileExt (JSON)    | 弱结构化扩展字段（设计上可承载 `category`、`tags` 等内容） |
 | `enableFlag`       | EnableFlagEnum       | 启停状态                                   |
 | `tenantId`         | Long                 | 归属的[租户](./tenant)                      |
@@ -120,14 +121,15 @@ import ProfileLifecycleDiagram from '../../../.vitepress/theme/components/Profil
 
 模板管理接口前缀 `/profile`（Manager 服务）：
 
-| 方法   | 路径                           | 说明        |
-|------|------------------------------|-----------|
-| POST | `/profile/add`               | 新增模板      |
-| POST | `/profile/update`            | 更新模板元数据   |
-| POST | `/profile/delete`            | 删除模板      |
-| GET  | `/profile/get_by_id`         | 按 ID 查询模板 |
-| POST | `/profile/list`              | 分页查询模板    |
-| GET  | `/profile/list_by_device_id` | 查某设备绑定的模板 |
+| 方法     | 路径                           | 说明              |
+|--------|------------------------------|-----------------|
+| POST   | `/profile/add`               | 新增模板            |
+| POST   | `/profile/update`            | 更新模板元数据         |
+| DELETE | `/profile/delete`            | 删除模板            |
+| GET    | `/profile/get_by_id`         | 按 ID 查询模板       |
+| POST   | `/profile/list_by_ids`       | 按 ID 集合批量查询模板   |
+| POST   | `/profile/list`              | 分页查询模板          |
+| GET    | `/profile/list_by_device_id` | 查某设备绑定的模板       |
 
 ## 延伸阅读
 

@@ -54,7 +54,7 @@ LoRaWAN devices send uplinks through a gateway to a network server (ChirpStack).
 
 ::: info Implementation status: available
 
-The MQTT connection is established lazily on first read/write, so startup tolerates a temporarily unreachable broker; `messageArrived` parses `deviceInfo.devEui`, `data`, and the Cayenne LPP `object`.
+The MQTT connection is established lazily on the first write (`read()` only consults the cache and never connects), so startup tolerates a temporarily unreachable broker; `messageArrived` parses `deviceInfo.devEui`, `data`, and the Cayenne LPP `object`.
 :::
 
 ## Minimal onboarding example

@@ -52,7 +52,7 @@ LoRaWAN 设备经网关上行到网络服务器（ChirpStack），ChirpStack 通
 
 ::: info 实现状态：可用
 
-MQTT 连接首次读写时惰性建立；messageArrived 解析 deviceInfo.devEui、data 与 Cayenne LPP object。
+MQTT 连接在第一次写值时惰性建立（`read()` 只查缓存、不建连）；messageArrived 解析 deviceInfo.devEui、data 与 Cayenne LPP object。
 :::
 
 ## 最小接入示例

@@ -38,16 +38,16 @@ cluster（簇）→ attribute（ZCL 属性）** 三级定位某个具体的数�
 ### 驱动属性（设备级 `driver-attribute`）
 
 这些属性配在[设备](../introduction/concepts/device)上，描述本机上那枚协调器 dongle 怎么连、组到哪张 Zigbee 网络里。
-`serialPort` 与 `baudRate` 决定串口连接，`dongleType` 决定用哪种协调器适配器，`panId` 与 `channel` 决定加入哪张网络的哪个信道（填
-`0` 表示自动）。
+`serialPort` 与 `baudRate` 决定串口连接，`dongleType` 决定用哪种协调器适配器；`panId` 与 `channel` 是预留属性（当前版本建网时
+不读取，网络沿用协调器自身存储的参数；语义上 `0` 表示自动）。
 
-| 属性          | code         | 类型     | 默认值            | 说明                                      |
-|-------------|--------------|--------|----------------|-----------------------------------------|
-| Serial Port | `serialPort` | STRING | `/dev/ttyUSB0` | Zigbee 协调器串口                            |
-| Baud Rate   | `baudRate`   | INT    | `115200`       | 串口波特率                                   |
-| Dongle Type | `dongleType` | STRING | `TELEGESIS`    | 协调器 dongle 类型（TELEGESIS, EMBER, CONBEE） |
-| PAN ID      | `panId`      | INT    | `0`            | PAN ID（0=自动）                            |
-| Channel     | `channel`    | INT    | `0`            | 信道（0=自动，11-26）                          |
+| 属性          | code         | 类型     | 默认值            | 说明                                        |
+|-------------|--------------|--------|----------------|-------------------------------------------|
+| Serial Port | `serialPort` | STRING | `/dev/ttyUSB0` | Zigbee 协调器串口                              |
+| Baud Rate   | `baudRate`   | INT    | `115200`       | 串口波特率                                     |
+| Dongle Type | `dongleType` | STRING | `TELEGESIS`    | 协调器 dongle 类型（本构建仅支持 TELEGESIS，EMBER/CONBEE 预留） |
+| PAN ID      | `panId`      | INT    | `0`            | PAN ID（0=自动；当前版本未读取）                    |
+| Channel     | `channel`    | INT    | `0`            | 信道（0=自动，11-26；当前版本未读取）                  |
 
 ### 位号属性（`point-attribute`）
 
@@ -63,7 +63,10 @@ cluster（簇）→ attribute（ZCL 属性）** 三级定位某个具体的数�
 
 ### 写命令属性（`command-attribute`）
 
-可写位号在写命令上填同样的四级定位，但指向要写入的目标属性。字段与位号属性同名同义，只是用于 `write` 路径。
+`application.yml` 在 `command-attribute` 里声明了与位号属性同名的四级定位字段，但它们当前是**占位声明**：`write()` 的签名只接收
+`pointConfig`（位号属性），并不传入命令属性，本驱动也未覆写 `execute()`，因此写入时这组属性不会被读取——写入和读取共用**位号属性**上的同一份
+`nodeIeeeAddress` / `endpointId` / `clusterId` / `attributeId`，写入目标就是该位号定位到的 ZCL 属性。下表照录 yml 的声明（说明列即 yml
+的 remark 措辞，"写入目标"指其**设计意图**，当前并不会生效）：
 
 | 属性                | code              | 类型     | 默认值 | 说明                |
 |-------------------|-------------------|--------|-----|-------------------|
@@ -90,7 +93,8 @@ cluster（簇）→ attribute（ZCL 属性）** 三级定位某个具体的数�
 ::: warning 协调器找不到 / 串口被占
 默认串口是 `/dev/ttyUSB0`、波特率 `115200`。先确认 dongle 已插好、宿主能看到串口设备（如 `ls /dev/ttyUSB*`
 ），且该串口没有被其他进程占用。容器化部署时，需把宿主串口设备透传进容器（如 `--device=/dev/ttyUSB0`），否则驱动启动后会一直连不上协调器。
-**注意**：当前实现的串口与波特率是硬编码的，见下文实现状态。
+`serialPort` / `baudRate` / `dongleType` 任一缺失时，首次建网会直接报 `Driver Zigbee attribute 'xxx' is required
+to start the network`。
 :::
 
 ::: warning 节点报 "node not found"
@@ -102,8 +106,7 @@ cluster（簇）→ attribute（ZCL 属性）** 三级定位某个具体的数�
 报 "endpoint/cluster/attribute not found" 说明三级寻址某一级填错。多功能设备的端点不一定是 `1`；簇 ID 要对应实际物理量（温度测量
 `1026`、相对湿度 `1029`）；属性 ID 要对应该簇下的具体属性（测量值常为 `0`）。先用协调器工具查清目标节点暴露的端点与簇，再回填位号属性。
 
-读路径取的是该 ZCL 属性的**最近缓存值**（`attribute.getLastValue()`）。若节点尚未上报过该属性、或属性绑定/上报未配置，可能读到
-`0`（默认占位）。
+读路径对该属性发起一次**同步 ZCL 读**（`attribute.readValue`，带超时）：节点不可达或无应答时读到空值，驱动以 `0` 占位返回，不会显式报错。
 :::
 
 ::: warning 数据类型对不上
@@ -113,9 +116,9 @@ cluster（簇）→ attribute（ZCL 属性）** 三级定位某个具体的数�
 
 ::: warning 驱动 / 设备显示离线
 驱动级健康检查依赖 `networkManager`
-是否已初始化：协调器没连上时驱动级为离线。设备级在线态见[设备](../introduction/concepts/device)的租约机制（健康检查 cron
-`0/15 * * * * ?`、租约超时 `45 秒`）。注意当前实现中设备记录有效时设备级健康检查固定返回在线（未按 IEEE
-地址做可达性校验），不能据此判断单个节点是否真实可达，见下文实现状态。
+是否已初始化：协调器没连上（或尚未触发首次建网）时驱动级为离线。设备级在线态见[设备](../introduction/concepts/device)的租约机制（健康检查
+cron `0/15 * * * * ?`、租约超时 `45 秒`）。设备级健康会按该设备位号上能解析到的 IEEE
+地址查协调器网络中的已知节点：节点不在网络中（或位号上没填有效地址、网络尚未建立）即判离线。
 :::
 
 ## 在 IoT DC3 中如何落地
@@ -124,26 +127,22 @@ cluster（簇）→ attribute（ZCL 属性）** 三级定位某个具体的数�
 - **采集周期**：默认 cron `0/30 * * * * ?`，每 30 秒读一轮 ZCL 属性。
 - **健康/在线**：设备健康检查默认 cron `0/15 * * * * ?`，租约超时 `45 秒`
   ，在线状态机制见[设备](../introduction/concepts/device)。
-- **读 / 写能力**：读路径取协调器侧 ZCL 属性的最近缓存值（`attribute.getLastValue()`），而非每次都同步轮询设备空口；这与请求-响应式驱动（如
-  `ble`、`coap`）不同。
-- **订阅能力（尚未实现）**：`initial()` 目前**只注册了协调器网络状态监听器**（`addNetworkStateListener`，仅记录网络 UP/DOWN
+- **读 / 写能力**：读路径对该 ZCL 属性发起**同步 ZCL 读**（`attribute.readValue`，带超时；空值以 `0`
+  占位），写路径真正把值写入 ZCL 属性（`attribute.writeValue`）并校验 ZCL 写回执
+  （`CommandResult`），被设备拒绝或超时都会抛错——写命令返回成功即代表写回执校验通过。
+- **订阅能力（尚未实现）**：驱动**只注册了协调器网络状态监听器**（首次建网时 `ensureNetwork()` 里的
+  `addNetworkStateListener`，仅记录网络 UP/DOWN
   日志），**并未监听节点入网（node-join/announce）或 ZCL 属性上报**
-  ，也未配置属性绑定/上报（binding/reporting）。因此读路径取到的缓存值依赖节点自行上报或外部工具配置上报，驱动本身不会捕获入网与上报事件——[驱动能力矩阵](./matrix)
+  ，也未配置属性绑定/上报（binding/reporting）。因此节点入网与属性上报不会形成位号值——[驱动能力矩阵](./matrix)
   中 Zigbee 的"订阅"一栏据此标注为未实现。
 
-::: warning 当前为骨架实现（Work in Progress）
-该驱动目前是**骨架版本**，协议层 I/O 尚未完整实现，请按"接入模板"而非生产可用驱动看待。源码方法体中有多处 `TODO` 标记，关键限制如下：
+::: warning 局部局限：dongle 支持、预留属性与订阅
+核心读写链路已可用（实现状态：可用），但以下边界仍需注意：
 
-- **串口与波特率被硬编码**：`initial()` 写死了 `/dev/ttyUSB0` 与 `115200`，**不读取** `serialPort` / `baudRate`
-  驱动属性。若协调器不在 `/dev/ttyUSB0`，需先补齐配置读取逻辑，否则填了属性也不生效。
-- **只打包了 Telegesis 适配器**：代码只引入并使用 `ZigBeeDongleTelegesis`，`dongleType` 填 `EMBER` / `CONBEE` 暂不会切换适配器。
-- **设备级健康检查恒在线**：`health(driverConfig, device)` 在设备记录有效时固定返回在线（仅当 device 或其 id 为空才返回离线），未真正按
-  IEEE 地址校验节点可达性。
-  :::
-
-::: warning 写命令当前不真正下发
-写路径（`writeAttribute`）会校验节点 / 端点 / 簇 / 属性是否存在，但只记一条日志，**不会真正把值写到 ZCL 属性**
-。在写能力补全前，配置了写命令的位号会"看似成功"但设备状态不变——不要依赖它做实际控制。
+- **本构建仅支持 Telegesis 协调器**：代码只打包了 `ZigBeeDongleTelegesis` 适配器，`dongleType` 填 `EMBER` / `CONBEE`
+  建网时会直接报 `Driver Zigbee dongle type 'xxx' has no adapter in this build`。
+- **`panId` / `channel` 当前未读取**：这两个驱动属性不参与建网，协调器沿用自身存储的网络参数（见属性表说明）。
+- **订阅未实现**：不监听节点入网与 ZCL 属性上报，见上文"订阅能力"。
 :::
 
 ## 延伸阅读

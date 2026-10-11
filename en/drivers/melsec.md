@@ -92,9 +92,11 @@ online detection:
 - **Acquisition cycle**: default cron `0/30 * * * * ?` (one read round every 30 seconds).
 - **Custom task**: default cron `0/5 * * * * ?` (the Melsec driver currently has no custom task; `schedule()` is an
   empty implementation and the schedule slot is reserved).
-- **Health / online**: device health check default cron `0/15 * * * * ?`, lease timeout `45 seconds` — the driver judges
-  online status by whether the TCP connection is alive; on a read/write exception it proactively disconnects and evicts
-  that connection from the cache, and the next acquisition round reconnects automatically.
+- **Health / online**: device health check default cron `0/15 * * * * ?`, lease timeout `45 seconds` — this driver
+  **implements no custom health check** and falls back to the interface default of **always online**, so the online
+  state does not reflect whether the TCP connection is alive; connection liveness can only be judged from read/write
+  behavior and logs. On a read/write exception it proactively disconnects and evicts that connection from the cache,
+  and the next acquisition round reconnects automatically.
   See [Device](../introduction/concepts/device) for the online-status mechanism.
 
 ## Troubleshooting

@@ -29,7 +29,7 @@ There's no single Compose file — the platform is split by responsibility into 
   auth/manager/data/agentic) from local `Dockerfile`s. Use it when you're changing backend code and need local
   debugging. The frontend isn't part of this stack — start it separately with `pnpm dev`.
 - **`app`** (`docker-compose.yml`): the prebuilt-image stack. It pulls remote images and runs them as-is, including
-  `dc3-web`, the gateway, the four centers, and a set of driver containers. Use it for evaluation, demos, and
+  `dc3-web`, the gateway, the four centers, and all 36 built-in driver containers. Use it for evaluation, demos, and
   production — no compilation, fast startup.
 - **`optional`** (`docker-compose-optional.yml`): observability and optional dependencies — EMQX,
   Elasticsearch/Logstash/Kibana, Prometheus, Grafana, APM, and several exporters. Add it when you need it; it doesn't
@@ -83,7 +83,7 @@ Variables for picking the stack and services:
 | `STACK`    | `dev`            | Pick the stack: `db` / `dev` / `app` / `optional`                                                             |
 | `SERVICES` | (empty = all)    | Operate only on the listed services, space-separated, e.g. `SERVICES="gateway agentic"`                       |
 | `GROUP`    | (empty)          | Predefined service group: `center` (the four centers) / `core` (centers + gateway) / `drivers` (driver group) |
-| `COMPOSE`  | `podman compose` | Container runtime (this repo standardizes on podman)                                                          |
+| `COMPOSE`  | auto-detected    | Container runtime: `docker compose` if available, else `podman compose`; override with `COMPOSE=podman compose` |
 
 `GROUP` is shorthand for `SERVICES` — `center` expands to `auth manager data agentic`, `core` adds `gateway`, and
 `drivers` expands to the built-in driver set. You can combine `SERVICES` and `GROUP`.
@@ -137,10 +137,15 @@ namespace Compose actually reads:
 Any other value fails with `Unsupported REGISTRY`. The image version is controlled by `DC3_IMAGE_TAG` (default `2026.9`) — apart from `dc3-web` (which only has `latest` and full-version tags, no series tag), services and dependency images share the same tag. In production, pin a specific version rather than
 `latest`.
 
+Since `2026.9`, `dc3-center-*` and `dc3-gateway` additionally have a GraalVM native image line (same image name, `-native` suffix on the tag, e.g. `dc3-center-auth:2026.9-native`) — millisecond-level startup and a smaller memory footprint; driver services still run on the JVM image line.
+
 ::: tip Pin a version before production
-The current image line on Docker Hub is `2026.9` (latest `2026.9.22`), matching the compose default — the `app` stack
-comes up out of the box. For production, still pin `DC3_IMAGE_TAG` to an exact patch version (e.g. `2026.9.22`) in the
-root `.env` instead of riding the series tag.
+The latest released line on Docker Hub is `2026.10` (latest patch `2026.10.9`, pushed 2026-10-08, with `latest`
+pointing at it and `-native` variants available); the repo default is `DC3_IMAGE_TAG=2026.9`, identical in
+`.env.example` and the Compose fallback — both come up out of the box. For production, still pin `DC3_IMAGE_TAG` to an
+exact patch version (e.g. `2026.10.9`) in the root `.env` instead of riding the series tag. Note the app image line
+jumped from `2025.9.3` straight to `2026.9` (no `2026.5`/`2026.6` tags ever existed): an older checkout whose
+`.env.example` says `2026.6` will fail to pull images — bump it to `2026.9` or newer.
 :::
 
 ::: code-group
@@ -163,7 +168,8 @@ set.
 
 ::: warning Makefile uses REGISTRY, Compose uses DC3_IMAGE_REGISTRY
 Don't confuse the two. `REGISTRY=auto|global|cn` is the `make` selector; it injects the matching `DC3_IMAGE_REGISTRY`
-namespace into Compose. When you run `podman compose` directly, set `DC3_IMAGE_REGISTRY` yourself.
+namespace into Compose. When you run `docker compose` or `podman compose` directly, set `DC3_IMAGE_REGISTRY` yourself
+(the Makefile auto-detects the runtime via `COMPOSE`, preferring `docker compose`).
 :::
 
 ## After the stack is up: seed data and external verification
@@ -173,7 +179,8 @@ the frontend `dc3-web` (default `http://127.0.0.1:8080`). To hit the API from th
 gateway — but the gateway isn't exposed in the `app` stack, so this is usually done under the `dev` stack (which
 publishes 8000). Login is two steps: first `POST /api/v3/auth/token/salt` to get the salt, then
 `POST /api/v3/auth/token/generate` to trade it for a token valid for 12 hours. After that, requests carry the three auth
-headers `X-Auth-Tenant` / `X-Auth-Login` / `X-Auth-Token`.
+headers `X-Auth-Tenant` / `X-Auth-Login` / `X-Auth-Token` (the `X-Auth-Token` value is JSON `{"salt":"...","token":"..."}`,
+not a bare token).
 
 ```bash
 # Only available under the dev stack where the gateway is exposed; all values are examples, replace with your own tenant/account
@@ -183,10 +190,10 @@ curl -s -X POST http://127.0.0.1:8000/api/v3/auth/token/salt \
   -d '{"tenant":"default","name":"dc3"}'
 # → returns a salt string (example; use within 5 minutes)
 
-# 2) Hash the password with the salt to exchange for a token (public), returning an access token valid for 12 hours
+# 2) Submit the plaintext password together with the salt to exchange for a token (public; the salt does not hash the password — verification happens server-side), returning an access token valid for 12 hours
 curl -s -X POST http://127.0.0.1:8000/api/v3/auth/token/generate \
   -H 'Content-Type: application/json' \
-  -d '{"tenant":"default","name":"dc3","salt":"<from previous step>","password":"<hashed password>"}'
+  -d '{"tenant":"default","name":"dc3","salt":"<from previous step>","password":"<plaintext password>"}'
 ```
 
 When the database starts for the first time on an **empty data volume**, the `dc3-postgres` entrypoint runs the **7 seed
