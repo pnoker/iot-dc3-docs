@@ -81,7 +81,7 @@ Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不�
 `AgenticModelProviderTypeEnum.ANTHROPIC`（`provider_type=1`）经 spring-ai-anthropic 与官方 SDK 直连 Anthropic API
 （`ChatClientFactory` 直接构建 `AnthropicChatModel`）。
 
-对运维人员而言，这意味着选择自由：先用云端模型方便上手，再切换到自托管模型保证数据主权，
+对运维人员来说，选择权在自己手上：先用云端模型方便上手，再切换到自托管模型保证数据主权，
 或者采用混合方案，敏感查询留在本地。Agentic Center 的 `dc3_model_provider` 表支持配置多个提供商，
 并可按会话切换。
 
@@ -114,7 +114,7 @@ Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不�
 
 3. **会话可跨重启持久化。** 每一轮——用户消息、工具调用、工具结果、助手回复——
    都落入 `dc3_message` 表。即使 Agentic Center 重启，消息存储（`ReactiveMessageStore.loadHistory`）
-   会回放最近 30 条消息（约合 15 轮对话，`historyWindowSize` 可配置），对话无缝恢复。这对跨小时的诊断会话至关重要。
+   会回放最近 30 条消息（约合 15 轮对话，`historyWindowSize` 可配置），对话接着聊，不用从头再来。这对跨小时的诊断会话至关重要。
 
 4. **模型永远看不到其他租户的数据。** 租户 ID 由网关注入（来自 JWT），而非由模型指定。
    即使提示词说"显示所有设备"，工具的 SQL 查询中带有 `WHERE tenant_id = ?`，
@@ -181,7 +181,7 @@ Agentic Center 出厂自带 12 个工具类，覆盖平台每个领域对象。�
 
 - **MCP ↔ Agentic 桥接。** MCP 外部 Agent 接入**已经上线**：网关 `POST /mcp` 的 OAuth 2.1 +
   JSON-RPC 2.0 端点让外部 AI Agent 调用平台工具面（见 [AI Agent / MCP 集成](./mcp)）。待做的是把这条 MCP
-  工具面与 Agentic 对话链路桥接起来，让一次会话可以从自动化 Agent 无缝升级到人类操作员。
+  工具面与 Agentic 对话链路桥接起来，让一次会话可以中途从自动化 Agent 转到人类操作员手上。
 
 ---
 

@@ -15,7 +15,7 @@ vulnerability, and the minimum security baseline to hit before you take the plat
 
 We ship security patches only for the current mainline release. Version numbers follow a `YYYY.M.x` year-month scheme —
 for example, `2026.10.x` is the October 2026 line — and the patch number `x` keeps rolling forward within a mainline. The
-current line is `2026.10.x` (latest release `2026.10.9`; the `latest` image tag points to it, including the `-native`
+current line is `2026.10.x` (latest release `2026.10.10`; the `latest` image tag points to it, including the `-native`
 variants). The repository's default image tag is `2026.9` (the `2026.9.x` line, ready to use out of the box).
 
 The table lists the release lines that still get security updates. Older versions are no longer back-ported; upgrade to

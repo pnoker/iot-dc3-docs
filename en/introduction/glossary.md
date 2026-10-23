@@ -38,6 +38,10 @@ row gives the canonical name and where to read more.
 | 租户      | Tenant · `tenantId`                   | The isolation boundary for business data. See [Tenant](./concepts/tenant)                                                                                         | Cross-cutting  |
 | 属性      | Attribute                             | A driver protocol-layer configuration item, registered by the driver from its `application.yml` at startup. See [Attribute & Config](./concepts/attribute-config) | Configuration  |
 | 配置      | Config                                | The concrete value a device instance supplies for an attribute. See [Attribute & Config](./concepts/attribute-config)                                             | Configuration  |
+| 门面      | Facade                                | The abstraction for center-to-center synchronous calls, in three modes: gRPC / local / disabled. See [Facade Modes](../architecture/facade-modes)                  | Center service |
+| 连续聚合    | Continuous Aggregate · cagg           | TimescaleDB's pre-aggregation over the hypertable (1-minute granularity kept 1 year, 1-hour kept forever); long-range queries hit it. See [Data Plane](../architecture/data-plane) | Data           |
+| 围栏令牌    | Fencing Token                         | A monotonically increasing token: after an ownership change, writes from the old holder are rejected by token age — no split brain. See [Schema Reference](../development/schema-reference) | Cross-cutting  |
+| 模式指纹    | Schema Fingerprint                    | The hash of the initdb DDL; services compare it against the stored value at startup and refuse to boot on mismatch. See [Upgrades & Migrations](../guide/upgrade) | Cross-cutting  |
 
 ::: tip Don't mix "point reading / measurement / point"
 Across the docs, use "Point" for the data-item definition and "PointValue" for its runtime value. On first mention, a

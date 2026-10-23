@@ -98,7 +98,7 @@ how this abstraction maps onto any scenario:
   adjust fans, time the lights; what is constant is the loop requirement that "judgment must write back to the physical
   world."
 
-In other words, once you understand this universal loop, any industry solution can be placed at a glance: you can see
+Once you understand this universal loop, any industry solution can be placed at a glance: you can see
 what it does within "collect–analyze–decide–act" and which hop it is missing. What IoT DC3 provides is the **general
 substrate** for this loop, not a finished solution for any one industry.
 

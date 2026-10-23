@@ -10,7 +10,7 @@ import ApiDocSequenceDiagram from '../../.vitepress/theme/components/ApiDocSeque
 # API 文档
 
 IoT DC3 的 REST 接口文档由代码注解自动生成，每个中心服务各自暴露一份在线文档。读完这页，你能在开发环境打开各中心的在线文档、用默认凭据走完"取盐 → 取 token → 带鉴权头调用"的登录流、看懂
-CRUD 路径约定，并理解每个接口上的 `x-dc3-ai` 风险元数据是怎么喂给 AI/MCP 工具的。
+CRUD 路径约定与错误响应的 R 码目录，并理解每个接口上的 `x-dc3-ai` 风险元数据是怎么喂给 AI/MCP 工具的。
 
 > 你在这里：准备调用或调试后端接口。要先把环境跑起来，看 [第一个设备](../quickstart/first-device)
 > ；要理解鉴权头背后的租户与权限，看 [鉴权·租户·RBAC](../architecture/auth-rbac)。
@@ -108,6 +108,25 @@ dc3 auth login --tenant default --username dc3
 token、password、salt、api key 一律不入库到文档、提交记录或工单。示例里的哈希值、token 都用占位符代替。
 :::
 
+## 另一条认证路：网关 OAuth RS256（默认关）
+
+`X-Auth-*` 三件套之外，网关还能接受第二种凭据：`Authorization: Bearer <JWT>`（RS256 签名，经 JWKS 验签）。它由 `DC3_GATEWAY_OAUTH_ENABLED` 控制，**默认关闭**，开了之后两种凭据并存：
+
+- 请求带 `Authorization: Bearer …` 且开关开启 → 网关验 JWT（校验签发者/受众，JWKS 缓存 5 分钟，遇到未知 `kid` 立即刷新一次），验过的主体注入 `X-Auth-Principal` 下发；
+- 没有 Bearer（或开关没开）→ 走上面经典的 `X-Auth-*` 链路；
+- 两种都没有 → 401（problem+json）。
+
+JWT 由鉴权中心那套 OAuth2 授权服务器签发——就是为 [MCP](../ai/mcp) 建的那套：`/.well-known/oauth-authorization-server`、`/oauth2/jwks`、`/oauth2/register`（动态注册）、`/oauth2/authorize`（OAuth 2.1 + PKCE）、`/oauth2/token`、`/oauth2/revoke`，经网关都在 `/api/v3/auth/` 前缀下。支持的授权方式：`authorization_code`、`client_credentials`、`refresh_token`。访问令牌 15 分钟（携带 `mcp:tools:call` 类 scope）或 1 小时（只读 scope），刷新令牌 30 天；授予的 scope 以主体 RBAC 绑定为上限。
+
+机器对机器调用最省事的是 client_credentials，CLI 直接支持：
+
+```bash
+dc3 auth login --oauth --client-id <id> --client-secret <secret>
+# 之后的请求自动带 Authorization: Bearer
+```
+
+网关配置项（`dc3.gateway.oauth.*`）：`enabled`、`jwks-url`、`issuer`、`audience`（默认 `dc3-mcp`）、`jwks-cache-ttl`。对应环境变量 `DC3_GATEWAY_OAUTH_ENABLED` / `DC3_GATEWAY_OAUTH_JWKS_URL`（见[环境变量](../quickstart/environment)）。无论走哪种凭据，下游各中心的 `@PreAuthorize` 权限校验都照常生效。
+
 ## CRUD 路径约定：动词反映结果基数
 
 所有业务接口的命名遵循同一条规则——HTTP 路径、Java 方法、gRPC RPC、前端函数上的动词，必须反映**返回结果的基数**。读单条用
@@ -133,6 +152,37 @@ token、password、salt、api key 一律不入库到文档、提交记录或工�
 `offset`/`limit`（零基 offset，默认 `offset=0`、`limit=50`，上限 200），响应是 `OffsetPage`（`items`/`offset`/`limit`/`total`/`hasNext`）。注意：写成嵌套的
 `page` 对象会被静默忽略——全局 `fail-on-unknown-properties=false` 不报错，但分页落在默认值上。错误响应统一为 RFC 9457 problem
 details（`application/problem+json`）。
+
+## 错误响应：RFC 9457 与 R 码目录
+
+业务错误统一是 `application/problem+json`，字段固定八个：`type`（恒为 `about:blank`）、`title`、`status`、`code`（`R###` 字符串）、`detail`、`instance`、`traceId`（关联服务日志）、`errors`（校验失败时的逐字段信息）。一个 422 的样子：
+
+```json
+{
+  "type": "about:blank",
+  "title": "validation",
+  "status": 422,
+  "code": "R422",
+  "detail": "deviceName must not be blank",
+  "instance": "/api/v3/manager/device/add",
+  "traceId": "a1b2c3d4",
+  "errors": {"deviceName": "must not be blank"}
+}
+```
+
+`code` 与 HTTP 状态一一对应，目录如下：
+
+| code | HTTP | 触发场景 |
+|------|------|---------|
+| `R401` | 401 | 未认证、token 无效、来源 IP 不合法 |
+| `R403` | 403 | 权限不足（RBAC 拒绝） |
+| `R4031` / `R4032` | 403 | 首次登录需改密 / 密码已过期 |
+| `R404` | 404 | 目标不存在（或跨租户不可见——不区分"不存在"与"无权看"） |
+| `R4090` / `R4091` | 409 | 已存在（唯一键冲突）/ 状态冲突（如乐观锁 version 不符） |
+| `R422` | 422 | 参数校验失败、超出取值范围 |
+| `R500` | 500 | 其余一切未分类失败 |
+
+参数绑定/校验失败（`BindException`、`MethodArgumentNotValidException`）固定 422 并带 `errors` 逐字段明细；网关侧的错误（无凭据 401、下游连不上 503）同样是 problem+json 形态。错误码枚举在 `dc3-common-constant` 的 `ErrorCode`，写客户端时按 `code` 分支、按 `traceId` 对日志。
 
 ## x-dc3-ai：给 AI/MCP 工具的风险标注
 

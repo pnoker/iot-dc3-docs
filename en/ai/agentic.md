@@ -230,7 +230,7 @@ from the database table **`dc3_model_provider`** (`provider_type`: `0` openai-co
 `api_key`, `default_flag`, etc., tenant-isolated). Only when the table has no usable provider does it fall back to a set
 of environment-variable defaults.
 
-In other words: manage providers centrally in the database in production. The `AGENTIC_FALLBACK_*` env vars are just the
+Manage providers centrally in the database in production. The `AGENTIC_FALLBACK_*` env vars are just the
 last line of defense when there's no DB configuration.
 
 | Variable                              | Default                        | Purpose                                                                      |
@@ -263,6 +263,73 @@ Never let a real `api_key` / `token` / `password` appear in docs, screenshots, l
 likewise be injected only through local files like `dc3/env/dev.env` and never committed to the repository.
 :::
 
+## Production security checklist
+
+The Agentic Center holds third-party model API keys and calls external endpoints on the user's behalf. Work through
+this section before going to production.
+
+### How API keys are stored
+
+`dc3_model_provider.api_key` is never stored in plaintext; it is encrypted with AES-256-GCM before being written. The
+master key is resolved in order:
+
+1. the `dc3.agentic.security-master-key` property;
+2. the `DC3_AGENTIC_MASTER_KEY` environment variable;
+3. if neither is set, one is derived from the platform security key `DC3_SECURITY_KEY` via HKDF-SHA256. That is fine
+   for a local run; a warning is logged.
+
+The master key is a Base64-encoded 256-bit (32-byte) value — a malformed one fails startup. Generate one with
+`openssl rand -base64 32`. Replacing the master key makes old ciphertext undecryptable, so line up the provider API
+keys for re-entry before you rotate.
+
+::: danger Set a dedicated master key in production
+Without `DC3_AGENTIC_MASTER_KEY`, the encryption key is derived from `DC3_SECURITY_KEY` (with a warning). It works,
+but the two locks are chained: leak the platform key and the provider keys go with it. Give the Agentic Center its
+own key in production.
+:::
+
+### Egress control
+
+A provider's `base_url` passes `AgenticBaseUrlValidator` both when saved and when called:
+
+- HTTPS is mandatory (`dc3.agentic.security-base-url-https-only`, on by default; turning it off belongs in tests);
+- the host must resolve to a public address. Loopback, link-local, site-local (`10/8`, `172.16/12`, `192.168/16`),
+  IPv6 unique-local, and multicast are all rejected, with no allowlist. An internal model gateway (Ollama, vLLM, …)
+  has to be exposed through a public hostname before it can be registered;
+- DNS verdicts are cached for ~30 seconds, and connectivity checks probe a resolution-pinned address (DNS pinning),
+  so a resolution swapped mid-probe doesn't take effect.
+
+Re-pointing a provider's `base_url` requires a fresh API key at the same time; a blank key is accepted only when
+`base_url` is unchanged. The rule is there to stop provider A's key from being sent to provider B.
+
+### Rate limiting and the fallback switch
+
+| Variable                                            | Default | Meaning                                                                     |
+|-----------------------------------------------------|---------|-----------------------------------------------------------------------------|
+| `AGENTIC_TRANSPORT_ACQUIRE_TIMEOUT_SECONDS`         | `30`    | Seconds a chat request waits for a model concurrency slot before failing with UNAVAILABLE instead of queueing forever |
+| `AGENTIC_TRANSPORT_GLOBAL_MAX_CONCURRENT_REQUESTS`  | `16`    | In-flight model request cap across all providers (fallback model and uncached configs) |
+| `AGENTIC_TRANSPORT_PER_TENANT_QPS`                  | `0`     | Per-tenant chat requests per second; `0` disables                           |
+| `AGENTIC_TRANSPORT_CACHE_TTL_SECONDS`               | `300`   | In-process provider / model / client cache TTL; bounds staleness after out-of-band edits in multi-replica deployments |
+| `AGENTIC_TRANSPORT_FALLBACK_ENABLED`                | `false` | Platform-wide fallback model switch                                         |
+
+::: warning Keep `AGENTIC_TRANSPORT_FALLBACK_ENABLED=false` in production
+With the fallback on, tenants without a model configuration quietly share the same upstream provider, and their usage
+lands on no one's bill; with it off, those tenants get a clear error. The default is `false` — leave it.
+:::
+
+### Attachments and observability
+
+Uploads are checked against the extension whitelist (`AGENTIC_ATTACHMENT_ALLOWED_EXTENSIONS`, default
+`png,jpg,jpeg,gif,webp,csv,txt,json,md,pdf`) before a single byte is written. The per-tenant quotas come in three
+parts: file count (`AGENTIC_ATTACHMENT_TENANT_MAX_COUNT`, default `2000`), total bytes
+(`AGENTIC_ATTACHMENT_TENANT_MAX_BYTES`, default 1 GiB), and file-name length
+(`AGENTIC_ATTACHMENT_NAME_MAX_LENGTH`, default `128` characters); a rejection reports the tenant's current usage.
+
+Model-side token usage is propagated back to the caller, and per-tool call counts and durations show up as the
+`agentic.tool.calls` / `agentic.tool.duration` metrics. Every endpoint carries
+`@PreAuthorize("@perm.can(...)")`; the seeded permission codes live under `dc3-center-agentic:*` — 21 codes across
+chat / session / message / attachment / action / model / provider.
+
 ## Pre-use checklist
 
 Before enabling the Agentic Center, verify these prerequisites — otherwise the model may answer fluently while the data
@@ -275,6 +342,8 @@ underneath is wrong:
 4. The model provider (DB or env fallback) is reachable, and the API key isn't written into docs or logs.
 5. Tool calling is opened only to trusted users and well-defined business scenarios. Turn it off with
    `AGENTIC_TOOL_CALLING_ENABLED=false` when you don't need it.
+6. For production, run through the security checklist above first: the master key, HTTPS public providers, and the
+   rate-limit / fallback switches.
 
 ## Further reading
 

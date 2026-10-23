@@ -86,6 +86,8 @@ curl -X POST http://localhost:8000/api/v3/data/point_value/list \
 `num_value IS NOT NULL`，否则结果偏差。位号的原始值与计算值分别在 `raw_value`、`cal_value`（均为文本）。
 :::
 
+顺带把"实时"的边界说清：控制台的实时值靠 REST 轮询（卡片按数据新鲜度自刷新），首页的实时数据卡走 `GET /api/v3/data/dashboard/stream?limit=20`——一个返回最近 N 条位号值的 JSON feed，可选 5/10/30 秒自动刷新（默认关）。**平台没有 WebSocket 推送**；程序化拿实时值，就用这一节的 `latest` 接口或 `dashboard/stream` 轮询。
+
 ## 下命令：读命令、写命令与轮询结果
 
 命令接口在数据中心，权限码 `point_command:list`。它们**不返回执行结果**，只返回一个命令 ID——执行是异步的，你拿这个 ID 去轮询历史。

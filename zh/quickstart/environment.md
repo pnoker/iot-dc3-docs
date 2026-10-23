@@ -92,6 +92,23 @@ source dc3/env/dev.env.sh
 IDEA 用户改用 `dc3/env/dev.env`（同样内容、无 `export`）：安装 EnvFile 插件 → 在 Run Configuration 启用 EnvFile → 添加
 `dc3/env/dev.env`。不要把 `.env.example` 直接当作 IDEA 环境变量文件——它是 Compose 模板，不是 Java 运行时配置。
 
+## 运行 profile：dev / test / pre / pro
+
+`NODE_ENV` 决定每个服务加载哪份 `application-<env>.yml`。四档差异不大，但每档都有明确用途：
+
+| profile | 谁在用 | 日志 | OpenAPI / Swagger | 密钥闸门 | MQ 名字前缀 |
+|---------|------|-----|-----------------|---------|------------|
+| `dev` | 本地 IDE / `make dev` | `DEBUG`（io.github.pnoker） | 开 | 不生效 | `dev_<用户名>.` |
+| `test` | 所有 Compose 栈的默认 | `DEBUG` | 开 | 不生效 | 无 |
+| `pre` | 预发 | 默认 `INFO` | 开 | 生效（`AUTH_HMAC_SECRET` 为空或默认值时拒绝启动） | 无 |
+| `pro` | 生产 | 默认 `INFO` | **关**（springdoc 端点不存在） | 生效 | 无 |
+
+三个名字相近的变量各管一件事，别混：
+
+- `NODE_ENV`：选 profile（Compose 栈默认 `test`，`dev.env` 里是 `dev`）；
+- `SPRING_ENV`：直接指定 `spring.env`，优先级高于 profile yml，主要影响 MQ 前缀与密钥闸门判定（native 镜像里被烘成 `test`，见[消息总线拓扑](../architecture/mq-topology)）；
+- `SPRING_GROUP`：MQ 前缀里的组名，默认取 OS 用户名。
+
 ## 按场景分组的关键变量
 
 下面按"为某个场景实际需要"的角度分组列出关键变量。完整长表在文末 `::: details` 折叠，这里只列你会真正改动或排错时查的那些。变量的
@@ -230,7 +247,7 @@ Web 控制台（`dc3-web`）经 nginx 反代把 API 请求转给网关；网关�
 
 ### Agentic / AI（Runtime）
 
-仅当 `dc3_model_provider` 没有配置可用提供方时，才回退到这组 `AGENTIC_FALLBACK_OPENAI_*`。会话记忆默认开启（`.env.example` 与代码内回退默认一致）。
+仅当 `dc3_model_provider` 没有配置可用提供方时，才回退到这组 `AGENTIC_FALLBACK_OPENAI_*`。会话记忆默认开启（`.env.example` 与代码内回退默认一致）。主密钥、传输限流和附件配额这几组变量是 2026.10 加进来的，各自的含义在 [Agentic 中心](../ai/agentic)的安全清单里讲。
 
 | 变量                                    | 默认值                            | 用途                                                               |
 |---------------------------------------|--------------------------------|------------------------------------------------------------------|
@@ -244,6 +261,17 @@ Web 控制台（`dc3-web`）经 nginx 反代把 API 请求转给网关；网关�
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         | 是否启用工具调用                                                         |
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           | 每个对话窗口保留的最大消息数                                                   |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` | 附件存储路径                                                           |
+| `DC3_AGENTIC_MASTER_KEY`              | (空)                            | provider API key 落库加密的 AES-256-GCM 主密钥（Base64 256 位；空则从 `DC3_SECURITY_KEY` 派生，生产必须显式设置） |
+| `AGENTIC_TRANSPORT_ACQUIRE_TIMEOUT_SECONDS` | `30`                     | 等待模型并发槽位的秒数，超时按 UNAVAILABLE 报错而非无限排队                            |
+| `AGENTIC_TRANSPORT_GLOBAL_MAX_CONCURRENT_REQUESTS` | `16`            | 全局在途模型请求上限（兜底模型与未缓存配置）                                          |
+| `AGENTIC_TRANSPORT_FALLBACK_ENABLED`  | `false`                        | 平台级兜底模型开关（生产保持关闭：它绕过按租户核算）                                       |
+| `AGENTIC_TRANSPORT_PER_TENANT_QPS`    | `0`                            | 每租户每秒聊天请求数，`0` 关闭                                                |
+| `AGENTIC_TRANSPORT_CACHE_TTL_SECONDS` | `300`                          | provider / 模型 / 客户端进程内缓存 TTL（秒）                                  |
+| `AGENTIC_CHECK_CACHE_MAXIMUM_SIZE`    | `256`                          | 连通性检查结果缓存上限（条）                                                   |
+| `AGENTIC_ATTACHMENT_ALLOWED_EXTENSIONS` | `png,jpg,jpeg,gif,webp,csv,txt,json,md,pdf` | 附件扩展名白名单（任何字节落盘前校验）                                    |
+| `AGENTIC_ATTACHMENT_TENANT_MAX_COUNT` | `2000`                         | 每租户附件数量上限                                                        |
+| `AGENTIC_ATTACHMENT_TENANT_MAX_BYTES` | `1073741824`                   | 每租户附件总字节上限（默认 1 GiB）                                             |
+| `AGENTIC_ATTACHMENT_NAME_MAX_LENGTH`  | `128`                          | 附件文件名最大长度（字符）                                                     |
 
 ::: info `AGENTIC_MEMORY_SCHEMA_INIT` 的建表绑定以代码为准
 `AGENTIC_MEMORY_SCHEMA_INIT` 默认 `never`，意在控制记忆表初始化模式。但该变量经 compose 注入容器后，仓库内未见

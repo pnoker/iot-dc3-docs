@@ -156,7 +156,7 @@ JSON 扩展同理。`PointDO.pointExt` 是 `JsonExt`（`content` 存成 JSON 字
 - `dc3_entity_alarm`（数据域，`03-iot-dc3-data.sql`）—— 运行期**告警实例**。它是规则引擎、状态超时、设备/驱动/事件上报等多个来源在运行时产生的记录，按
   `alarm_source_flag` 区分来源。
 
-换句话说：`dc3_event` 回答"这设备**能**报什么"，`dc3_entity_alarm` 回答"现在**报了**什么"。两张表在不同 schema、不同 init
+`dc3_event` 回答"这设备**能**报什么"，`dc3_entity_alarm` 回答"现在**报了**什么"。两张表在不同 schema、不同 init
 脚本里，新增查询时别把它们当一回事。告警与事件的完整模型（规则、通知通道、状态跟踪）见 [告警与通知](../operation/alarms)。
 
 ## 延伸阅读

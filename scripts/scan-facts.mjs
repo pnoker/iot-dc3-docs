@@ -217,7 +217,11 @@ if (!up) {
         }
     }
 
-    // 2b. DC3_IMAGE_TAG — every docs assignment must equal the upstream default
+    // 2b. DC3_IMAGE_TAG — every docs *claim* of the default must equal the
+    // upstream default. A command-prefix override (`DC3_IMAGE_TAG=x docker
+    // compose …`) is an explicit per-invocation override, not a claim about
+    // the default (the native-stack docs rely on it: driver -native images
+    // only exist from the 2026.10 line), so those are exempt.
     const envFile = join(up, '.env.example')
     if (existsSync(envFile)) {
         const envText = readFileSync(envFile, 'utf8')
@@ -225,13 +229,17 @@ if (!up) {
         notes.push(`上游 .env.example DC3_IMAGE_TAG 默认: ${upstreamTag ?? '(未找到)'}`)
         if (upstreamTag) {
             const tagRe = /DC3_IMAGE_TAG=([\w.\-]+)/g
+            const overridePrefixRe = /\b(?:docker|podman|make)\b/
             for (const file of DOC_FILES) {
                 const md = readFileSync(file, 'utf8')
                 let m
                 while ((m = tagRe.exec(md))) {
-                    if (m[1] !== upstreamTag) {
-                        problems.push(`${file}  DC3_IMAGE_TAG=${m[1]} 与上游 .env.example 默认 ${upstreamTag} 不一致（docs 声称的默认 tag 必须 == 上游）`)
-                    }
+                    if (m[1] === upstreamTag) continue
+                    // same-line command prefix after the assignment → explicit override, exempt
+                    const lineEnd = md.indexOf('\n', m.index)
+                    const restOfLine = md.slice(m.index + m[0].length, lineEnd === -1 ? md.length : lineEnd)
+                    if (overridePrefixRe.test(restOfLine)) continue
+                    problems.push(`${file}  DC3_IMAGE_TAG=${m[1]} 与上游 .env.example 默认 ${upstreamTag} 不一致（docs 声称的默认 tag 必须 == 上游）`)
                 }
             }
         }

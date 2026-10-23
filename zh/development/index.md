@@ -164,4 +164,5 @@ VM options 添加 `-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address
 - [领域模型](../architecture/domain-model) — DO/BO/VO 各层字段、枚举转换与 MapStruct `*Builder` 细节
 - [驱动开发](./driver-authoring) — 复制 `dc3-driver-virtual` 模板扩展新协议驱动，实现 `DriverCustomService`
 - [API 文档](./api-documentation) — OpenAPI/Swagger 暴露方式、鉴权头与导出流程
+- [数据库结构参考](./schema-reference) — 全部 schema 与表的一页清单，升级改库前先看
 - [测试](./testing) — 单元、集成、E2E 与覆盖率约定

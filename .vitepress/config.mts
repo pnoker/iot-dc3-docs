@@ -19,7 +19,7 @@ import {defineConfig} from 'vitepress'
 import {Lang, t} from './i18n'
 import {transformHead} from './seo.mts'
 import {resolveVersion} from './version.mts'
-import {assertHeadingParity, assertLocaleParity, assertMarkdownHygiene, assertSidebarRegistersAllPages, SRC_EXCLUDE} from './sidebar-check.mts'
+import {assertHeadingParity, assertLocaleParity, assertMarkdownHygiene, assertSidebarRegistersAllPages, assertVersionAnchors, SRC_EXCLUDE} from './sidebar-check.mts'
 
 const versionInfo = resolveVersion()
 
@@ -160,15 +160,15 @@ const PILLARS: ReadonlyArray<Pillar> = [
             {key: 'group.quickstart', items: [['quickstart'], ['quickstart/environment'], ['quickstart/first-device']]},
             {
                 key: 'group.deploy-ops',
-                items: [['guide'], ['guide/usage'], ['guide/deployment'], ['guide/observability'], ['guide/logging'], ['guide/troubleshooting']]
+                items: [['guide'], ['guide/usage'], ['guide/deployment'], ['guide/upgrade'], ['guide/observability'], ['guide/logging'], ['guide/troubleshooting']]
             },
             {
                 key: 'group.development',
-                items: [['development/driver-authoring'], ['development/api-documentation'], ['development/technology-stack'], ['development/testing'], ['development/changelog']]
+                items: [['development/driver-authoring'], ['development/api-documentation'], ['development/schema-reference'], ['development/technology-stack'], ['development/testing'], ['development/changelog']]
             },
             {key: 'group.frontend', items: [['frontend'], ['frontend/test-debugging']]},
             {key: 'group.automation', items: [['automation'], ['automation/cli']]},
-            {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/console-devices'], ['operation/console-entities'], ['operation/console-identity'], ['operation/console-organize'], ['operation/console-alarms'], ['operation/console-mcp'], ['operation/alarms']]}
+            {key: 'group.operations', items: [['operation'], ['operation/data-commands'], ['operation/console-devices'], ['operation/console-entities'], ['operation/console-identity'], ['operation/console-organize'], ['operation/console-alarms'], ['operation/console-agentic'], ['operation/console-mcp'], ['operation/alarms']]}
         ]
     }
 ]
@@ -274,6 +274,7 @@ assertSidebarRegistersAllPages(sidebars)
 assertLocaleParity()
 assertHeadingParity()
 assertMarkdownHygiene()
+assertVersionAnchors()
 
 function buildNav(lang: Lang) {
     const p = lang === 'en' ? '/en' : '/zh'

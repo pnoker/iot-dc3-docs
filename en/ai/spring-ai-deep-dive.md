@@ -125,8 +125,8 @@ Four things make this architecture production-grade:
 3. **Conversations survive restarts.** Every turn — user message, tool call, tool result, assistant response —
    lands in the `dc3_message` table. If the Agentic Center restarts, the message store
    (`ReactiveMessageStore.loadHistory`) replays
-   the most recent 30 messages (roughly 15 turns; `historyWindowSize` is configurable) and the conversation resumes
-   seamlessly. This is critical for
+   the most recent 30 messages (roughly 15 turns; `historyWindowSize` is configurable) and the conversation picks up
+   where it left off. This is critical for
    multi-turn diagnostic sessions that span hours.
 
 4. **The model never sees another tenant's data.** Tenant IDs are injected by the gateway (from the JWT), not
@@ -201,7 +201,7 @@ rising," "show me the trend." The next frontier is *prescriptive* operations:
 - **MCP ↔ Agentic bridge.** MCP access for external agents **is already live**: the gateway's `POST /mcp` endpoint
   (OAuth 2.1 + JSON-RPC 2.0) lets external AI agents call the platform tool surface (see
   [AI Agent / MCP Integration](./mcp)). What's still ahead is bridging that MCP tool surface with the Agentic chat
-  chain, so a conversation can escalate from an automated agent to a human operator seamlessly.
+  chain, so a conversation can escalate from an automated agent to a human operator mid-stream.
 
 ---
 

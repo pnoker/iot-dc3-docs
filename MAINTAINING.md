@@ -10,7 +10,7 @@
 |------|------|---------|
 | 驱动数量 | **全站统一 36**（官方叙事，与驱动总览 36 行表、dc3.site 定价页一致）。v2026.9.22 起的发布镜像实含全部 36 个驱动模块——**不在文档里写 28**（中英文都不许，含 meta description） | 2026-09-19，2026-10-11 重申英文变体 |
 | 文档基线 | **main 分支 + Docker Hub 已发布 tag**。用户按文档操作实际拿到的是 main 检出或 Docker Hub 镜像，文档必须与之自洽。上游核对：本地 `C:\Users\pnoker\Code\github\iot-dc3`（main）+ Docker Hub API | 2026-10-11（取代 2026-09-19 的 release 基线） |
-| 版本线叙事 | **最新发布 2026.10.9**（2026-10-08 推送，`latest` 指向它，含 `-native` 变体）；**仓库默认 `DC3_IMAGE_TAG=2026.9`**（.env.example 与 compose fallback 一致，2026.9.22 于 2026-09-23 发布）——两者开箱即用。历史事实：app 镜像线 2025.9.3 → 2026.9 跳变，从无 2026.5/2026.6。发版后按此模板更新，**不写"尚未发布"的猜测** | 2026-10-11 |
+| 版本线叙事 | **最新发布 2026.10.10**（git tag 2026-10-17、镜像 2026-10-19 推送成功，`latest` 指向它，含 `-native` 变体；本版起 33/36 驱动加入 native 线，例外 dnp3/ble/opc-da 永久 JVM、opc-ua 暂未发布）；**仓库默认 `DC3_IMAGE_TAG=2026.9`**（.env.example 与 compose fallback 一致，2026.9.22 于 2026-09-23 发布）——两者开箱即用。历史事实：app 镜像线 2025.9.3 → 2026.9 跳变，从无 2026.5/2026.6。发版后按此模板更新，**不写"尚未发布"的猜测** | 2026-10-24 |
 | 商业叙事 | 社区版免费（AGPL-3.0）+ 专业版按位号订阅 + 企业版商业授权，见 dc3.site/zh/pricing/。联系邮箱 **pnokers@icloud.com**（不用 gmail） | 2026-09-19 |
 | 产品定位 | **Physical AI Runtime**：位于智能体意图与物理世界之间的执行层（看见/理解/决策/行动/追溯），与 dc3.site 一致 | 2026-09-19 |
 | 鉴权口径 | 登录提交**明文密码**（服务端 Argon2 校验，盐不参与密码哈希、不参与 JWT HMAC 密钥）；`X-Auth-Token` 是 JSON `{"salt","token"}`（裸 token 401）；`X-Auth-Tenant` 传租户名（如 `default`）。全站 curl 示例统一用 `zh/guide/index.md` 与 `zh/development/api-documentation.md` 里的正确形态，`enableFlag` 一律写字符串 `"ENABLE"` | 2026-09-19（源码定论），2026-10-11 强化示例统一 |
@@ -31,6 +31,7 @@
 | `assertHeadingParity` | zh/en 每对镜像页标题数必须相等——单语新增整节会被拦。改 zh 必查 en |
 | `assertLocaleParity` | locales/zh.json 与 en.json 键集必须一致 |
 | `assertMarkdownHygiene` | 断行切断的 `**粗体**`（渲染出裸星号）与单行 `::: info … :::` 容器（闭合必须独占一行） |
+| `assertVersionAnchors` | 版本锚点漂移：以 `dc3/doc/CHANGE.md` 快照首个 `### 📌 <版本>` 为唯一事实源，校验 `public/versions.json` 的 `latest`（系列号口径，如 `2026.10`）与 zh/en guide/usage、zh/en community/security、MAINTAINING 里的"最新发布"声明都指向它。**发版流程：同步 CHANGE.md 快照 → 改 versions.json → 改上述页面的版本号**，任何一步漏掉即 build fail |
 | `fix-diagram-anchors`（构建链内） | 图表索引深链锚点以 dist 实际渲染出的 id 为准回填（两遍构建），失靶即 build fail | 
 
 图表组件的视觉与语义规范见 `.vitepress/theme/DIAGRAM_SPEC.md`——新增或修改图表前必读。
@@ -46,7 +47,7 @@ node scripts/scan-facts.mjs --upstream D:/path/iot-dc3   # 指定上游仓库（
 ```
 
 三类检查：
-1. **上游提取**：驱动目录数、`.env.example` 的 `DC3_IMAGE_TAG` 与 `DC3_MQ_*`/批量变量集、pom 版本、dc3-cli 顶层命令面——直接从上游 main 读，与本站口径比对；
+1. **上游提取**：驱动目录数、`.env.example` 的 `DC3_IMAGE_TAG` 与 `DC3_MQ_*`/批量变量集、pom 版本、dc3-cli 顶层命令面——直接从上游 main 读，与本站口径比对（`DC3_IMAGE_TAG` 只拦"声称默认值"；命令前缀式覆盖 `DC3_IMAGE_TAG=x docker compose …` 是显式覆盖不算声称，豁免——native 栈文档依赖它）；
 2. **禁用串（语义正则）**：历史事实错误的残留家族（哈希后密码/`hashed password`/`hash the password with the salt`、裸 `X-Auth-Token: <token>`、`"enableFlag": true`、`Gateway → Auth →`、`28 个驱动`/`28 drivers`/`28 built-in` 等）——**按语义家族匹配而非字面量**，中英文变体都要覆盖；
 3. **扫描范围**：zh/、en/、根 index.md、README.md（历史教训：根语言门的 meta 里曾残留"28 个协议驱动"，因为脚本只扫 zh/en）。
 

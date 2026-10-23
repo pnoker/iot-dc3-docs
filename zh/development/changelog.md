@@ -17,7 +17,7 @@ import ChangelogDiagram from '../../.vitepress/theme/components/ChangelogDiagram
 ## 这份清单从哪来
 
 平台不维护手写的 `CHANGELOG`。所有改动都通过规范化的提交信息留痕，发布时由脚本扫描 git
-历史、解析每条提交的类型与作用域，再聚合成下面这份按版本分组的清单。换句话说，**提交信息就是变更日志的原始数据**——一条含糊的
+历史、解析每条提交的类型与作用域，再聚合成下面这份按版本分组的清单。**提交信息就是变更日志的原始数据**——一条含糊的
 `update` 或 `fix bug` 会变成一行没有价值的发布说明，所以提交规范本身就是这份文档质量的前提。
 
 生成器是 `dc3/bin/changelog.py`（Python，无第三方依赖），由 Makefile 目标 `make changelog` 驱动，产出文件为
@@ -37,7 +37,7 @@ make changelog
 
 ```bash [指定范围与版本号]
 # FROM/TO 接受任意 git ref（tag、分支、commit）；VERSION 写入分组标题
-make changelog FROM=v2026.9.22 TO=HEAD VERSION=2026.10.9
+make changelog FROM=v2026.10.9 TO=HEAD VERSION=2026.10.10
 ```
 
 :::
@@ -92,7 +92,7 @@ Highlights 最快。
 ## 版本号与 tag 规则
 
 清单里的版本号对应 git tag，由 `make tag`（`dc3/bin/tag.sh`）生成。tag 名就是 `v` 加根 `pom.xml` 的版本号，形如
-`v2026.9.22`、`v2026.10.9`（版本号须为 `YYYY.M.P` 形态）。打 tag 前有五道校验，任何一道不过即拒绝执行：
+`v2026.10.9`、`v2026.10.10`（版本号须为 `YYYY.M.P` 形态）。打 tag 前有五道校验，任何一道不过即拒绝执行：
 
 - 只允许在 `main` 分支上打 tag；
 - 工作区必须干净（无未提交改动）；
@@ -103,7 +103,7 @@ Highlights 最快。
 ```bash
 # 在 iot-dc3/ 目录下的 main 分支上
 make tag
-# → 创建形如 v2026.10.9 的 annotated tag 并 push 到 origin；
+# → 创建形如 v2026.10.10 的 annotated tag 并 push 到 origin；
 #   随后 Docker Images 工作流校验、构建并发布镜像，并创建 GitHub Release
 # 预览效果（不实际打 tag）：
 bash dc3/bin/tag.sh --dry-run

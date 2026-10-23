@@ -40,7 +40,7 @@ make changelog
 
 ```bash [Specify range and version number]
 # FROM/TO accept any git ref (tag, branch, commit); VERSION is written into the group heading
-make changelog FROM=v2026.9.22 TO=HEAD VERSION=2026.10.9
+make changelog FROM=v2026.10.9 TO=HEAD VERSION=2026.10.10
 ```
 
 :::
@@ -98,7 +98,7 @@ Other Changes without a category. For the full convention, see the [Contributing
 ## Version number and tag rules
 
 Version numbers in the list correspond to git tags created by `make tag` (`dc3/bin/tag.sh`). The tag name is `v` plus
-the root `pom.xml` version, e.g. `v2026.9.22` or `v2026.10.9` (the version must be `YYYY.M.P` shaped). Five checks gate
+the root `pom.xml` version, e.g. `v2026.10.9` or `v2026.10.10` (the version must be `YYYY.M.P` shaped). Five checks gate
 the run; any failure aborts it:
 
 - tagging is only allowed on the `main` branch;
@@ -110,7 +110,7 @@ the run; any failure aborts it:
 ```bash
 # In the iot-dc3/ directory, on the main branch
 make tag
-# → creates an annotated tag like v2026.10.9 and pushes it to origin;
+# → creates an annotated tag like v2026.10.10 and pushes it to origin;
 #   the Docker Images workflow then verifies, builds, and publishes the images
 #   and creates the GitHub Release
 # Preview without tagging:

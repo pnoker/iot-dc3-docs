@@ -102,6 +102,8 @@ aggregations like `AVG`/`SUM` directly on the hypertable, you must add `num_valu
 skewed. A point's raw and calculated values live in `raw_value` and `cal_value` respectively (both are text).
 :::
 
+While we're here, the boundary of "real time": the console's live values are REST-polled (cards refresh based on data freshness), and the home live-feed card calls `GET /api/v3/data/dashboard/stream?limit=20` — a JSON feed of the N most recent point values with optional 5/10/30-second auto-refresh (off by default). **The platform has no WebSocket push**; to read values programmatically in near-real time, poll the `latest` endpoints from this section or the `dashboard/stream` feed.
+
 ## Issuing commands: read, write, and polling for results
 
 The command interfaces live in the Data Center, under the permission code `point_command:list`. They **don't return the

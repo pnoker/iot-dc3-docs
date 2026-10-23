@@ -1,6 +1,6 @@
 # IoT DC3 v2026.8.19 发布：八个新驱动、租约遥测与部署矩阵
 
-> **发版档案**：R6 · 收官篇 · **当前最新发布版，与线上版本对齐**
+> **发版档案**：R6 · 收官篇 · 历史发版存档（写作时为最新版；当前版本线见 docs 站[变更日志](https://docs.dc3.site/zh/development/changelog)）
 > **发布渠道建议**：开源中国 / InfoQ / CSDN / 掘金
 > **配图**：`images/cover.png`（封面）、`images/eight-drivers.png`、`images/lease-telemetry.png`、`images/deploy-contract.png`
 
@@ -8,7 +8,7 @@
 
 ![IoT DC3 v2026.8.19 发布封面](images/cover.png)
 
-`v2026.8.19` 是当前最新正式版本与本系列收官篇。它完成三项主要交付：**驱动矩阵从 28 扩到 36**，**遥测链路做到不丢不重**（PostgreSQL 租约 + fencing + 强制 durable outbox），**交付矩阵补齐四种部署形态**；另有一项契约收敛——ID 全线字符串化。这是"底座收敛、链路可靠"之后的第三步：把可靠性做成默认。
+`v2026.8.19` 是本系列收官篇锚定的正式版本。它完成三项主要交付：**驱动矩阵从 28 扩到 36**，**遥测链路做到不丢不重**（PostgreSQL 租约 + fencing + 强制 durable outbox），**交付矩阵补齐四种部署形态**；另有一项契约收敛——ID 全线字符串化。这是"底座收敛、链路可靠"之后的第三步：把可靠性做成默认。
 
 ## 新特性速览
 

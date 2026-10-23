@@ -10,7 +10,7 @@ import ObservabilityDiagram from '../../.vitepress/theme/components/Observabilit
 
 IoT DC3 的日志聚合与指标监控是一套**可选**栈：一条命令 `make up-optional` 拉起 EMQX、ELK（Elasticsearch + Logstash +
 Kibana）、Prometheus 与 Grafana。读完这页你能知道每个组件干什么、暴露在哪个端口、怎么把服务日志接进 Kibana、把服务指标接进
-Grafana，以及用哪些环境变量调堆内存和开关 APM。
+Grafana，以及用哪些环境变量调堆内存和开关 APM；链路追踪（Jaeger）与告警该盯什么，也在这页。
 
 > 你在这里：已能[部署并启动平台](./usage)，想给运行中的环境加上日志检索与指标看板。
 
@@ -104,6 +104,25 @@ Agent，也就没有数据上报。
 `postgres-exporter`（数据库指标）与 `nginx-exporter`（前端 nginx 指标）。Prometheus 本地保留 7 天时序数据（
 `--storage.tsdb.retention.time=7d`），Grafana 以它为数据源画看板。
 
+### 指标端点在哪
+
+各中心与网关都在**自身服务端口**暴露 `/actuator/prometheus`——管理端点没有独立端口，带 base-path 的服务要加前缀（如鉴权中心是 `http://<host>:8300/auth/actuator/prometheus`；各服务的就绪路径见[服务清单](../architecture/services)）。抓取目标列表烧在 `dc3-prometheus` 镜像内，仓库里看不到；改了网络或端口要核对镜像内的 `/etc/prometheus/prometheus.yml`。**驱动服务不在抓取面里**：驱动不依赖 `dc3-common-web`，没有 actuator 端点。
+
+JVM、HTTP、R2DBC 等 Micrometer 基础指标之外，平台当前只有智能中心注册了业务指标：
+
+| 指标 | 类型 | 标签 | 看什么 |
+|------|------|------|--------|
+| `agentic.chat.requests` / `agentic.chat.duration` | Counter / Timer | tenant、provider、model、result | 聊天量与耗时，`result` 区分成败 |
+| `agentic.chat.tokens` | Counter | tenant、provider、model | token 消耗 |
+| `agentic.tool.calls` / `agentic.tool.duration` | Counter / Timer | tool、domain、outcome | 工具调用频次与耗时 |
+| `agentic.check.results` | Counter | kind、result | L1/L2 连通性检查通过率 |
+| `agentic.transport.global.permits` / `agentic.transport.provider.permits` | Gauge | 后者带 tenant、provider | 并发槽位余量 |
+| `agentic.transport.acquire.timeout` | Counter | scope | 拿不到槽位的频率，涨了就该调限流参数 |
+
+### 预置看板
+
+Grafana 不用从零拼：数据源 `DC3 Postgres`（直连 `dc3_history` schema，TimescaleDB）和看板 **Point Value Overview** 随可选栈自动置备，起栈即有。看板三段：总览（当前范围样本数、活跃位号/设备、静默位号、每分钟摄取速率）→ 单位号趋势 → 位号清单（最新值、最后采集时间、样本数）。
+
 接入步骤：
 
 1. `make up-optional` 启动 Prometheus、两个 exporter 与 Grafana。
@@ -118,6 +137,32 @@ GF_SERVER_ROOT_URL="https://ops.example.com/grafana" make up-optional
 
 Prometheus 自身不对宿主机发布端口，通常通过 Grafana 间接查询；要直接看 Prometheus，可临时在 compose 里为其加一个端口映射，或用
 `docker exec` / `podman exec` 进容器排查。
+
+## 链路追踪（Jaeger）
+
+可选栈里的 `dc3-jaeger`（all-in-one 镜像）承担链路追踪：UI 在 `16686`（`DC3_JAEGER_UI_PORT`），OTLP 接收 gRPC `4317` / HTTP `4318`。
+
+各中心与网关默认开启追踪，经 OTLP 导出到 `http://dc3-jaeger:4318/v1/traces`，链路头按 B3 + W3C 双格式传播——一次跨服务调用在 Jaeger 里能串成一条 trace。开关在应用侧（不在 `.env.example` 里，按需注入核心栈）：
+
+| 变量 | 默认 | 说明 |
+|------|------|------|
+| `OTEL_TRACING_ENABLED` | `true` | 追踪总开关 |
+| `OTEL_TRACING_SAMPLING_PROBABILITY` | `1.0` | 采样率，生产建议降到 `0.1`–`0.3` |
+| `OTEL_OTLP_EXPORTER_ENABLED` | `true` | OTLP 导出开关 |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://dc3-jaeger:4318/v1/traces` | 导出地址 |
+| `OTEL_EXPORTER_OTLP_TIMEOUT` | `10s` | 导出超时 |
+
+没起 Jaeger 时导出没有接收方，服务日志可能出现连接失败告警（不影响业务请求）；不需要追踪就把 `OTEL_OTLP_EXPORTER_ENABLED` 设为 `false`。驱动服务没有追踪埋点，trace 到驱动边界为止。
+
+## 看什么、告警什么
+
+仓库不内置告警规则——Prometheus 抓取配置和 Grafana 置备都在镜像里，不含 alert rule，要自己配。这套栈里值得接告警的信号：
+
+- **就绪探针**：各中心的 `/<base>/actuator/health/readiness` 持续失败（k8s 形态已接探针；Compose 形态用 blackbox 或脚本探测）。
+- **摄取健康**：预置看板里的 Ingest Rate 突降、Silent Points 上升——前者说明链路断了，后者说明一部分设备停报。
+- **队列堆积**：RabbitMQ 管理界面（db 栈发布 `15672`）盯 `dc3.q.value.point` 的深度，持续上涨就是数据中心消费跟不上。
+- **数据库**：postgres-exporter 的连接数、死元组、磁盘增长——时序数据 30 天滚动加两个连续聚合，磁盘只增不减，要有容量预案。
+- **智能中心**：`agentic.transport.acquire.timeout` 增长（限流到顶了）、`agentic.check.results` 失败占比升高（provider 不可达）。
 
 ## 约束与边界
 

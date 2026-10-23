@@ -128,7 +128,7 @@ The new module's own `pom.xml` usually just inherits the driver parent module an
   <groupId>io.github.pnoker</groupId>
   <artifactId>dc3-driver</artifactId>
   <!-- Keep in sync with the upstream version (the copied template already carries it; usually no edit needed) -->
-  <version>2026.10.9</version>
+  <version>2026.10.10</version>
 </parent>
 
 <artifactId>dc3-driver-knx</artifactId>

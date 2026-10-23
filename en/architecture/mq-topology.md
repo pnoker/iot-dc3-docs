@@ -13,7 +13,18 @@ The platform's loose coupling rides on a single message bus: most of the asynchr
 - Exchanges: `dc3.e.<domain>`; queues: `dc3.q.<domain>[.<sub>]`; routing keys: `dc3.r.<domain>.<prefix>`.
 - Queue names with a **dot suffix** (e.g. `dc3.q.point_command.`) are **per-consumer prefixed queues** — each driver instance owns its own queue under its client id (`dc3.driver.client`, e.g. `dc3.q.point_command.dc3-driver-virtual`), and commands route to it by the key `dc3.r.point_command.<service>.<node>`.
 - **Exception**: `dc3.q.event.report` carries a dot but is a **fixed-suffix shared queue** (every driver's events land in this one queue) — it is not a per-consumer queue.
-- The optional system property `dc3.rabbit.tag` prefixes every name (empty by default) — use it to isolate stacks sharing one RabbitMQ.
+- Every name can carry a **prefix tag** (empty by default — names are exactly as in the tables below); it's what isolates stacks sharing one RabbitMQ.
+
+### When the prefix appears: `dev_<user>.` in dev environments
+
+The rule is a single line: when `spring.env` is `dev`, the prefix is `dev_<spring.group>.` — the group defaults to the launching user's OS username, overridable via `SPRING_GROUP`; `test` / `pre` / `pro` carry no prefix. Physical names then look like `dev_pnoker.dc3.e.value`. Two input sources: the dev profile YAML (`spring.env: dev`, `spring.group: ${user.name}`) or the environment variables `SPRING_ENV` / `SPRING_GROUP` (which outrank the profile YAML). The intent: multiple developers on one machine each get their own topology and never trade messages.
+
+::: warning The prefix must match across the whole stack
+A publisher and a consumer with different prefixes are two mutually invisible topologies — values published by a driver pile up in a queue nobody consumes. Two classic traps:
+
+1. **Native images mixed with JVM services**: native images bake `SPRING_ENV=test` in at build time (so AOT doesn't freeze the dev profile into the binary), which naturally disagrees with JVM services running dev. When mixing JVM + native stacks, set `SPRING_ENV` explicitly and uniformly (see the native stack section of the [deployment guide](../guide/deployment)).
+2. **The single stack**: `docker-compose-single.yml` explicitly sets `SPRING_ENV: dev` + `SPRING_GROUP: root`, aligning centers and drivers on one prefix — that's the pattern to copy.
+:::
 
 ## Full inventory
 

@@ -142,7 +142,7 @@ write-command attributes specify the write function code and value template. Swi
 attributes become `tagName`/`tagType`; switch to DLMS and they become `logicalName` (OBIS) / `attributeId`. The byte
 order and register order discussed earlier likewise surface as corresponding point attributes.
 
-In other words, the protocol knowledge in this chapter is not abstract theory — it maps directly to every field you fill
+The protocol knowledge in this chapter is not abstract theory — it maps directly to every field you fill
 in when onboarding a device in DC3. Understand the protocol and you understand the driver's attribute table.
 
 ::: warning Some drivers are currently protocol skeletons (WIP)

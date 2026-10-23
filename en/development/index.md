@@ -193,4 +193,5 @@ Suggested debug ports: Gateway 5005, Auth 5006, Manager 5007, Data 5008, Agentic
 - [Driver Authoring](./driver-authoring) — copy the `dc3-driver-virtual` template to extend a new protocol driver,
   implementing `DriverCustomService`
 - [API Documentation](./api-documentation) — how OpenAPI/Swagger is exposed, the auth header, and the export workflow
+- [Database Schema Reference](./schema-reference) — every schema and table on one page; read before touching the database
 - [Testing](./testing) — conventions for unit, integration, E2E, and coverage

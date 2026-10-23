@@ -11,7 +11,7 @@ import ObservabilityDiagram from '../../.vitepress/theme/components/Observabilit
 Log aggregation and metrics monitoring in IoT DC3 are an **optional** stack: a single command, `make up-optional`,
 starts EMQX, ELK (Elasticsearch + Logstash + Kibana), Prometheus, and Grafana. This page covers what each component
 does, the port it exposes, how to feed service logs into Kibana and service metrics into Grafana, and the environment
-variables that tune heap memory and toggle APM.
+variables that tune heap memory and toggle APM; tracing (Jaeger) and what to alert on are here too.
 
 > You are here: you can already [deploy and start the platform](./usage), and now want to add log search and metrics
 > dashboards to a running environment.
@@ -121,6 +121,34 @@ schedule, along with the two exporters — `postgres-exporter` (database metrics
 metrics). Prometheus keeps 7 days of time-series data locally (`--storage.tsdb.retention.time=7d`), and Grafana queries
 it as a data source to draw dashboards.
 
+### Where the metrics endpoints live
+
+Every center and the gateway expose `/actuator/prometheus` on their **own service port** — management endpoints have no
+separate port, and services with a base-path need the prefix (the auth center serves
+`http://<host>:8300/auth/actuator/prometheus`; readiness paths per service are in the [services
+list](../architecture/services)). The scrape target list is baked into the `dc3-prometheus` image and not visible in the
+repo; if you change networks or ports, check `/etc/prometheus/prometheus.yml` inside the image. **Driver services are
+not in the scrape surface**: drivers don't depend on `dc3-common-web` and carry no actuator endpoints.
+
+Beyond the stock Micrometer metrics (JVM, HTTP, R2DBC, …), the only custom business metrics today come from the Agentic
+Center:
+
+| Metric | Kind | Tags | What it tells you |
+|---------|------|------|-------------------|
+| `agentic.chat.requests` / `agentic.chat.duration` | Counter / Timer | tenant, provider, model, result | chat volume and latency; `result` splits success/failure |
+| `agentic.chat.tokens` | Counter | tenant, provider, model | token consumption |
+| `agentic.tool.calls` / `agentic.tool.duration` | Counter / Timer | tool, domain, outcome | tool-call frequency and latency |
+| `agentic.check.results` | Counter | kind, result | L1/L2 connectivity-check pass rate |
+| `agentic.transport.global.permits` / `agentic.transport.provider.permits` | Gauge | the latter adds tenant, provider | remaining concurrency permits |
+| `agentic.transport.acquire.timeout` | Counter | scope | how often a slot can't be acquired — rising means the limits need attention |
+
+### The provisioned dashboard
+
+Grafana needs no assembly: the `DC3 Postgres` datasource (straight into the `dc3_history` schema, TimescaleDB) and the
+**Point Value Overview** dashboard are provisioned with the optional stack, present from the first start. The dashboard
+has three parts: overview (samples in range, active points/devices, silent points, ingest rate per minute) → per-point
+trend → point list (latest value, last seen, sample count).
+
 To run it:
 
 1. Run `make up-optional` to start Prometheus, the two exporters, and Grafana.
@@ -135,6 +163,43 @@ GF_SERVER_ROOT_URL="https://ops.example.com/grafana" make up-optional
 
 Prometheus publishes no port to the host and is normally queried through Grafana. To look at it directly, temporarily
 add a port mapping in the compose file, or use `docker exec` / `podman exec` to drop into the container.
+
+## Tracing (Jaeger)
+
+Tracing lives in the optional stack as `dc3-jaeger` (the all-in-one image): UI on `16686` (`DC3_JAEGER_UI_PORT`), OTLP
+ingest on gRPC `4317` / HTTP `4318`.
+
+Every center and the gateway ship tracing by default, exporting over OTLP to
+`http://dc3-jaeger:4318/v1/traces`, with B3 + W3C propagation — one cross-service call shows up as a single trace in
+Jaeger. The switches live on the application side (not in `.env.example`; inject into the core stack as needed):
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `OTEL_TRACING_ENABLED` | `true` | master tracing switch |
+| `OTEL_TRACING_SAMPLING_PROBABILITY` | `1.0` | sampling; drop to `0.1`–`0.3` in production |
+| `OTEL_OTLP_EXPORTER_ENABLED` | `true` | OTLP export switch |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://dc3-jaeger:4318/v1/traces` | export target |
+| `OTEL_EXPORTER_OTLP_TIMEOUT` | `10s` | export timeout |
+
+Without Jaeger running there is nothing to receive the exports; service logs may show connection warnings (business
+requests are unaffected). Turn `OTEL_OTLP_EXPORTER_ENABLED` off if you don't want tracing. Drivers carry no tracing
+instrumentation — traces end at the driver boundary.
+
+## What to watch, what to alert on
+
+The repo ships no alerting rules — the Prometheus scrape config and the Grafana provisioning are baked into images,
+with no alert rules in them; wire your own. Signals from this stack worth alerting on:
+
+- **Readiness**: each center's `/<base>/actuator/health/readiness` failing continuously (k8s forms already probe it;
+  on Compose, use a blackbox probe or a script).
+- **Ingest health**: Ingest Rate dropping or Silent Points rising on the provisioned dashboard — the former means the
+  pipeline broke, the latter that some devices stopped reporting.
+- **Queue backlog**: watch `dc3.q.value.point` depth on the RabbitMQ management UI (the db stack publishes `15672`);
+  sustained growth means the Data Center can't keep up.
+- **Database**: connections, dead tuples, and disk growth from postgres-exporter — 30-day rolling raw data plus two
+  continuous aggregates means disk only grows; have a capacity plan.
+- **Agentic Center**: `agentic.transport.acquire.timeout` climbing (limits maxed out), or the failure share of
+  `agentic.check.results` rising (provider unreachable).
 
 ## Constraints and boundaries
 

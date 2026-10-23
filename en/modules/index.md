@@ -100,6 +100,10 @@ The runtime is PostgreSQL + R2DBC only — JDBC / MyBatis are not supported runt
 
 ## Time-series Storage
 
+The only implementation today is the Data Center's native R2DBC store on **PostgreSQL + TimescaleDB** — there is no
+runtime switch and no `DC3_TSDB`-style backend selector; the TDengine / InfluxDB / IoTDB adapters from older docs were
+removed when the persistence layer converged. Don't go looking for them.
+
 | Module          | Purpose                                                                                                                  |
 |-----------------|--------------------------------------------------------------------------------------------------------------------------|
 | `dc3-tsdb-core` | Store-neutral reactive `TsdbStore` port and capability set — point history is implemented by the Data Center's native R2DBC store |

@@ -17,7 +17,7 @@ import DriverLifecycleDiagram from '../../../.vitepress/theme/components/DriverL
 
 A Driver answers "how does DC3 actually talk to this [Device](./device)?". A device only describes "what is connected";
 the thing that holds the protocol session, polls on a schedule, and translates register values into point values is the
-driver—a **running service process**. In other words: a device is a row of metadata, a driver is a program that runs.
+driver—a **running service process**. A device is a row of metadata; a driver is a program that runs.
 
 The easy confusion is "Driver" vs. "Device": one Modbus TCP driver instance (`dc3-driver-modbus-tcp`) can connect to
 hundreds or thousands of Modbus devices at once; each device tells the driver "my IP, port, slave address" through

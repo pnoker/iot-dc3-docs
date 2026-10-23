@@ -33,7 +33,7 @@ The two differ less in what they can do than in who initiates and how it's bound
 single HTTP entry — the gateway `dc3-gateway` (`8000`). The Agentic chat and the MCP tool calls both go through it,
 where the gateway injects principal context and hands off to `dc3-center-auth` for **RBAC** and **tenant isolation**.
 
-In other words: the AI gets no more privilege than the account behind it, and cross-tenant data stays invisible (you get
+The AI gets no more privilege than the account behind it, and cross-tenant data stays invisible (you get
 a 404, not the data). The README's "tenant-level isolation across database, cache, and API paths" and "JWT + Spring
 Security + RBAC" apply equally to both.
 

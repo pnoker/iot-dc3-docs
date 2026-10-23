@@ -119,10 +119,10 @@ make reset STACK=db CONFIRM_RESET_VOLUMES=true
 
 传入其它值会直接报错 `Unsupported REGISTRY`。镜像版本由 `DC3_IMAGE_TAG`（默认 `2026.9`）统一控制——除 `dc3-web`（只有 `latest` 与完整版本号 tag，无系列 tag）外，服务与依赖镜像共用同一个 tag，生产建议钉死具体版本而非 `latest`。
 
-自 `2026.9` 起，`dc3-center-*` 与 `dc3-gateway` 另有 GraalVM native 镜像线（同一镜像名，tag 加 `-native` 后缀，如 `dc3-center-auth:2026.9-native`），启动毫秒级、内存占用更低；驱动服务仍在 JVM 镜像线上运行。
+自 `2026.9` 起，`dc3-center-*` 与 `dc3-gateway` 另有 GraalVM native 镜像线：镜像名不变，tag 加 `-native` 后缀，如 `dc3-center-auth:2026.9-native`，启动毫秒级、内存更省。`2026.10.10` 起 36 个驱动里有 33 个也发了 native 镜像（amd64），如 `dc3-driver-virtual:2026.10.10-native`。剩下的：`dnp3`、`ble`、`opc-da` 的 native 绑定（Rust FFI、TinyB/JNA、vendored DCOM）带不进 native image，会一直留在 JVM 线；`opc-ua` 的 native 镜像这次没发出来（打包超出 CI 机器内存，已从矩阵撤下）。native 栈用 `dc3/docker-compose-native.yml` 拉起，见[部署指南](./deployment.md)。
 
 ::: tip 钉死版本再上生产
-Docker Hub 最新发布线是 `2026.10`（最新补丁 `2026.10.9`，2026-10-08 推送，`latest` 指向它，含 `-native` 变体）；仓库默认 `DC3_IMAGE_TAG=2026.9`，`.env.example` 与 Compose fallback 一致，开箱即可起栈。生产环境仍建议把根目录 `.env` 的 `DC3_IMAGE_TAG` 钉死到具体补丁版本（如 `2026.10.9`）而非跟随系列 tag。另注意 app 镜像线从 `2025.9.3` 直接跳到 `2026.9`（从无 `2026.5`/`2026.6` tag）：旧检出的 `.env.example` 若写着 `2026.6`，拉镜像会失败，改成 `2026.9` 及以上即可。
+Docker Hub 最新发布线是 `2026.10`（最新补丁 `2026.10.10`，2026-10-19 推送，`latest` 指向它，含 `-native` 变体）；仓库默认 `DC3_IMAGE_TAG=2026.9`，`.env.example` 与 Compose fallback 一致，开箱即可起栈。生产环境仍建议把根目录 `.env` 的 `DC3_IMAGE_TAG` 钉死到具体补丁版本（如 `2026.10.10`）而非跟随系列 tag。另注意 app 镜像线从 `2025.9.3` 直接跳到 `2026.9`（从无 `2026.5`/`2026.6` tag）：旧检出的 `.env.example` 若写着 `2026.6`，拉镜像会失败，改成 `2026.9` 及以上即可。
 :::
 
 ::: code-group

@@ -188,6 +188,18 @@ driver instance. Once it's live, leave it alone — changing it stops commands f
 driver.
 :::
 
+## Device online but no data: hop-by-hop through the value chain
+
+**Symptom**: the device shows online, but point values don't update; or some points have values and others don't.
+
+**Root cause**: a value has to travel five hops — driver read → publish to the bus → Data Center consumption → persisted → queryable via API — and a break at any hop looks the same from the outside. Locate it hop by hop:
+
+1. **Did the driver read anything?** Look for read-task entries in the driver log (read jobs run on each point's collect cycle); for protocol drivers, also check for timeouts/exceptions. Nothing read → check device connectivity and the point configuration (read/write direction, address, enable state).
+2. **Was it published?** Values go to the value exchange (`dc3.e.value`). In dev environments names carry a `dev_<username>.` prefix — a publisher and consumer with different prefixes are two mutually invisible topologies, the sneakiest break of all. See [Message Bus Topology](../architecture/mq-topology).
+3. **Is the queue backing up?** Check `dc3.q.value.point` ready count on the RabbitMQ management page (`15672`). A backlog means the Data Center can't keep up — tune the batch/concurrency variables (`POINT_BATCH_*`, see [Environment Variables](../quickstart/environment)).
+4. **Did it land?** Check the Data Center log for ingest errors; messages in the dead-letter queue `dc3.q.point_value_dead` were rejected or exhausted retries (poison messages) — handling is in the dead-letter part of [Data Plane](../architecture/data-plane).
+5. **Can it be queried?** Is there a row for the point in `dc3_point_latest` (table layout in the [schema reference](../development/schema-reference))? A row that the UI doesn't show points at tenant filtering or the point's enable state.
+
 ## Authentication failures: 401 / 403 and HMAC
 
 **Symptom**: Calling a protected endpoint through the gateway returns `401` (unauthenticated) or `403` (unauthorized).

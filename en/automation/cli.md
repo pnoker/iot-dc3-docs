@@ -44,6 +44,8 @@ Three steps to get going: configure the gateway, log in, then use it.
 dc3 config set gateway http://localhost:8000   # gateway address (example: local default port 8000)
 dc3 auth login                                 # interactive login
 dc3 device list                                # list devices
+dc3 device import-template --driver-id 1 --profile-id 1   # download the XLSX import template
+dc3 device import devices.xlsx --driver-id 1 --profile-id 1   # bulk import (polls to the terminal state)
 ```
 
 ## Authentication: the three-stage token and how it stays fresh

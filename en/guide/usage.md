@@ -137,13 +137,19 @@ namespace Compose actually reads:
 Any other value fails with `Unsupported REGISTRY`. The image version is controlled by `DC3_IMAGE_TAG` (default `2026.9`) — apart from `dc3-web` (which only has `latest` and full-version tags, no series tag), services and dependency images share the same tag. In production, pin a specific version rather than
 `latest`.
 
-Since `2026.9`, `dc3-center-*` and `dc3-gateway` additionally have a GraalVM native image line (same image name, `-native` suffix on the tag, e.g. `dc3-center-auth:2026.9-native`) — millisecond-level startup and a smaller memory footprint; driver services still run on the JVM image line.
+Since `2026.9`, `dc3-center-*` and `dc3-gateway` have had a GraalVM native image line: same image name with a
+`-native` tag suffix, e.g. `dc3-center-auth:2026.9-native` — millisecond startup, smaller footprint. From
+`2026.10.10`, 33 of the 36 drivers publish native images too (amd64), e.g. `dc3-driver-virtual:2026.10.10-native`. Of
+the rest, `dnp3`, `ble`, and `opc-da` stay on the JVM line for good (their native bindings — Rust FFI, TinyB/JNA,
+vendored DCOM — cannot be carried into a native image), and the `opc-ua` native image didn't make it out this time
+(its build exceeded the CI machine's memory and was pulled from the matrix). Bring the native stack up with
+`dc3/docker-compose-native.yml`; see the [deployment guide](./deployment.md).
 
 ::: tip Pin a version before production
-The latest released line on Docker Hub is `2026.10` (latest patch `2026.10.9`, pushed 2026-10-08, with `latest`
+The latest released line on Docker Hub is `2026.10` (latest patch `2026.10.10`, pushed 2026-10-19, with `latest`
 pointing at it and `-native` variants available); the repo default is `DC3_IMAGE_TAG=2026.9`, identical in
 `.env.example` and the Compose fallback — both come up out of the box. For production, still pin `DC3_IMAGE_TAG` to an
-exact patch version (e.g. `2026.10.9`) in the root `.env` instead of riding the series tag. Note the app image line
+exact patch version (e.g. `2026.10.10`) in the root `.env` instead of riding the series tag. Note the app image line
 jumped from `2025.9.3` straight to `2026.9` (no `2026.5`/`2026.6` tags ever existed): an older checkout whose
 `.env.example` says `2026.6` will fail to pull images — bump it to `2026.9` or newer.
 :::

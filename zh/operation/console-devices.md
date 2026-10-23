@@ -14,7 +14,7 @@ title: 控制台 · 设备管理
 
 - **工具栏**：检索与筛选（见下）、**新增**、**导入**；
 - **设备卡片列表**：每台设备一张卡，卡上直接提供 启用/停用、删除；
-- **分页与排序**：底部分页器可切换每页条数与页码，工具栏可刷新、按列排序。
+- **分页与排序**：底部分页器的每页条数默认按视口能放下几列自适应，也可以手动改；工具栏可刷新、按列排序。
 
 ## 找到设备：筛选与检索
 
@@ -37,9 +37,22 @@ title: 控制台 · 设备管理
 
 创建动作对应 `POST /device/add`（返回新建实体含 id——见[设备概念](../introduction/concepts/device)的 API 表）。
 
-## 批量导入
+## 批量导入（XLSX）
 
-工具栏点 **导入**：先**下载模板**，按模板填写后上传。导入逐行校验，失败行会给出原因。适合一次性录入成批同类设备（如同一网关下的多块仪表）。
+工具栏的 **导入** 背后是一套异步流程，不是同步返回：
+
+1. **下载模板**：`POST /api/v3/manager/device/export/import_template`，请求体给 `driverId` + `profileId`，返回按该驱动/模板定制的 XLSX（`device-import-template-v1.xlsx`）。模板跟驱动绑定——驱动接什么属性，模板就有什么列。
+2. **填表上传**：`POST /api/v3/manager/device/import`，multipart 两部分：`request`（JSON，仍是 `driverId` + `profileId`）和 `file`（XLSX，不超过 20 MB）；请求头带 `Idempotency-Key`——同 key 同内容重传返回原操作，同 key 不同内容直接拒。
+3. **轮询结果**：上传返回 **202** 加 `Location`（操作查询地址）。对 `GET /api/v3/manager/operations/get_by_id?id=<operationId>` 轮询，状态 `PENDING`/`RUNNING` 走到 `SUCCEEDED`/`FAILED`，逐行校验的失败原因在 `result` / `error` 字段里。操作状态落 `dc3_operation` 表（见[数据库结构参考](../development/schema-reference)）。
+
+CLI 把这几步包成了两条命令：
+
+| 动作 | 命令 / 接口 |
+|------|------------|
+| 下载模板 | `dc3 device import-template --driver-id <id> --profile-id <id> --output <file>`；接口 `POST …/device/export/import_template` |
+| 上传并等结果 | `dc3 device import <file> --driver-id <id> --profile-id <id>`（默认轮询到终态，`--no-wait` 只提交；`--idempotency-key` 可指定幂等键）；接口 `POST …/device/import` |
+
+没有设备导出接口，只有模板导出。要留数据，先做位号值导出或数据库备份（见 [FAQ](../community/faq)）。
 
 ## 启用 / 停用 / 删除
 

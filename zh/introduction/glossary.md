@@ -34,6 +34,10 @@ title: 术语表
 | 租户   | Tenant · `tenantId`                   | 业务数据的隔离边界。详见 [租户](./concepts/tenant)                                           | 横切    |
 | 属性   | Attribute                             | 驱动协议层的配置项，由驱动启动时从 `application.yml` 注册。详见 [属性与配置](./concepts/attribute-config) | 配置    |
 | 配置   | Config                                | 设备实例层为属性填的具体值。详见 [属性与配置](./concepts/attribute-config)                          | 配置    |
+| 门面   | Facade                                | 中心间同步调用的抽象，gRPC / local / disabled 三种模式。详见 [facade 模式](../architecture/facade-modes) | 中心服务  |
+| 连续聚合 | Continuous Aggregate · cagg          | TimescaleDB 对超表的预聚合（1 分钟粒度留 1 年、1 小时粒度永久），长区间查询走它。详见 [数据平面](../architecture/data-plane) | 数据    |
+| 围栏令牌 | Fencing Token                        | 单调递增的令牌：持有者变更后，旧持有者的写因令牌过旧被拒，防双主。见 [数据库结构参考](../development/schema-reference) | 横切    |
+| 模式指纹 | Schema Fingerprint                   | initdb DDL 的哈希；服务启动时与库内值比对，不符拒绝启动。见 [版本升级与数据库迁移](../guide/upgrade) | 横切    |
 
 ::: tip 不要混用"点位 / 测点 / 位号"
 全站统一用「位号(Point)」指数据项的定义，用「位号值(PointValue)」指它的运行态取值。中心服务首次出现给「中文名 + 标识」，后续可用其一。

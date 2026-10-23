@@ -129,7 +129,7 @@ type, and configuration:
 
 ::: warning host/port are placeholders; reachability never affects output
 The virtual driver never opens a connection to `host:port`, so it produces random values even with a non-existent
-address. In other words, **it cannot validate real network connectivity**——to test a real link, switch to the driver for
+address. It cannot validate real network connectivity — to test a real link, switch to the driver for
 that protocol.
 :::
 

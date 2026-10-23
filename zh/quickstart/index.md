@@ -10,7 +10,7 @@ import QuickstartIndexDiagram from '../../.vitepress/theme/components/Quickstart
 
 这页带你把 IoT DC3 从源码跑起来：先用 Compose 起好 PostgreSQL 与 RabbitMQ，再用一组本地环境变量把 Java
 进程指向本机端口，构建、启动、跑测试。读完你能在自己的机器上跑通整套中心服务，并理解为什么启动有先后、为什么本地进程不能直接吃根
-`.env`。
+`.env`。只想先扫一眼界面的，[demo.dc3.site](https://demo.dc3.site) 有 mock 数据的在线演示，不用本地起栈。
 
 > 你在这里：想从源码开发或调试。只想点一遍最短闭环，请看 [第一个设备：端到端](./first-device)
 > ；想理解服务怎么拼起来，请看 [系统架构总览](../architecture/)。

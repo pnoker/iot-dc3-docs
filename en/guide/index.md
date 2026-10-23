@@ -122,6 +122,8 @@ see [Troubleshooting · auth failures: 401 / 403](./troubleshooting).
 ## Further reading
 
 - [Deployment Modes & Image Registries](./usage) — container images, registry switching, and Compose orchestration
+- [Production Deployment](./deployment) — the five deployment forms and the pre-launch hardening checklist
+- [Upgrades & Migrations](./upgrade) — schema changes between versions and the schema-fingerprint gate
 - [Observability](./observability) — integrating Grafana, Prometheus, and ELK
 - [Logging Conventions](./logging) — log message style, levels, and output format
 - [Troubleshooting](./troubleshooting) — locating and fixing startup and connection issues

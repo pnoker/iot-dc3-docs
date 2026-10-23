@@ -38,6 +38,8 @@ pnpm link   # 全局可用 dc3 命令
 dc3 config set gateway http://localhost:8000   # 网关地址（示例：本地默认端口 8000）
 dc3 auth login                                 # 交互式登录
 dc3 device list                                # 列出设备
+dc3 device import-template --driver-id 1 --profile-id 1   # 下载 XLSX 导入模板
+dc3 device import devices.xlsx --driver-id 1 --profile-id 1   # 批量导入（默认轮询到终态）
 ```
 
 ## 鉴权：三段式 token 如何拿到与保鲜

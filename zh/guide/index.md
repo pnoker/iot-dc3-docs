@@ -108,6 +108,8 @@ curl -X POST http://localhost:8000/api/v3/auth/token/generate \
 ## 延伸阅读
 
 - [部署模式与镜像源](./usage) — 容器镜像、镜像仓库切换与 Compose 编排
+- [生产部署指南](./deployment) — 五种部署形态与上线前加固清单
+- [版本升级与数据库迁移](./upgrade) — 换版本时的库结构变更与 schema fingerprint 闸门
 - [可观测性](./observability) — Grafana / Prometheus / ELK 对接
 - [日志规范](./logging) — 日志消息风格、级别与输出格式约定
 - [故障排查](./troubleshooting) — 启动与连接问题的定位与处理

@@ -13,7 +13,18 @@ title: 消息总线拓扑
 - 交换机：`dc3.e.<域>`；队列：`dc3.q.<域>[.<细分>]`；路由键：`dc3.r.<域>.<前缀>`。
 - 队列名带**点号后缀**（如 `dc3.q.point_command.`）的是**每消费者前缀队列**——每个驱动实例按自己的 client id（`dc3.driver.client`）持有自己的队列（如 `dc3.q.point_command.dc3-driver-virtual`），命令按路由键 `dc3.r.point_command.<服务名>.<节点>` 定向投递。
 - **例外**：`dc3.q.event.report` 虽然带点号，但它是**固定后缀**的共享队列（所有驱动的事件都落进这一条），不是每消费者队列。
-- 可选系统属性 `dc3.rabbit.tag` 会作为前缀注入全部名字（默认为空）——多套栈共用一个 RabbitMQ 时用它隔离。
+- 名字可以整体带一个**前缀 tag**（默认为空，名字就是上表原样）——多套栈共用一个 RabbitMQ 时靠它隔离。
+
+### 什么时候带前缀：dev 环境的 `dev_<user>.`
+
+tag 的取值规则只有一条：`spring.env` 为 `dev` 时，前缀是 `dev_<spring.group>.`——group 默认取启动用户的系统用户名，可用 `SPRING_GROUP` 覆盖；`test` / `pre` / `pro` 一律不带前缀。物理名因此变成 `dev_pnoker.dc3.e.value` 这样。输入有两个来源：dev profile 的 yml（`spring.env: dev`、`spring.group: ${user.name}`），或环境变量 `SPRING_ENV` / `SPRING_GROUP`（优先级高于 profile yml）。设计意图是同一台机器上多个开发者各用各的拓扑，互不串消息。
+
+::: warning 前缀必须全栈一致
+发布者和消费者带了不同的前缀，就是两套互相看不见的拓扑——驱动发布的值会堆在没人消费的队列里。两个典型场景：
+
+1. **原生镜像混跑**：native 镜像在构建期把 `SPRING_ENV=test` 烘进镜像（不让 AOT 把 dev profile 冻进二进制），和按 dev 跑的 JVM 服务天然不一致。混用 JVM + native 栈时，要显式统一 `SPRING_ENV`（详见[生产部署指南](../guide/deployment)的原生镜像栈一节）。
+2. **single 栈**：`docker-compose-single.yml` 显式设了 `SPRING_ENV: dev` + `SPRING_GROUP: root`，把中心和驱动对齐到同一个前缀——这是正确做法的样例。
+:::
 
 ## 全量清单
 

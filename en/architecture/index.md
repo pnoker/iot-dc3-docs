@@ -94,7 +94,7 @@ switches** — `dc3.facade.{auth,manager,data}.mode` — picks the implementatio
 - `disabled` — the process itself is that center (e.g. the manager process sets `dc3.facade.manager.mode` to
   `disabled`); no implementation is wired at all.
 
-In other words, "distributed or monolithic" is a deployment switch, not two codebases. The same business logic moves
+"Distributed or monolithic" is a deployment switch, not two codebases. The same business logic moves
 between the two forms just by changing this group of switches.
 
 ::: warning Read the Facade Mode Defaults Carefully

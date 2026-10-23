@@ -100,6 +100,23 @@ use `dc3/env/dev.env` instead (same content, no `export`): install the EnvFile p
 Configuration, and add `dc3/env/dev.env`. Don't use `.env.example` directly as an IDEA environment file — it's a Compose
 template, not Java runtime configuration.
 
+## Runtime profiles: dev / test / pre / pro
+
+`NODE_ENV` decides which `application-<env>.yml` each service loads. The four differ in small but definite ways:
+
+| profile | Who uses it | Logging | OpenAPI / Swagger | Secret gate | MQ name prefix |
+|---------|-------------|---------|-------------------|-------------|----------------|
+| `dev` | local IDE / `make dev` | `DEBUG` (io.github.pnoker) | on | inactive | `dev_<username>.` |
+| `test` | default in every Compose stack | `DEBUG` | on | inactive | none |
+| `pre` | pre-production | `INFO` default | on | active (startup refuses a blank or default `AUTH_HMAC_SECRET`) | none |
+| `pro` | production | `INFO` default | **off** (no springdoc endpoints exist) | active | none |
+
+Three similarly named variables each own one job — don't mix them:
+
+- `NODE_ENV`: picks the profile (`test` by default in Compose stacks, `dev` in `dev.env`);
+- `SPRING_ENV`: sets `spring.env` directly, outranking the profile YAML; it mainly drives the MQ prefix and the secret-gate check (baked to `test` in native images — see [Message Bus Topology](../architecture/mq-topology));
+- `SPRING_GROUP`: the group part of the MQ prefix, defaulting to the OS username.
+
 ## Key Variables Grouped by Scenario
 
 The groups below cover what you actually need for a given scenario. The full long table is collapsed under `::: details`
@@ -253,7 +270,9 @@ internal auth headers, but can be switched to OAuth RS256 ticket mode.
 ### Agentic / AI (Runtime)
 
 The `AGENTIC_FALLBACK_OPENAI_*` group only kicks in as a fallback when `dc3_model_provider` has no usable provider
-configured. Conversation memory is on by default (`.env.example` and the in-code fallback agree).
+configured. Conversation memory is on by default (`.env.example` and the in-code fallback agree). The master key,
+transport rate-limit, and attachment quota variables arrived in 2026.10; the [Agentic Center](../ai/agentic) security
+checklist explains what each one does.
 
 | Variable                              | Default                        | Purpose                                                                         |
 |---------------------------------------|--------------------------------|---------------------------------------------------------------------------------|
@@ -267,6 +286,17 @@ configured. Conversation memory is on by default (`.env.example` and the in-code
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         | Whether tool calling is on                                                      |
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           | Maximum messages retained per conversation window                               |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` | Attachment storage path                                                         |
+| `DC3_AGENTIC_MASTER_KEY`              | (empty)                        | AES-256-GCM master key encrypting provider API keys at rest (Base64, 256-bit; derived from `DC3_SECURITY_KEY` when unset — set explicitly in production) |
+| `AGENTIC_TRANSPORT_ACQUIRE_TIMEOUT_SECONDS` | `30`                    | Seconds waiting for a model concurrency slot before failing with UNAVAILABLE   |
+| `AGENTIC_TRANSPORT_GLOBAL_MAX_CONCURRENT_REQUESTS` | `16`             | In-flight model request cap across all providers                               |
+| `AGENTIC_TRANSPORT_FALLBACK_ENABLED`  | `false`                        | Platform-wide fallback model switch (keep off in production: it bypasses per-tenant accounting) |
+| `AGENTIC_TRANSPORT_PER_TENANT_QPS`    | `0`                            | Per-tenant chat requests per second; `0` disables                              |
+| `AGENTIC_TRANSPORT_CACHE_TTL_SECONDS` | `300`                          | In-process provider / model / client cache TTL (seconds)                       |
+| `AGENTIC_CHECK_CACHE_MAXIMUM_SIZE`    | `256`                          | Upper bound of cached connectivity-check results                               |
+| `AGENTIC_ATTACHMENT_ALLOWED_EXTENSIONS` | `png,jpg,jpeg,gif,webp,csv,txt,json,md,pdf` | Attachment extension whitelist, checked before any byte is written   |
+| `AGENTIC_ATTACHMENT_TENANT_MAX_COUNT` | `2000`                         | Per-tenant attachment count cap                                                |
+| `AGENTIC_ATTACHMENT_TENANT_MAX_BYTES` | `1073741824`                   | Per-tenant total-bytes cap (1 GiB by default)                                  |
+| `AGENTIC_ATTACHMENT_NAME_MAX_LENGTH`  | `128`                          | Maximum attachment file-name length (characters)                               |
 
 ::: info The table binding for `AGENTIC_MEMORY_SCHEMA_INIT` is governed by the code
 `AGENTIC_MEMORY_SCHEMA_INIT` defaults to `never` and is meant to control the memory table init mode. But after Compose
@@ -471,6 +501,17 @@ below.
 | `AGENTIC_MEMORY_MAX_MESSAGES`         | `50`                           |
 | `AGENTIC_TOOL_CALLING_ENABLED`        | `true`                         |
 | `AGENTIC_ATTACHMENT_STORAGE_PATH`     | `dc3/data/agentic/attachments` |
+| `DC3_AGENTIC_MASTER_KEY`              | (empty)                        |
+| `AGENTIC_TRANSPORT_ACQUIRE_TIMEOUT_SECONDS` | `30`                    |
+| `AGENTIC_TRANSPORT_GLOBAL_MAX_CONCURRENT_REQUESTS` | `16`             |
+| `AGENTIC_TRANSPORT_FALLBACK_ENABLED`  | `false`                        |
+| `AGENTIC_TRANSPORT_PER_TENANT_QPS`    | `0`                            |
+| `AGENTIC_TRANSPORT_CACHE_TTL_SECONDS` | `300`                          |
+| `AGENTIC_CHECK_CACHE_MAXIMUM_SIZE`    | `256`                          |
+| `AGENTIC_ATTACHMENT_ALLOWED_EXTENSIONS` | `png,jpg,jpeg,gif,webp,csv,txt,json,md,pdf` |
+| `AGENTIC_ATTACHMENT_TENANT_MAX_COUNT` | `2000`                         |
+| `AGENTIC_ATTACHMENT_TENANT_MAX_BYTES` | `1073741824`                   |
+| `AGENTIC_ATTACHMENT_NAME_MAX_LENGTH`  | `128`                          |
 
 #### Batch Processing / Driver Lease / Images / Observability
 

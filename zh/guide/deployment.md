@@ -112,6 +112,25 @@ helm upgrade dc3 dc3/deploy/helm/dc3 --reuse-values --set services.gateway.repli
 helm rollback dc3 1
 ```
 
+## 原生镜像栈（`docker-compose-native.yml`）
+
+`dc3-center-*` 与 `dc3-gateway` 自 2026.9、33/36 个驱动自 2026.10.10 起另有 GraalVM native 镜像线（毫秒级启动、更低内存，详见[部署模式与镜像源](./usage)）。`dc3/docker-compose-native.yml` 把这条线拉成一个栈：`gateway / auth / manager / data / agentic` 五个核心服务，加 `virtual`（默认启动）与其余 33 个驱动（都在 `native-drivers` profile 之后）。镜像名与 JVM 线相同，tag 加 `-native` 后缀，仅 amd64。
+
+```bash
+docker compose -f dc3/docker-compose-db.yml up -d          # 基础设施照旧（postgres/rabbitmq 不在 native 栈内）
+DC3_IMAGE_TAG=2026.10.10 docker compose -f dc3/docker-compose-native.yml up -d
+# 除 virtual 外的驱动要显式启用 profile（mqtt / modbus-tcp 还需外部 broker / Modbus 从站才有意义）：
+DC3_IMAGE_TAG=2026.10.10 docker compose -f dc3/docker-compose-native.yml --profile native-drivers up -d
+```
+
+有几个坑要先说清楚：
+
+1. compose 默认的 tag 拉不到驱动 native 镜像。native 栈的 tag 默认 `${DC3_IMAGE_TAG:-2026.9}-native`，而驱动的 `-native` 镜像 2026.10 线才开始发布，`2026.9-native` 只有中心和网关。要起驱动 native 服务，把 `DC3_IMAGE_TAG` 显式设为 `2026.10.10`（已发布 `2026.10-native`、`2026.10.10-native`、`latest-native`）。
+2. opc-ua 的 native 镜像没发出来。compose 里 opc-ua 服务在，但镜像从未发布（打包超了 CI 机器的内存，已从构建矩阵撤下），opc-ua 先留在 JVM 栈。dnp3、ble、opc-da 则是永远留在 JVM 栈——它们的 native 绑定（Rust FFI、TinyB/JNA、vendored DCOM）带不进 native image。
+3. 运行 profile 在构建期就定死了。原生镜像过 AOT，`SPRING_ENV=test` 是构建时烘进镜像的（Dockerfile 的 `native-runtime-base` 层），运行期改环境变量无效。这么做的目的：不让二进制把 dev profile 冻进镜像、把 RabbitMQ 队列拆成两套拓扑（`dev_<user>` 标签和无标签的 `dc3.q.*`）。需要 dev 隔离标签的，在构建期覆盖 `SPRING_ENV`。
+
+自建驱动 native 镜像走根 `Dockerfile` 的 `driver-native-builder` 阶段：`NATIVE_SERVICE` 构建参数一次只编一个驱动，首次约 30–60 分钟、峰值内存约 13 GB；BuildKit 会缓存 `~/.m2` 与分层，后续只重编变更部分。
+
 ## 谁可以扩容，谁不能
 
 下表描述 Compose / Swarm 形态（形态一至三）的默认行为；Kubernetes / Helm 下流量走 Service / Ingress，web 与

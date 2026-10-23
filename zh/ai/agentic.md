@@ -139,7 +139,7 @@ HTTP CRUD 约定相互独立。
 ## 会话不是内存里的，而是落库的
 
 很多 AI 服务把会话上下文放在内存里，进程一重启就丢。智能中心不是——它把每一轮对话**持久化在 `dc3_agentic` schema** 里，
-`ReactiveMessageStore.loadHistory` 按 `conversation_id` 从 `dc3_message` 读回最近 `historyWindowSize` 条消息。换句话说，会话能跨重启续上，也能被审计。
+`ReactiveMessageStore.loadHistory` 按 `conversation_id` 从 `dc3_message` 读回最近 `historyWindowSize` 条消息。会话因此能跨重启续上，也能被审计。
 
 三张表的关系如下：
 
@@ -215,6 +215,54 @@ IDE 里直接跑 Spring 而不经过 compose，则用的是 Spring 裸默认值�
 存在数据库内，访问受租户隔离约束；env 兜底的 key 也只应通过 `dc3/env/dev.env` 等本地文件注入，不入库到代码仓库。
 :::
 
+## 生产安全清单
+
+智能中心手里握着第三方模型的 API key，还会按用户的意图去调外部接口。上生产之前，把这一节过一遍。
+
+### API key 怎么加密存
+
+`dc3_model_provider.api_key` 不以明文落库，写入前先用 AES-256-GCM 加密。加密用的主密钥按顺序取：
+
+1. 配置项 `dc3.agentic.security-master-key`；
+2. 环境变量 `DC3_AGENTIC_MASTER_KEY`；
+3. 都没设时，从平台安全密钥 `DC3_SECURITY_KEY` 经 HKDF-SHA256 派生一个。派生只适合本地跑，日志里会有告警。
+
+主密钥是 Base64 的 256 位（32 字节）值，格式或长度不对，服务起不来。生成一个：`openssl rand -base64 32`。换主密钥后旧密文解不开，轮换前把各 provider 的 API key 准备好重新录入。
+
+::: danger 生产环境单独设一把主密钥
+不设 `DC3_AGENTIC_MASTER_KEY`，加密密钥就从 `DC3_SECURITY_KEY` 派生（带告警日志）。能用是能用，但两把锁串在了一起：平台密钥泄露，provider 的 key 跟着遭殃。生产给 agentic 单独设一把。
+:::
+
+### 出口管控
+
+provider 的 `base_url` 在保存和调用前都要过 `AgenticBaseUrlValidator`：
+
+- 必须 HTTPS（`dc3.agentic.security-base-url-https-only`，默认开，关掉只该出现在测试里）；
+- 主机必须解析到公网地址。回环、链路本地、站点本地（`10/8`、`172.16/12`、`192.168/16`）、IPv6 唯一本地、组播，一律拒绝，没有白名单。内网的模型网关（Ollama、vLLM 这类）要经公网域名暴露出来才能配进来；
+- DNS 解析判定缓存约 30 秒；连通性检查按解析期固定下的地址（DNS pinning）去探测，探测窗口内解析结果换了也不受影响。
+
+改 provider 的 `base_url` 必须同时提交新的 API key，留空只在 `base_url` 没动时才沿用旧密文。这条挡的是把 A 家的 key 发到 B 家去。
+
+### 限流与兜底
+
+| 变量                                                | 默认  | 语义                                                    |
+|---------------------------------------------------|-----|-------------------------------------------------------|
+| `AGENTIC_TRANSPORT_ACQUIRE_TIMEOUT_SECONDS`        | `30`  | 等待模型并发槽位的秒数，超时按 UNAVAILABLE 报错而非无限排队          |
+| `AGENTIC_TRANSPORT_GLOBAL_MAX_CONCURRENT_REQUESTS` | `16`  | 全局在途模型请求上限（兜底模型与未缓存配置走这条信号量）            |
+| `AGENTIC_TRANSPORT_PER_TENANT_QPS`                 | `0`   | 每租户每秒聊天请求数，`0` 关闭                                |
+| `AGENTIC_TRANSPORT_CACHE_TTL_SECONDS`              | `300` | provider / 模型 / 客户端进程内缓存 TTL，多副本部署下界定期外修改的陈旧窗口 |
+| `AGENTIC_TRANSPORT_FALLBACK_ENABLED`               | `false` | 平台级兜底模型开关                                          |
+
+::: warning 生产保持 `AGENTIC_TRANSPORT_FALLBACK_ENABLED=false`
+开着兜底，没配模型的租户会悄悄共用同一个上游 provider，用量算不到哪个租户头上；关着，这些租户拿到的是明确报错。默认就是 `false`，别动。
+:::
+
+### 附件与可观测性
+
+附件上传先查扩展名白名单（`AGENTIC_ATTACHMENT_ALLOWED_EXTENSIONS`，默认 `png,jpg,jpeg,gif,webp,csv,txt,json,md,pdf`），过了才落盘。租户配额三件套：条数（`AGENTIC_ATTACHMENT_TENANT_MAX_COUNT`，默认 `2000`）、总字节（`AGENTIC_ATTACHMENT_TENANT_MAX_BYTES`，默认 1 GiB）、文件名长度（`AGENTIC_ATTACHMENT_NAME_MAX_LENGTH`，默认 `128` 字符），超限报错时会把租户当前用量一起带上。
+
+模型侧的 token 用量随请求链路透传回调用方，每个工具的调用次数和耗时以 `agentic.tool.calls` / `agentic.tool.duration` 指标暴露。所有端点都挂 `@PreAuthorize("@perm.can(...)")`，权限码种子在 `dc3-center-agentic:*` 名下，chat / session / message / attachment / action / model / provider 共 21 个。
+
 ## 使用前检查
 
 启用智能中心前，确认这些前置条件，避免"模型答得头头是道但数据是错的"：
@@ -224,6 +272,7 @@ IDE 里直接跑 Spring 而不经过 compose，则用的是 Spring 裸默认值�
 3. 至少有一个设备和位号在产生数据，否则查值类工具返回空。
 4. 模型提供方（DB 或 env 兜底）可访问，且 API key 未写入文档或日志。
 5. 工具调用只对可信用户、明确的业务场景开放；不需要时用 `AGENTIC_TOOL_CALLING_ENABLED=false` 关闭。
+6. 要上生产，先把上面的安全清单过一遍：主密钥、HTTPS 公网 provider、限流和兜底开关。
 
 ## 延伸阅读
 

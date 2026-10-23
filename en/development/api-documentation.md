@@ -11,8 +11,8 @@ import ApiDocSequenceDiagram from '../../.vitepress/theme/components/ApiDocSeque
 
 IoT DC3's REST API docs are generated from code annotations, and each center service exposes its own online docs. By
 the end of this page you'll be able to open each center's online docs in development, walk through the login flow with
-the default credentials (fetch salt → fetch token → call with auth headers), read the CRUD path conventions, and see how
-the `x-dc3-ai` risk metadata on each endpoint feeds into AI/MCP tools.
+the default credentials (fetch salt → fetch token → call with auth headers), read the CRUD path conventions and the
+error-response code catalog, and see how the `x-dc3-ai` risk metadata on each endpoint feeds into AI/MCP tools.
 
 > You're about to call or debug a backend API. If you need to get the environment running first,
 > see [First Device](../quickstart/first-device). For the tenants and permissions behind those auth headers,
@@ -132,6 +132,37 @@ Tokens, passwords, salts, and API keys must never be committed to documentation,
 and tokens in examples are replaced with placeholders.
 :::
 
+## The other auth path: gateway OAuth RS256 (off by default)
+
+Besides the `X-Auth-*` trio, the gateway can accept a second credential kind: `Authorization: Bearer <JWT>` (RS256,
+verified via JWKS). It is controlled by `DC3_GATEWAY_OAUTH_ENABLED` and **off by default**; once on, both credentials
+coexist:
+
+- request carries `Authorization: Bearer …` and the switch is on → the gateway verifies the JWT (issuer/audience
+  checks, JWKS cached 5 minutes with one forced refresh on an unknown `kid`), and injects the verified principal as
+  `X-Auth-Principal` downstream;
+- no bearer (or the switch off) → the classic `X-Auth-*` chain above;
+- neither → 401 (problem+json).
+
+The JWTs come from the OAuth2 authorization server inside the Auth Center — the one built for
+[MCP](../ai/mcp): `/.well-known/oauth-authorization-server`, `/oauth2/jwks`, `/oauth2/register` (dynamic
+registration), `/oauth2/authorize` (OAuth 2.1 + PKCE), `/oauth2/token`, `/oauth2/revoke`, all under the `/api/v3/auth/`
+prefix through the gateway. Supported grants: `authorization_code`, `client_credentials`, `refresh_token`. Access
+tokens last 15 minutes (with `mcp:tools:call`-style scopes) or 1 hour (read-only scopes); refresh tokens 30 days;
+granted scopes are capped by the principal's RBAC bindings.
+
+For machine-to-machine calls, client_credentials is the easy one, and the CLI supports it directly:
+
+```bash
+dc3 auth login --oauth --client-id <id> --client-secret <secret>
+# subsequent requests carry Authorization: Bearer automatically
+```
+
+Gateway settings (`dc3.gateway.oauth.*`): `enabled`, `jwks-url`, `issuer`, `audience` (default `dc3-mcp`),
+`jwks-cache-ttl`. Environment variables `DC3_GATEWAY_OAUTH_ENABLED` / `DC3_GATEWAY_OAUTH_JWKS_URL` (see
+[Environment Variables](../quickstart/environment)). Whichever credential is used, the downstream centers'
+`@PreAuthorize` checks still apply as usual.
+
 ## CRUD path conventions: the verb reflects result cardinality
 
 All business APIs follow one naming rule — the verb on the HTTP path, the Java method, the gRPC RPC, and the frontend
@@ -165,6 +196,42 @@ uniform envelope. Pagination endpoints (like `device/list`) take **flat** `offse
 (`items`/`offset`/`limit`/`total`/`hasNext`). Note that a nested `page` object is silently ignored — the global
 `fail-on-unknown-properties=false` doesn't error, but pagination falls back to the defaults. Errors use RFC 9457 problem
 details (`application/problem+json`).
+
+## Error responses: RFC 9457 and the R-code catalog
+
+Business errors are uniformly `application/problem+json` with eight fixed fields: `type` (always `about:blank`),
+`title`, `status`, `code` (an `R###` string), `detail`, `instance`, `traceId` (correlates with service logs), and
+`errors` (per-field details on validation failures). A 422 looks like this:
+
+```json
+{
+  "type": "about:blank",
+  "title": "validation",
+  "status": 422,
+  "code": "R422",
+  "detail": "deviceName must not be blank",
+  "instance": "/api/v3/manager/device/add",
+  "traceId": "a1b2c3d4",
+  "errors": {"deviceName": "must not be blank"}
+}
+```
+
+`code` maps one-to-one onto the HTTP status:
+
+| code | HTTP | When |
+|------|------|------|
+| `R401` | 401 | unauthenticated, invalid token, disallowed source IP |
+| `R403` | 403 | permission denied (RBAC) |
+| `R4031` / `R4032` | 403 | password change required on first login / password expired |
+| `R404` | 404 | target not found (or invisible cross-tenant — "not found" and "not yours" are deliberately indistinguishable) |
+| `R4090` / `R4091` | 409 | already exists (unique-key conflict) / state conflict (e.g. optimistic-lock version mismatch) |
+| `R422` | 422 | validation failure, value out of range |
+| `R500` | 500 | everything else, unclassified |
+
+Bind/validation failures (`BindException`, `MethodArgumentNotValidException`) are always 422 with the per-field
+`errors` map; gateway-side errors (401 without credentials, 503 when a downstream is unreachable) use the same
+problem+json shape. The enum lives in `dc3-common-constant`'s `ErrorCode` — branch client logic on `code`, correlate
+with logs via `traceId`.
 
 ## x-dc3-ai: risk annotations for AI/MCP tools
 

@@ -14,7 +14,8 @@ After logging in, open **Device Management** from the navigation. The page has t
 
 - **Toolbar**: search and filters (below), **Add**, **Import**;
 - **Device card list**: one card per device, with enable/disable and delete actions right on the card;
-- **Pagination and sorting**: page size and number at the bottom; the toolbar offers refresh and column sorting.
+- **Pagination and sorting**: the bottom pager auto-fits its page size to how many columns the viewport holds, with a
+  manual override; the toolbar offers refresh and column sorting.
 
 ## Finding a device: filters
 
@@ -37,9 +38,22 @@ Searches hit the manager center's device pagination endpoint (`POST /device/list
 
 Creation maps to `POST /device/add` (returns the new entity with its id — see the API table in the [Device concept](../introduction/concepts/device)).
 
-## Bulk import
+## Bulk import (XLSX)
 
-Click **Import** in the toolbar: download the template first, fill it in, and upload. Rows are validated one by one and failures report a reason. Suited for entering batches of similar devices at once (e.g. many meters behind the same gateway).
+The toolbar's **Import** runs an asynchronous flow, not a synchronous one:
+
+1. **Download the template**: `POST /api/v3/manager/device/export/import_template` with `driverId` + `profileId` in the body returns an XLSX shaped for that driver/profile (`device-import-template-v1.xlsx`). The template follows the driver — whatever attributes the driver takes become the columns.
+2. **Fill and upload**: `POST /api/v3/manager/device/import`, multipart with two parts: `request` (JSON, again `driverId` + `profileId`) and `file` (XLSX, up to 20 MB); the request carries an `Idempotency-Key` header — same key with the same content returns the original operation, same key with different content is rejected.
+3. **Poll for the result**: the upload answers **202** plus a `Location` (the operation query URI). Poll `GET /api/v3/manager/operations/get_by_id?id=<operationId>`; the status moves from `PENDING`/`RUNNING` to `SUCCEEDED`/`FAILED`, with per-row validation failures in the `result` / `error` fields. Operation state lands in the `dc3_operation` table (see the [schema reference](../development/schema-reference)).
+
+The CLI wraps those steps in two commands:
+
+| Action | Command / endpoint |
+|--------|--------------------|
+| Download the template | `dc3 device import-template --driver-id <id> --profile-id <id> --output <file>`; endpoint `POST …/device/export/import_template` |
+| Upload and wait | `dc3 device import <file> --driver-id <id> --profile-id <id>` (polls to the terminal state by default; `--no-wait` submits only; `--idempotency-key` sets the key); endpoint `POST …/device/import` |
+
+There is no device export endpoint — only the template export. To keep the data, export point values or take a database backup first (see the [FAQ](../community/faq)).
 
 ## Enable / disable / delete
 

@@ -112,7 +112,7 @@ public class KnxDriverApplication {
   <groupId>io.github.pnoker</groupId>
   <artifactId>dc3-driver</artifactId>
   <!-- 与上游当前版本保持一致（复制模板后此版本已自带，通常无需手改） -->
-  <version>2026.10.9</version>
+  <version>2026.10.10</version>
 </parent>
 
 <artifactId>dc3-driver-knx</artifactId>

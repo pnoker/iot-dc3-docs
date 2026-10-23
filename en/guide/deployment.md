@@ -129,6 +129,40 @@ helm upgrade dc3 dc3/deploy/helm/dc3 --reuse-values --set services.gateway.repli
 helm rollback dc3 1
 ```
 
+## The native image stack (`docker-compose-native.yml`)
+
+`dc3-center-*` and `dc3-gateway` have had a GraalVM native image line since 2026.9, joined by 33 of the 36 drivers in
+2026.10.10 (millisecond startup, smaller footprint — see [Deployment Modes and Image
+Registries](./usage)). `dc3/docker-compose-native.yml` brings that line up as a stack: the five core services
+`gateway / auth / manager / data / agentic`, plus `virtual` (started by default) and the other 33 drivers (all behind
+the `native-drivers` profile). Image names match the JVM line with a `-native` tag suffix; amd64 only.
+
+```bash
+docker compose -f dc3/docker-compose-db.yml up -d          # infra as usual (postgres/rabbitmq are not in the native stack)
+DC3_IMAGE_TAG=2026.10.10 docker compose -f dc3/docker-compose-native.yml up -d
+# Drivers other than virtual need the profile enabled explicitly (mqtt / modbus-tcp only make sense with an external broker / Modbus slave):
+DC3_IMAGE_TAG=2026.10.10 docker compose -f dc3/docker-compose-native.yml --profile native-drivers up -d
+```
+
+A few things to get straight before using this stack:
+
+1. The compose default tag cannot pull driver native images. The tag defaults to `${DC3_IMAGE_TAG:-2026.9}-native`,
+   but driver `-native` images start with the 2026.10 line; `2026.9-native` covers centers and gateway only. Set
+   `DC3_IMAGE_TAG` to `2026.10.10` to start native driver services (published: `2026.10-native`, `2026.10.10-native`,
+   `latest-native`).
+2. The opc-ua native image was never published. The opc-ua service is in the compose file, but its build exhausted the
+   CI runner's memory and was pulled from the matrix — keep opc-ua on the JVM stack for now. dnp3, ble, and opc-da stay
+   on the JVM stack for good: their native bindings (Rust FFI, TinyB/JNA, vendored DCOM) cannot be carried into a
+   native image.
+3. The runtime profile is decided at build time. Native images go through AOT; `SPRING_ENV=test` is baked in by the
+   Dockerfile's `native-runtime-base` layer, and changing the env var at runtime does nothing. The point is to keep the
+   binary from freezing the dev profile and splitting RabbitMQ into two queue topologies (`dev_<user>`-tagged vs
+   untagged `dc3.q.*`). If you need the dev isolation tag, override `SPRING_ENV` at build time.
+
+To build driver native images yourself, use the root `Dockerfile`'s `driver-native-builder` stage: the `NATIVE_SERVICE`
+build arg compiles exactly one driver per build, ~30-60 minutes and ~13 GB peak memory on the first run; BuildKit
+caches `~/.m2` and the layers, so subsequent builds only recompile what changed.
+
 ## Who can scale - and who cannot
 
 The table describes the default behavior of the Compose / Swarm modes (modes 1-3); on Kubernetes / Helm traffic

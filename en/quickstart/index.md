@@ -11,7 +11,8 @@ import QuickstartIndexDiagram from '../../.vitepress/theme/components/Quickstart
 This page walks you through running IoT DC3 from source: bring up PostgreSQL and RabbitMQ with Compose, point the Java
 processes at your local ports, build, start, and run the tests. By the end you'll have the center services running on
 your own machine, and you'll understand why startup has an order and why local processes can't read the root `.env`
-directly.
+directly. If you'd rather just glance at the UI first, [demo.dc3.site](https://demo.dc3.site) is an online demo with
+mock data — no local stack needed.
 
 > You are here because you want to develop or debug from source. If you just want to click through the shortest
 > end-to-end loop once, see [First Device: End to End](./first-device). To understand how the services fit together,
