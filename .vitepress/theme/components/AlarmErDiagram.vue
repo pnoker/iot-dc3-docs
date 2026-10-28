@@ -194,7 +194,7 @@ function stroke(r: Role) {
                 stroke-width="1.5"/>
           <rect :fill="stroke(e.role)" :height="HEAD" :width="W" :x="e.x" :y="e.y" opacity="0.85" rx="8"/>
           <rect :fill="stroke(e.role)" :height="8" :width="W" :x="e.x" :y="e.y + HEAD - 8"/>
-          <text :x="e.x + W / 2" :y="e.y + 17.5" fill="#ffffff" font-size="11.5" font-weight="700"
+          <text :x="e.x + W / 2" :y="e.y + 17.5" fill="var(--dc3-on-accent)" font-size="11.5" font-weight="700"
                 text-anchor="middle">{{ e.k }}
           </text>
           <text :x="e.x + W / 2" :y="e.y + HEAD + 15" fill="var(--dc3-text2)" font-size="8" font-style="italic"

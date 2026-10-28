@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 
 const DICT = {
   zh: {
-    aria: 'MCP 工具可见性过滤流程：Agent 经网关 introspect 校验后读取约 330+ 条的工具目录，再依次通过主体 RBAC 权限、MCP 连接白名单、风险策略三层求交集得到 tools/list 可见集；tools/call 时还要叠加 OAuth scope 与 HIGH 风险两阶段确认',
+    aria: 'MCP 工具可见性过滤流程：Agent 经网关 introspect 校验后读取 348 条的工具目录，再依次通过主体 RBAC 权限、MCP 连接白名单、风险策略三层求交集得到 tools/list 可见集；tools/call 时还要叠加 OAuth scope 与 HIGH 风险两阶段确认',
     region: 'tools/list 可见性流水线',
     agentT: 'AI Agent · MCP 客户端',
     agentS1: 'tools/list · tools/call（JSON-RPC 2.0）',
@@ -18,7 +18,7 @@ const DICT = {
     gwT: 'dc3-gateway · McpGatewayController',
     gwS1: 'introspect（gRPC）→ active · principal · scope · tenant · connection_id',
     catT: 'dc3_mcp_tool_catalog',
-    catS1: '~330+ 工具 · tool_id = {service}:{METHOD}:{path}',
+    catS1: '348 个工具 · tool_id = {service}:{METHOD}:{path}',
     catS2: 'x-dc3-ai：riskLevel · destructive · idempotent · openWorld',
     catS3: '目录刷新：管理端手动触发，无定时推送',
     f1T: '① principal RBAC（主体权限）',
@@ -60,7 +60,7 @@ const DICT = {
     legCall: '调用时附加闸门', legSolid: '主流程', legDash: '来源 / 响应'
   },
   en: {
-    aria: 'MCP tool visibility filtering: after the gateway introspect check the agent reads the ~330+ tool catalog, then intersects principal RBAC permissions, the MCP connection allowlist and risk policy to derive the tools/list result; tools/call additionally requires OAuth scope and the HIGH-risk two-phase confirmation',
+    aria: 'MCP tool visibility filtering: after the gateway introspect check the agent reads the 348-entry tool catalog, then intersects principal RBAC permissions, the MCP connection allowlist and risk policy to derive the tools/list result; tools/call additionally requires OAuth scope and the HIGH-risk two-phase confirmation',
     region: 'tools/list visibility pipeline',
     agentT: 'AI Agent · MCP client',
     agentS1: 'tools/list · tools/call (JSON-RPC 2.0)',
@@ -68,7 +68,7 @@ const DICT = {
     gwT: 'dc3-gateway · McpGatewayController',
     gwS1: 'introspect (gRPC) → active · principal · scope · tenant · connection_id',
     catT: 'dc3_mcp_tool_catalog',
-    catS1: '~330+ tools · tool_id = {service}:{METHOD}:{path}',
+    catS1: '348 tools · tool_id = {service}:{METHOD}:{path}',
     catS2: 'x-dc3-ai: riskLevel · destructive · idempotent · openWorld',
     catS3: 'refresh: manual admin endpoint, no scheduled push',
     f1T: '① principal RBAC',

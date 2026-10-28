@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{ lang?: 'zh' | 'en' }>(), {lang: 'zh'})
 const DICT = {
   zh: {
     centerRegion: '中心服务 Center Services · gRPC 互联 (Facade: api / grpc / local)',
-    driverRegion: '驱动层 Driver Layer · 28+ 协议驱动 (gRPC ↔ manager, RabbitMQ 收发)',
+    driverRegion: '驱动层 Driver Layer · 36 协议驱动 (gRPC ↔ manager, RabbitMQ 收发)',
     obsRegion: '可选运维 Observability',
     webName: 'Web 控制台', webSub: 'Vue3 · Vite8 · Element Plus · :8080',
     cliName: 'dc3-cli', cliSub: 'TypeScript CLI (HTTP)',
@@ -36,7 +36,7 @@ const DICT = {
     busSub: 'point_value · point_command · result · event · notify    |    MQTT :1883',
     modbusSub: 'TCP / RTU', opcName: 'OPC', opcSub: 'UA / DA',
     s7Name: 'S7 PLC', s7Sub: 'Siemens', mqttName: 'MQTT', mqttSub: 'Broker',
-    moreName: '+ 24 协议', moreSub: 'BACnet·SNMP·IEC104·CoAP…',
+    moreName: '+ 32 协议', moreSub: 'BACnet·SNMP·IEC104·CoAP…',
     devName: '现场设备 Field Devices',
     devSub: 'PLC · 传感器 · 电表 · 网关 · 仪表  (Modbus / OPC / S7 / MQTT)',
     pgTitle: 'PostgreSQL 持久层',
@@ -57,7 +57,7 @@ const DICT = {
   },
   en: {
     centerRegion: 'Center Services · gRPC interconnect (Facade: api / grpc / local)',
-    driverRegion: 'Driver Layer · 28+ protocol drivers (gRPC ↔ manager, via RabbitMQ)',
+    driverRegion: 'Driver Layer · 36 protocol drivers (gRPC ↔ manager, via RabbitMQ)',
     obsRegion: 'Observability (optional)',
     webName: 'Web Console', webSub: 'Vue3 · Vite8 · Element Plus · :8080',
     cliName: 'dc3-cli', cliSub: 'TypeScript CLI (HTTP)',
@@ -70,7 +70,7 @@ const DICT = {
     busSub: 'point_value · point_command · result · event · notify    |    MQTT :1883',
     modbusSub: 'TCP / RTU', opcName: 'OPC', opcSub: 'UA / DA',
     s7Name: 'S7 PLC', s7Sub: 'Siemens', mqttName: 'MQTT', mqttSub: 'Broker',
-    moreName: '+ 24 protocols', moreSub: 'BACnet·SNMP·IEC104·CoAP…',
+    moreName: '+ 32 protocols', moreSub: 'BACnet·SNMP·IEC104·CoAP…',
     devName: 'Field Devices',
     devSub: 'PLC · Sensor · Meter · Gateway  (Modbus / OPC / S7 / MQTT)',
     pgTitle: 'PostgreSQL Storage',

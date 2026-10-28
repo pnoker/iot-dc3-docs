@@ -39,7 +39,7 @@ The tool catalog is generated, not hand-written. Two inputs feed it:
 - **The tool set** comes from service registration: the resource-registrar scans HTTP endpoints as each center boots
   and records them in `dc3_api` (`api_code` / `api_name`) and `dc3_resource` (`resource_code` / `permission_code`).
 - **Descriptions and schemas** come from build-time static snapshots: the auth center ships four OpenAPI snapshots
-  (`classpath*:openapi/openapi-*.json` — auth / manager / data / agentic, **347 operations** in total; regenerate with
+  (`classpath*:openapi/openapi-*.json` — auth / manager / data / agentic, **348 operations** in total; regenerate with
   `make openapi`). `McpOpenApiAggregator` parses the snapshots, enriches every endpoint with its description,
   `x-dc3-ai` risk annotations, and merged `inputSchema`, joins that with the registry, creates one tool record per
   endpoint, and stores them in `dc3_mcp_tool_catalog`.

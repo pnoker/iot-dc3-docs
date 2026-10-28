@@ -179,7 +179,7 @@ gateway's risk gating below — see the [Agentic Center](../ai/agentic) for deta
 :::
 
 **Path two: [AI Agent / MCP](../ai/mcp) (exposing tools safely to external agents).** The gateway offers a JSON-RPC 2.0
-MCP Resource Server at `POST /mcp`; the tool catalog is auto-aggregated from the OpenAPI of the four centers (~330+
+MCP Resource Server at `POST /mcp`; the tool catalog is auto-aggregated from the OpenAPI of the four centers (348
 tools), with an external agent deciding which to call. It targets the "build your own agent and let the model
 orchestrate autonomously" scenario, with stricter constraints than the conversational path:
 

@@ -10,8 +10,8 @@ import AiIndexDiagram from '../../.vitepress/theme/components/AiIndexDiagram.vue
 
 IoT DC3 把大语言模型接进了运营流程，让模型不只"看数据"，还能"动设备"。AI 栏目覆盖两种让 LLM 驱动操作的方式，区别在于谁来发起、怎么约束：
 
-- **Agentic 中心**——平台内建的对话式 AI 辅助运营。基于 Spring AI，内置 68 个工具（61 个编程式注册的响应式工具 + 7 个
-  `@Tool` 方法），通过 Tool-Calling 让 LLM 查设备、读写位号、执行命令；兼容 OpenAI API 标准，并原生支持 Anthropic
+- **Agentic 中心**——平台内建的对话式 AI 辅助运营。基于 Spring AI，内置 68 个工具（单一注册表统一注册），
+  通过 Tool-Calling 让 LLM 查设备、读写位号、执行命令；兼容 OpenAI API 标准，并原生支持 Anthropic
   API，可接 GPT、Claude、DeepSeek、通义千问等主流模型。适合想要一个有界面、可多轮对话的
   AI 运营助手。
 - **MCP**——把平台工具安全暴露给外部 AI Agent。网关在 `POST /mcp` 提供 JSON-RPC 2.0 的 MCP Resource Server，工具目录由服务注册表与四个中心的

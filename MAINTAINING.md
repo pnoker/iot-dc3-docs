@@ -48,8 +48,8 @@ node scripts/scan-facts.mjs --upstream D:/path/iot-dc3   # 指定上游仓库（
 
 三类检查：
 1. **上游提取**：驱动目录数、`.env.example` 的 `DC3_IMAGE_TAG` 与 `DC3_MQ_*`/批量变量集、pom 版本、dc3-cli 顶层命令面——直接从上游 main 读，与本站口径比对（`DC3_IMAGE_TAG` 只拦"声称默认值"；命令前缀式覆盖 `DC3_IMAGE_TAG=x docker compose …` 是显式覆盖不算声称，豁免——native 栈文档依赖它）；
-2. **禁用串（语义正则）**：历史事实错误的残留家族（哈希后密码/`hashed password`/`hash the password with the salt`、裸 `X-Auth-Token: <token>`、`"enableFlag": true`、`Gateway → Auth →`、`28 个驱动`/`28 drivers`/`28 built-in` 等）——**按语义家族匹配而非字面量**，中英文变体都要覆盖；
-3. **扫描范围**：zh/、en/、根 index.md、README.md（历史教训：根语言门的 meta 里曾残留"28 个协议驱动"，因为脚本只扫 zh/en）。
+2. **禁用串（语义正则）**：历史事实错误的残留家族（哈希后密码/`hashed password`/`hash the password with the salt`、裸 `X-Auth-Token: <token>`、`"enableFlag": true`、`Gateway → Auth →`、`28 个驱动`/`28 drivers`/`28 built-in` 等；2026-10-24 增补：`28 协议驱动`/`28+ 协议驱动`/`+24 协议`、Agentic 两层注册与 `@Tool` 反射通道叙事（现口径：68 工具单一注册表）、`330+`/`347`（现口径 348，与构建期快照一致）、`AgenticToolMetadata` 已删除的注解）——**按语义家族匹配而非字面量**，中英文变体都要覆盖；
+3. **扫描范围**：zh/、en/、根 index.md、README.md，以及 **`.vitepress/theme/components/*.vue`**（图表组件的 DICT 字符串会渲染成页面上 SVG 文字，2026-10-24 图表审计发现"28 协议驱动""10 @Tool"只存在于组件里，markdown 扫描看不见）。
 
 上游发版或 main 大改后先跑它，再按第 5 节流程改文档。
 

@@ -91,7 +91,7 @@ Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不�
 参数名的拼写错误就是运行时错误。而在 Spring AI 中，`@Tool` 和 `@ToolParam` 注解由 Java 编译器验证。
 如果你修改了方法签名中的参数名但忘了更新注解，IDE 会在编译之前就标记出来。
 
-当你拥有 12 个工具类、68 个工具（7 个 `@Tool` 方法 + 61 个编程式 `ToolDefinition`）以及一个贡献者团队时，这一点至关重要。
+当你拥有 12 个工具类、68 个工具以及一个贡献者团队时，这一点至关重要。
 编程式注册的工具定义（name / description / JSON Schema）集中在 `ReactiveAgenticToolRegistry` 一处，同样享受编译期检查。
 编译器成为了 Python 工具调用框架无法提供的安全网。
 
@@ -123,23 +123,23 @@ Qwen、Groq、Together AI、Ollama (本地模型)、vLLM —— 列表还在不�
 ## 内建工具面：12 个工具类、68 个工具
 
 Agentic Center 出厂自带 12 个工具类，覆盖平台每个领域对象。每个工具方法包装已有的服务层方法——
-不存在重复的业务逻辑。注册分两层：61 个响应式工具经 `ReactiveAgenticToolRegistry` 编程式注册，7 个上下文/系统类工具经
-`ChatClientConfig` 以 `@Tool` 注解注册。唯一的写工具 `writePointValue` 走两阶段确认（见 [Agentic 中心](./agentic)）。
+不存在重复的业务逻辑。全部工具都在 `ReactiveAgenticToolRegistry` 一处编程式注册（2026.10 收敛后不再有 `@Tool` 反射通道，
+两条模型链路共享同一份工具面）。唯一的写工具 `writePointValue` 走两阶段确认（见 [Agentic 中心](./agentic)）。
 
-| 工具类              | 领域  | 注册   | 关键方法                                                                                       |
-|------------------|-----|------|--------------------------------------------------------------------------------------------|
-| `TenantTool`     | 租户  | @Tool | `getCurrentTenantInfo()`                                                                   |
-| `UserTool`       | 用户  | @Tool | `getCurrentUserProfile()`                                                                  |
-| `SystemTool`     | 系统  | @Tool | `getSystemHealth()`, `getDeviceStatuses()`, `getDriverStatuses()`                          |
-| `DeviceTool`     | 设备  | 注册表  | `lookupDeviceById()`, `searchDevices()`, `getDeviceLatestPointValues()`                    |
-| `DriverTool`     | 驱动  | 注册表  | `lookupDriverById()`, `searchDrivers()`                                                    |
-| `ProfileTool`    | 模板  | 注册表  | `lookupProfileById()`, `searchProfiles()`, `listProfilesByDeviceId()`                      |
-| `PointTool`      | 位号  | 注册表  | `lookupPointById()`, `searchPoints()`, `listPointsByDevice()`                              |
-| `PointValueTool` | 位号值 | 注册表  | `getLatestPointValue()`, `getPointValueHistory()`, `readPointValue()`, `writePointValue()` |
-| `CommandTool`    | 命令  | 注册表  | `lookupCommandById()`, `searchCommands()`, `listCommandsByDeviceId()`                     |
-| `EventTool`      | 事件  | 注册表  | `lookupEventById()`, `searchEvents()`, `listEventsByDeviceId()`                           |
-| `InsightTool`    | 洞察  | 注册表  | `getAlertStats()`, `getTodayStats()`, `analyticsQueryHistory()` 等 25 个                     |
-| `HistoryTool`    | 历史  | 注册表  | `searchCommandHistories()`, `searchEventHistories()`                                      |
+| 工具类              | 领域  | 关键方法                                                                                       |
+|------------------|-----|--------------------------------------------------------------------------------------------|
+| `TenantTool`     | 租户  | `getCurrentTenantInfo()`                                                                   |
+| `UserTool`       | 用户  | `getCurrentUserProfile()`                                                                  |
+| `SystemTool`     | 系统  | `getSystemHealth()`, `getDeviceStatuses()`, `getDriverStatuses()`                          |
+| `DeviceTool`     | 设备  | `lookupDeviceById()`, `searchDevices()`, `getDeviceLatestPointValues()`                    |
+| `DriverTool`     | 驱动  | `lookupDriverById()`, `searchDrivers()`                                                    |
+| `ProfileTool`    | 模板  | `lookupProfileById()`, `searchProfiles()`, `listProfilesByDeviceId()`                      |
+| `PointTool`      | 位号  | `lookupPointById()`, `searchPoints()`, `listPointsByDevice()`                              |
+| `PointValueTool` | 位号值 | `getLatestPointValue()`, `getPointValueHistory()`, `readPointValue()`, `writePointValue()` |
+| `CommandTool`    | 命令  | `lookupCommandById()`, `searchCommands()`, `listCommandsByDeviceId()`                     |
+| `EventTool`      | 事件  | `lookupEventById()`, `searchEvents()`, `listEventsByDeviceId()`                           |
+| `InsightTool`    | 洞察  | `getAlertStats()`, `getTodayStats()`, `analyticsQueryHistory()` 等 25 个                     |
+| `HistoryTool`    | 历史  | `searchCommandHistories()`, `searchEventHistories()`                                      |
 
 工具方法刻意使用与 REST/gRPC 层不同的命名规范。REST 端点遵循项目的 `getXxx`/`listXxx` 约定；
 工具方法使用 `lookupXxx`/`searchXxx`。这种分离让模型能够区分"按 ID 获取一个"

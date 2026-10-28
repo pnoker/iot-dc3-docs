@@ -4,7 +4,7 @@ title: Console · MCP Connections
 
 # Console · MCP Connections
 
-Exposing the platform's 330+ tool catalog safely to external AI agents is managed under **Settings → MCP Integration**: four sub-pages — server, clients, connections, tools. The call audit sits under **Settings → Audit → MCP Audit** (same group as the identity audit). The protocol and security model (OAuth 2.1 + PKCE, three-layer tool visibility, HIGH-risk two-phase confirmation) live in [AI Agent / MCP](../ai/mcp) — this page is about driving the UI.
+Exposing the platform's 348-entry tool catalog safely to external AI agents is managed under **Settings → MCP Integration**: four sub-pages — server, clients, connections, tools. The call audit sits under **Settings → Audit → MCP Audit** (same group as the identity audit). The protocol and security model (OAuth 2.1 + PKCE, three-layer tool visibility, HIGH-risk two-phase confirmation) live in [AI Agent / MCP](../ai/mcp) — this page is about driving the UI.
 
 > You are here: you want Claude Desktop / VS Code / Cursor or your own agent calling platform tools over MCP. Protocol details and the curl flow are on the MCP page; this covers what to configure in the console.
 
@@ -15,7 +15,7 @@ Exposing the platform's 330+ tool catalog safely to external AI agents is manage
 | **MCP Server** | The platform's outward `/mcp` endpoint (the MCP resource server on the gateway) | Check server status |
 | **MCP Connection** | One established agent connection: which client, which tool whitelist | New connection, manage tools, inspect scope |
 | **MCP Client** | Registered OAuth clients (where `/oauth2/register` dynamic registrations land) | Register a client, view clientId/secret |
-| **MCP Tools** | The tool catalog (the 330+ tools with risk levels and origins) | Browse the catalog, **refresh the tool catalog** |
+| **MCP Tools** | The tool catalog (the 348 tools with risk levels and origins) | Browse the catalog, **refresh the tool catalog** |
 
 **Tool-catalog refresh** is a manual admin action (via the gateway: `POST /api/v3/auth/mcp/tool/catalog/refresh`; the refresh button lives on the **MCP Tools** sub-page): the catalog does not update automatically when HTTP endpoints are added — click refresh there (or trigger via curl) before new tools appear in `tools/list`. Note that the gateway root only exposes the JSON-RPC `POST /mcp`; there is no `/mcp/**` forwarding route, so curl must go through the `/api/v3/auth/mcp/...` prefix.
 

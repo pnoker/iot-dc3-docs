@@ -106,12 +106,11 @@ for human confirmation before continuing.
 
 Key facts along the critical path:
 
-- Tools register in two layers: `ReactiveAgenticToolRegistry` registers 61 reactive tools with programmatic
-  `ToolDefinition`s (name + description + inputSchema), whose implementations return `Mono` and never block the event
-  loop; `ChatClientConfig` then registers 3 `@Tool` classes (tenant/user/system) as a `ToolCallbackProvider` via
-  `MethodToolCallbackProvider`, wrapped in an `AgenticToolTracingCallbackProvider` for call tracing. The
-  OpenAI-compatible path merges both layers for the model (68 tools); the Anthropic-native path (the Spring AI runtime)
-  currently attaches only the `@Tool` layer.
+- Tools have a single registration source: `ReactiveAgenticToolRegistry` registers all 68 tools programmatically with
+  `ToolDefinition`s (name + description + inputSchema; 12 tool classes, implementations return `Mono` and never block
+  the event loop); `ChatClientConfig` bridges every registry tool into a `ToolCallbackProvider` via
+  `ReactiveAgenticToolCallback`. Since the October 2026 registration-path collapse there is no reflective `@Tool`
+  channel — the OpenAI-compatible and Anthropic-native paths see exactly the same tool surface, with no drift.
 - Every tool method starts with `AgenticToolContextUtil.requireTenantId(toolContext)` to extract the current tenant ID,
   so all queries carry tenant scope — the model **cannot see or touch** another tenant's data.
 - Write-type actions (command dispatch) go from the Agentic Center to the **Data Center**'s command plane via
@@ -120,15 +119,14 @@ Key facts along the critical path:
   surface, terminating at the same command plane. The command itself has a 10-second TTL (`PointCommandDTO.expireAt`
   defaults to `now+10s`) and won't execute once expired.
 
-## Built-in tools: two registration layers, 68 tools
+## Built-in tools: one registry, 68 tools
 
-The tool surface prepared for the model totals **12 tool classes and 68 tools**, registered in two layers:
+The tool surface prepared for the model totals **12 tool classes and 68 tools**, all registered in one place —
+`ReactiveAgenticToolRegistry`. The October 2026 registration-path collapse merged the earlier dual channel into one:
+every tool method must be registered there, a contract test checks
+them one by one, and the tool surface cannot drift between the two model paths.
 
-- **Reactive tools (61)**: `ReactiveAgenticToolRegistry` registers 9 tool classes with programmatic `ToolDefinition`s —
-  seven business domains (device, driver, profile, point, point value, command, event), plus insight (alert/dashboard/
-  analytics/command status, 25 tools) and history (command/event execution records, 4 tools).
-- **`@Tool` tools (7)**: `ChatClientConfig` registers `TenantTool`, `UserTool`, and `SystemTool` via
-  `MethodToolCallbackProvider`, covering tenant/user context, system health, and device/driver online status.
+The 12 tool classes cover these domains:
 
 Tool methods mainly use the verbs `lookup*` (fetch one or many by ID) and
 `search*` (paginated query), plus `list*ByXxxId` (enumerate by ownership) and the insight layer's
@@ -139,26 +137,25 @@ Get a feel for what each domain can do first, then read the table. Given a quest
 sequence — say, "first look up which points a profile has → then read the latest values of those points → finally decide
 whether to issue a command" — and orchestrates the calls automatically.
 
-| Tool class       | Domain      | Registered     | Representative methods                                                                        | Typical use                                                     |
-|------------------|-------------|----------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| `TenantTool`     | Tenant      | @Tool          | `getCurrentTenantInfo()`                                                                      | Confirm the current tenant context                              |
-| `UserTool`       | User        | @Tool          | `getCurrentUserProfile()`                                                                     | Look up the current user's info                                 |
-| `SystemTool`     | System      | @Tool          | `getSystemHealth()` / `getDeviceStatuses()` / `getDriverStatuses()`                           | Platform health, device/driver online status                    |
-| `DeviceTool`     | Device      | Registry       | `lookupDeviceById()` / `searchDevices()` / `getDeviceLatestPointValues()`                     | Look up a device, search by criteria, latest-value snapshot     |
-| `DriverTool`     | Driver      | Registry       | `lookupDriverById()` / `searchDrivers()`                                                      | Check protocol driver connectivity                              |
-| `ProfileTool`    | Profile     | Registry       | `lookupProfileById()` / `searchProfiles()` / `listProfilesByDeviceId()`                       | Look up profiles and their capabilities                         |
-| `PointTool`      | Point       | Registry       | `lookupPointById()` / `searchPoints()` / `listPointsByDevice()`                               | Look up points, read/write direction, list points by device/profile |
-| `PointValueTool` | Point value | Registry       | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | Read live values, query history curves, issue read/write commands |
-| `CommandTool`    | Command     | Registry       | `lookupCommandById()` / `searchCommands()` / `listCommandsByDeviceId()`                       | Look up custom commands, list commands by device/profile        |
-| `EventTool`      | Event       | Registry       | `lookupEventById()` / `searchEvents()` / `listEventsByDeviceId()`                             | Look up events reported by devices                              |
-| `InsightTool`    | Insight     | Registry       | `getAlertStats()` / `getTodayStats()` / `analyticsQueryHistory()` (25 in total)               | Alert stats, dashboard metrics, aggregate analytics, command status |
-| `HistoryTool`    | History     | Registry       | `searchCommandHistories()` / `searchEventHistories()`                                         | Look up command/event execution records                         |
+| Tool class       | Domain      | Representative methods                                                                        | Typical use                                                     |
+|------------------|-------------|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| `TenantTool`     | Tenant      | `getCurrentTenantInfo()`                                                                      | Confirm the current tenant context                              |
+| `UserTool`       | User        | `getCurrentUserProfile()`                                                                     | Look up the current user's info                                 |
+| `SystemTool`     | System      | `getSystemHealth()` / `getDeviceStatuses()` / `getDriverStatuses()`                           | Platform health, device/driver online status                    |
+| `DeviceTool`     | Device      | `lookupDeviceById()` / `searchDevices()` / `getDeviceLatestPointValues()`                     | Look up a device, search by criteria, latest-value snapshot     |
+| `DriverTool`     | Driver      | `lookupDriverById()` / `searchDrivers()`                                                      | Check protocol driver connectivity                              |
+| `ProfileTool`    | Profile     | `lookupProfileById()` / `searchProfiles()` / `listProfilesByDeviceId()`                       | Look up profiles and their capabilities                         |
+| `PointTool`      | Point       | `lookupPointById()` / `searchPoints()` / `listPointsByDevice()`                               | Look up points, read/write direction, list points by device/profile |
+| `PointValueTool` | Point value | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | Read live values, query history curves, issue read/write commands |
+| `CommandTool`    | Command     | `lookupCommandById()` / `searchCommands()` / `listCommandsByDeviceId()`                       | Look up custom commands, list commands by device/profile        |
+| `EventTool`      | Event       | `lookupEventById()` / `searchEvents()` / `listEventsByDeviceId()`                             | Look up events reported by devices                              |
+| `InsightTool`    | Insight     | `getAlertStats()` / `getTodayStats()` / `analyticsQueryHistory()` (25 in total)               | Alert stats, dashboard metrics, aggregate analytics, command status |
+| `HistoryTool`    | History     | `searchCommandHistories()` / `searchEventHistories()`                                         | Look up command/event execution records                         |
 
 ::: info Risk metadata is annotated on REST endpoints, not tool methods
 The `x-dc3-ai` risk metadata (`riskLevel` / `destructive` / `idempotent` / `openWorld`) is **hand-annotated** in the
 Controller's `@Operation` extension (e.g. the chat endpoint of `ChatController`) for the OpenAPI / MCP catalog to
-consume. The Agentic Center's tool methods carry no risk level: `@Tool` methods carry only
-`@AgenticToolMetadata(domain, title)` — just the two fields `domain()` and `title()` — and registry tools'
+consume. The Agentic Center's tool methods carry no risk level: the registry's
 `ToolDefinition` carries only name / description / inputSchema. Don't treat endpoint-level risk metadata as a property
 of each tool method.
 :::

@@ -167,7 +167,7 @@ The Agentic Center (built on Spring AI) connects an LLM to the platform, so a co
 - Query device status and point values
 - Read and write points, and issue commands to devices (high-risk operations require confirmation)
 
-The platform also auto-aggregates its 330+ HTTP APIs into an MCP (Model Context Protocol) tool catalog that tools like
+The platform also auto-aggregates its 348 HTTP APIs into an MCP (Model Context Protocol) tool catalog that tools like
 Claude Desktop, VS Code, and Cursor can call directly after OAuth 2.1 authorization. See the [AI Overview](../ai/).
 
 ### Which LLM providers are supported?

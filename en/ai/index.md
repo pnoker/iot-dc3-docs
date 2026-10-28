@@ -12,7 +12,7 @@ IoT DC3 plugs large language models into operations, so a model can do more than
 section covers two ways an LLM drives those actions; the difference is who initiates and how it's constrained.
 
 - **Agentic Center** — a built-in, conversational AI operations assistant. Built on Spring AI with 68 built-in tools
-  (61 programmatically registered reactive tools plus 7 `@Tool` methods), it lets
+  (registered in a single programmatic registry), it lets
   the LLM query devices, read and write points, and run commands through Tool Calling. It speaks the OpenAI API and
   supports the Anthropic API natively, so you
   can point GPT, Claude, DeepSeek, Qwen, and friends at it. Good when you want a UI-driven, multi-turn assistant.

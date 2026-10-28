@@ -99,7 +99,7 @@ descriptions. A typo in a parameter name is a runtime error. In Spring AI, `@Too
 verified by the Java compiler. If you rename a parameter in the method signature without updating the annotation,
 the IDE flags it before the code even compiles.
 
-This matters when you have 12 tool classes and 68 tools (7 `@Tool` methods + 61 programmatic `ToolDefinition`s) and a
+This matters when you have 12 tool classes, 68 tools, and a
 team of contributors. Programmatic tool definitions (name / description / JSON Schema) live in one place,
 `ReactiveAgenticToolRegistry`, and enjoy the same compile-time review. The compiler becomes a
 safety net that Python tool-calling frameworks cannot provide.
@@ -137,25 +137,25 @@ Four things make this architecture production-grade:
 ## The built-in tool surface: 12 tool classes, 68 tools
 
 The Agentic Center ships with 12 tool classes covering every domain object in the platform. Each tool method wraps
-an existing service-layer method — there's no duplicated business logic. Registration is two-layered: 61 reactive
-tools are registered programmatically by `ReactiveAgenticToolRegistry`, and 7 context/system tools are registered with
-the `@Tool` annotation by `ChatClientConfig`. The single write tool, `writePointValue`, goes through two-phase
+an existing service-layer method — there's no duplicated business logic. Every tool is registered programmatically in
+one place, `ReactiveAgenticToolRegistry` (since the October 2026 collapse there is no `@Tool` reflective channel; both
+model paths share the same tool surface). The single write tool, `writePointValue`, goes through two-phase
 confirmation (see the [Agentic Center](./agentic) page).
 
-| Tool Class       | Domain      | Registered | Key Methods                                                                                |
-|------------------|-------------|------------|--------------------------------------------------------------------------------------------|
-| `TenantTool`     | Tenant      | @Tool      | `getCurrentTenantInfo()`                                                                   |
-| `UserTool`       | User        | @Tool      | `getCurrentUserProfile()`                                                                  |
-| `SystemTool`     | System      | @Tool      | `getSystemHealth()`, `getDeviceStatuses()`, `getDriverStatuses()`                          |
-| `DeviceTool`     | Device      | Registry   | `lookupDeviceById()`, `searchDevices()`, `getDeviceLatestPointValues()`                    |
-| `DriverTool`     | Driver      | Registry   | `lookupDriverById()`, `searchDrivers()`                                                    |
-| `ProfileTool`    | Profile     | Registry   | `lookupProfileById()`, `searchProfiles()`, `listProfilesByDeviceId()`                      |
-| `PointTool`      | Point       | Registry   | `lookupPointById()`, `searchPoints()`, `listPointsByDevice()`                              |
-| `PointValueTool` | Point Value | Registry   | `getLatestPointValue()`, `getPointValueHistory()`, `readPointValue()`, `writePointValue()` |
-| `CommandTool`    | Command     | Registry   | `lookupCommandById()`, `searchCommands()`, `listCommandsByDeviceId()`                      |
-| `EventTool`      | Event       | Registry   | `lookupEventById()`, `searchEvents()`, `listEventsByDeviceId()`                            |
-| `InsightTool`    | Insight     | Registry   | `getAlertStats()`, `getTodayStats()`, `analyticsQueryHistory()`, 25 in total                |
-| `HistoryTool`    | History     | Registry   | `searchCommandHistories()`, `searchEventHistories()`                                       |
+| Tool Class       | Domain      | Key Methods                                                                                |
+|------------------|-------------|--------------------------------------------------------------------------------------------|
+| `TenantTool`     | Tenant      | `getCurrentTenantInfo()`                                                                   |
+| `UserTool`       | User        | `getCurrentUserProfile()`                                                                  |
+| `SystemTool`     | System      | `getSystemHealth()`, `getDeviceStatuses()`, `getDriverStatuses()`                          |
+| `DeviceTool`     | Device      | `lookupDeviceById()`, `searchDevices()`, `getDeviceLatestPointValues()`                    |
+| `DriverTool`     | Driver      | `lookupDriverById()`, `searchDrivers()`                                                    |
+| `ProfileTool`    | Profile     | `lookupProfileById()`, `searchProfiles()`, `listProfilesByDeviceId()`                      |
+| `PointTool`      | Point       | `lookupPointById()`, `searchPoints()`, `listPointsByDevice()`                              |
+| `PointValueTool` | Point Value | `getLatestPointValue()`, `getPointValueHistory()`, `readPointValue()`, `writePointValue()` |
+| `CommandTool`    | Command     | `lookupCommandById()`, `searchCommands()`, `listCommandsByDeviceId()`                      |
+| `EventTool`      | Event       | `lookupEventById()`, `searchEvents()`, `listEventsByDeviceId()`                            |
+| `InsightTool`    | Insight     | `getAlertStats()`, `getTodayStats()`, `analyticsQueryHistory()`, 25 in total                |
+| `HistoryTool`    | History     | `searchCommandHistories()`, `searchEventHistories()`                                       |
 
 The tool methods deliberately use different naming from the REST/gRPC layer. REST endpoints follow the project's
 `getXxx`/`listXxx` convention; tool methods use `lookupXxx`/`searchXxx`. This separation lets the model

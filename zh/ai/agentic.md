@@ -92,22 +92,23 @@ access token，详见[第一个设备：端到端](../quickstart/first-device)�
 
 关键链路上的事实锚点：
 
-- 工具分两层注册：`ReactiveAgenticToolRegistry` 用编程式 `ToolDefinition`（name + description + inputSchema）注册 61 个
-  响应式工具（实现返回 `Mono`，全程不阻塞事件循环）；`ChatClientConfig` 再把 3 个 `@Tool` 工具类（租户/用户/系统）经
-  `MethodToolCallbackProvider` 注册成 `ToolCallbackProvider`，外包一层 `AgenticToolTracingCallbackProvider` 做调用追踪。OpenAI
-  兼容链路把两层合并暴露给模型（68 个）；Anthropic 原生链路（Spring AI 运行时）当前只挂 `@Tool` 层。
+- 工具只有一个注册源：`ReactiveAgenticToolRegistry` 以编程式 `ToolDefinition`（name + description + inputSchema）注册
+  全部 68 个工具（12 个工具类，实现返回 `Mono`，全程不阻塞事件循环）；`ChatClientConfig` 把注册表里的每个工具经
+  `ReactiveAgenticToolCallback` 桥接成 `ToolCallbackProvider` 交给 ChatClient。2026.10 的注册路径收敛之后已无反射式
+  `@Tool` 通道——OpenAI 兼容与 Anthropic 原生两条链路看到的是同一份工具面，不会漂移。
 - 每个工具方法进来第一件事就是 `AgenticToolContextUtil.requireTenantId(toolContext)` 取出当前租户 ID，所有查询都带租户作用域——模型
   **看不到也碰不到别的租户**的数据。
 - 写类动作（命令下发）由智能中心经 `PointCommandFacade`（gRPC 实现 `PointCommandGrpcFacade` / 本地
   `PointCommandLocalFacade`）下发到**数据中心**的命令平面，并非调用 HTTP `POST /point_command/write` 端点（那是数据中心面向
   Web/CLI 的另一调用面，终点命令平面相同）。命令本身有 10 秒 TTL（`PointCommandDTO.expireAt` 默认 `now+10s`），过期不再执行。
 
-## 内置工具：两层注册，68 个工具
+## 内置工具：单一注册表，68 个工具
 
-平台给模型准备的工具面共 **12 个工具类、68 个工具**，分两层注册：
+平台给模型准备的工具面共 **12 个工具类、68 个工具**，全部在 `ReactiveAgenticToolRegistry` 一处注册。2026.10 的
+注册路径收敛把早期的双通道结构合并成了一条：每个工具方法必须在注册表里登记，契约测试
+逐个核对，两条模型链路之间的工具面不可能漂移。
 
-- **响应式工具（61 个）**：`ReactiveAgenticToolRegistry` 以编程式 `ToolDefinition` 注册 9 个工具类——设备、驱动、模板、位号、位号值、命令、事件 7 个业务域，外加洞察（告警/看板/聚合分析/命令状态，25 个）与历史（命令/事件执行记录，4 个）。
-- **`@Tool` 工具（7 个）**：`ChatClientConfig` 经 `MethodToolCallbackProvider` 注册 `TenantTool`、`UserTool`、`SystemTool` 三个类，覆盖租户/用户上下文、系统健康与设备/驱动在线态。
+12 个工具类按域覆盖：
 
 工具方法主要用 `lookup*`（按 ID 取单条/批量）与 `search*`（分页查询）动词，辅以 `list*ByXxxId`（按归属枚举）与洞察类的
 `get*` / `analytics*` / `page*`，并非 REST 层那套 `getXxx`/`listXxx`——这是工具给模型用的语义化命名，与对外
@@ -116,24 +117,23 @@ HTTP CRUD 约定相互独立。
 先按域理解它们各自能干什么，再看表：模型拿到一个问题后，会把它拆成"先查模板有哪些位号 → 再查这些位号的最新值 →
 最后判断要不要下命令"这样的工具序列，自动编排。
 
-| 工具类              | 域   | 注册   | 代表方法                                                                                          | 典型用途                 |
-|------------------|-----|------|-----------------------------------------------------------------------------------------------|----------------------|
-| `TenantTool`     | 租户  | @Tool | `getCurrentTenantInfo()`                                                                      | 确认当前租户上下文            |
-| `UserTool`       | 用户  | @Tool | `getCurrentUserProfile()`                                                                     | 查当前用户信息              |
-| `SystemTool`     | 系统  | @Tool | `getSystemHealth()` / `getDeviceStatuses()` / `getDriverStatuses()`                           | 看平台健康度、设备/驱动在线态      |
-| `DeviceTool`     | 设备  | 注册表  | `lookupDeviceById()` / `searchDevices()` / `getDeviceLatestPointValues()`                     | 查某台设备、按条件检索、设备最新值快照 |
-| `DriverTool`     | 驱动  | 注册表  | `lookupDriverById()` / `searchDrivers()`                                                      | 查协议驱动接入情况            |
-| `ProfileTool`    | 模板  | 注册表  | `lookupProfileById()` / `searchProfiles()` / `listProfilesByDeviceId()`                       | 查模板及其能力、按设备列模板       |
-| `PointTool`      | 位号  | 注册表  | `lookupPointById()` / `searchPoints()` / `listPointsByDevice()`                               | 查位号、读写方向、按设备/模板列位号   |
-| `PointValueTool` | 位号值 | 注册表  | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | 读实时值、查历史曲线、下发读/写命令   |
-| `CommandTool`    | 命令  | 注册表  | `lookupCommandById()` / `searchCommands()` / `listCommandsByDeviceId()`                      | 查自定义命令、按设备/模板列命令     |
-| `EventTool`      | 事件  | 注册表  | `lookupEventById()` / `searchEvents()` / `listEventsByDeviceId()`                            | 查设备上报事件              |
-| `InsightTool`    | 洞察  | 注册表  | `getAlertStats()` / `getTodayStats()` / `analyticsQueryHistory()`（共 25 个）                    | 告警统计、看板指标、聚合分析、命令状态  |
-| `HistoryTool`    | 历史  | 注册表  | `searchCommandHistories()` / `searchEventHistories()`                                        | 查命令/事件执行记录           |
+| 工具类              | 域   | 代表方法                                                                                          | 典型用途                 |
+|------------------|-----|-----------------------------------------------------------------------------------------------|----------------------|
+| `TenantTool`     | 租户  | `getCurrentTenantInfo()`                                                                      | 确认当前租户上下文            |
+| `UserTool`       | 用户  | `getCurrentUserProfile()`                                                                     | 查当前用户信息              |
+| `SystemTool`     | 系统  | `getSystemHealth()` / `getDeviceStatuses()` / `getDriverStatuses()`                           | 看平台健康度、设备/驱动在线态      |
+| `DeviceTool`     | 设备  | `lookupDeviceById()` / `searchDevices()` / `getDeviceLatestPointValues()`                     | 查某台设备、按条件检索、设备最新值快照 |
+| `DriverTool`     | 驱动  | `lookupDriverById()` / `searchDrivers()`                                                      | 查协议驱动接入情况            |
+| `ProfileTool`    | 模板  | `lookupProfileById()` / `searchProfiles()` / `listProfilesByDeviceId()`                       | 查模板及其能力、按设备列模板       |
+| `PointTool`      | 位号  | `lookupPointById()` / `searchPoints()` / `listPointsByDevice()`                               | 查位号、读写方向、按设备/模板列位号   |
+| `PointValueTool` | 位号值 | `getLatestPointValue()` / `getPointValueHistory()` / `readPointValue()` / `writePointValue()` | 读实时值、查历史曲线、下发读/写命令   |
+| `CommandTool`    | 命令  | `lookupCommandById()` / `searchCommands()` / `listCommandsByDeviceId()`                      | 查自定义命令、按设备/模板列命令     |
+| `EventTool`      | 事件  | `lookupEventById()` / `searchEvents()` / `listEventsByDeviceId()`                            | 查设备上报事件              |
+| `InsightTool`    | 洞察  | `getAlertStats()` / `getTodayStats()` / `analyticsQueryHistory()`（共 25 个）                    | 告警统计、看板指标、聚合分析、命令状态  |
+| `HistoryTool`    | 历史  | `searchCommandHistories()` / `searchEventHistories()`                                        | 查命令/事件执行记录           |
 
 ::: info 风险元数据标在 REST 端点上，不在工具方法上
-`x-dc3-ai` 风险元数据（`riskLevel` / `destructive` / `idempotent` / `openWorld`）是在 Controller 的 `@Operation` 扩展里**手工标注**的（如 `ChatController` 的聊天端点），供 OpenAPI / MCP 目录消费。智能中心的工具方法不带风险等级：`@Tool` 方法只带
-`@AgenticToolMetadata(domain, title)`（仅 `domain()` 与 `title()` 两个字段），注册表工具的 `ToolDefinition` 里只有 name / description / inputSchema——别把端点上的风险元数据当成每个工具方法的属性。
+`x-dc3-ai` 风险元数据（`riskLevel` / `destructive` / `idempotent` / `openWorld`）是在 Controller 的 `@Operation` 扩展里**手工标注**的（如 `ChatController` 的聊天端点），供 OpenAPI / MCP 目录消费。智能中心的工具方法不带风险等级：注册表里的 `ToolDefinition` 只有 name / description / inputSchema 三个字段——别把端点上的风险元数据当成每个工具方法的属性。
 :::
 
 ## 会话不是内存里的，而是落库的

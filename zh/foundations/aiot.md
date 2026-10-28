@@ -120,7 +120,7 @@ API，经网关注入主体上下文，再由鉴权中心做 RBAC 权限校验�
 :::
 
 **第二条：[AI Agent / MCP](../ai/mcp)（把工具安全暴露给外部 Agent）。** 网关在 `POST /mcp` 提供 JSON-RPC 2.0 的 MCP Resource
-Server，工具目录由四个中心的 OpenAPI 自动聚合（约 330+ 个工具），由外部 Agent 自主决定调用哪个。它面向"自己搭 Agent
+Server，工具目录由四个中心的 OpenAPI 自动聚合（348 个工具），由外部 Agent 自主决定调用哪个。它面向"自己搭 Agent
 让模型自主编排"的场景，约束比对话式更严：
 
 - **仅 OAuth 2.1**：MCP 访问只接受 OAuth 2.1 颁发的短时 JWT（默认 15 分钟有效），公开客户端强制 PKCE（S256）、刷新令牌轮换。**当前没有 Personal Access Token（PAT）等长期静态令牌**这一接入方式。

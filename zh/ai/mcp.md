@@ -34,7 +34,7 @@ IoT DC3 把整个平台的 HTTP 能力自动聚合成一份 MCP（Model Context 
 - **工具集**来自服务注册：resource-registrar 在各中心启动时扫描 HTTP 端点，登记进 `dc3_api`（`api_code` / `api_name`）与
   `dc3_resource`（`resource_code` / `permission_code`）；
 - **描述与 schema** 来自构建期静态快照：鉴权中心打包了四份 OpenAPI 快照（`classpath*:openapi/openapi-*.json`，auth / manager /
-  data / agentic 合计 **347 个操作**，`make openapi` 重新生成）。`McpOpenApiAggregator` 解析快照，为每个接口补齐描述、
+  data / agentic 合计 **348 个操作**，`make openapi` 重新生成）。`McpOpenApiAggregator` 解析快照，为每个接口补齐描述、
   `x-dc3-ai` 风险标注与合并后的 `inputSchema`，与注册表 join 后为每个接口生成一条工具记录，落库到 `dc3_mcp_tool_catalog`。
 
 选构建期快照而非运行期拉取，是为了让鉴权中心不依赖四个中心同时可达、也不必在生产暴露 `/v3/api-docs`（见

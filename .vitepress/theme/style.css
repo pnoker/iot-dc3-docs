@@ -1102,6 +1102,7 @@ body.dc3-modal-open {
     --dc3-ext-stroke: #64748b;
     --dc3-arrow: #94a3b8;
     --dc3-arrow-label: #475569;
+    --dc3-on-accent: #ffffff;
     --dc3-fe-text: #0e7490;
     --dc3-region-amber: rgba(251, 191, 36, 0.06);
     --dc3-region-be: rgba(6, 78, 59, 0.04);

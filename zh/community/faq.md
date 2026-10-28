@@ -158,7 +158,7 @@ Agentic 中心（基于 Spring AI）把大模型接到平台上，对话即可�
 - 查询设备状态与位号值
 - 读写位号、向设备下发命令（高风险操作需二次确认）
 
-平台同时把 330+ 个 HTTP 接口自动聚合成 MCP（Model Context Protocol）工具目录，Claude Desktop、VS Code、Cursor
+平台同时把 348 个 HTTP 接口自动聚合成 MCP（Model Context Protocol）工具目录，Claude Desktop、VS Code、Cursor
 等 AI 工具经 OAuth 2.1 鉴权后可直接调用。详见 [AI 概览](../ai/)。
 
 ### 支持哪些大模型？

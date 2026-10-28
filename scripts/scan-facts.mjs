@@ -47,10 +47,14 @@ function walk(dir, out = [], ext = '.md') {
 
 // Scan roots: the two language trees plus the root language gate and the
 // repo readme (both sit outside zh/ and en/ and were a guard blind spot).
+// Diagram components are included too — their DICT strings render as SVG
+// text on pages, and the 2026-10-24 audit found stale counts ("28+ 协议驱动",
+// "10 @Tool") surviving ONLY there, invisible to a markdown-only scan.
 const DOC_FILES = [
     ...walk('zh'),
     ...walk('en'),
     ...['index.md', 'README.md'].filter(f => existsSync(f)),
+    ...walk('.vitepress/theme/components', [], '.vue'),
 ]
 
 function findUpstream() {
@@ -103,7 +107,10 @@ const FORBIDDEN = [
             // EN reversed: "use the salt … to hash the password"
             /\bsalt\b[^\n]{0,40}?\bhash(?:es|ed|ing)?\s+(?:the\s+)?password/i,
             // placeholders / identifiers of the old hashed-password narrative
-            /<hashed(?:\s+password)?>|\bhashed password\b|salt-hashed password|PASSWORD_HASH/i,
+            // (PASSWORD_HASH uppercase-only: lowercase password_hash is a real
+            // column name of dc3_local_credential, seen in ER-diagram DICTs)
+            /<hashed(?:\s+password)?>|\bhashed password\b|salt-hashed password/i,
+            /\bPASSWORD_HASH\b/,
             // ZH: 用盐哈希(密码)后 / 盐把(将)密码哈希 / 密码…哈希后提交
             /用盐[对将]?[进]?哈希|盐[把将][^\n]{0,8}密码[^\n]{0,8}哈希|(?:密码|口令)[^\n]{0,10}哈希后(?:再|即|便)?(?:提交|发送|上传|置换|登录)/,
         ],
@@ -149,10 +156,35 @@ const FORBIDDEN = [
         patterns: [
             /28\s*个(?:多协议|协议|接入|连接|内置)?驱动/,
             /28\s*个多协议/,
+            /28\s*协议驱动/,
             /28\s*(?:款|类|种)\S{0,6}驱动/,
             /\b28\s+(?:built-?in|protocol|driver|connectivity|multi-?protocol|plug-?in|available|supported|offered)?\s*-?\s*(?:drivers?|driver\s+modules)\b/i,
             /\b28\s+built-?in\b/i,
             /\b(?:built[\s-]?in|ships|bundles|includes|offers|provides)\s+28\s+(?:drivers?|protocol)/i,
+        ],
+    },
+    {
+        // 2026-10-24 diagram-audit follow-up: stale counts that survived
+        // inside diagram DICT strings and AI pages after the upstream
+        // Oct-2026 changes (36 drivers, single tool registry, snapshot
+        // resync). Absolute ban — the corrected figures are 36 drivers /
+        // 68 tools in ONE registry (no reflective @Tool channel) / 348
+        // MCP catalog operations.
+        key: 'stale-agentic-mcp-counts',
+        negatable: false,
+        why: '驱动 36；Agentic 工具 68 且单一注册表（无 @Tool 反射通道、无两层注册）；MCP 目录 = 348 个构建期快照操作',
+        patterns: [
+            /28\+\s*(?:个)?\s*(?:协议驱动|protocol drivers?)/,
+            /\+\s*24\s*(?:协议|protocols?)\b/,
+            /61\s*个\s*编程式|61\s+reactive\b|61\s+programmatically/,
+            /7\s*个\s*`?@Tool/,
+            /\b10\s*个?\s*@Tool/i,
+            /Built-in @Tool/,
+            /@Tool\s+schemas?/,
+            /两层注册|two registration layers|two-layered|two-layer registration/,
+            /330\+/,
+            /347\s*个操作|347\s*operations/i,
+            /AgenticToolMetadata/,
         ],
     },
     {
